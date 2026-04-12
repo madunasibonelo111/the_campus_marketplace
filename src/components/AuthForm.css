@@ -1,3 +1,4 @@
+
 *{
     font-family: "Poppins", sans-serif;
     margin: 0;
@@ -9,11 +10,12 @@
 }
 /*Body Style*/
 
-body{
+body {
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
+    margin: 0;
     background: linear-gradient(90deg, #e2e2e2, #c9d6ff);
 }
 html, body {
@@ -22,17 +24,25 @@ html, body {
 
 /* Container */
 
-.container{
-    position: relative;
-    width: 1000px;
+.container {
+    width: 1100px;        /* 🔥 bigger width */
+    height: 650px;        /* 🔥 taller */
     max-width: 95%;
-    height: 600px;
-    max-height: 90vh;
+    max-height: 95vh;
     background: #fff;
-    margin: 20px;
-    border-radius: 30px;
-    box-shadow: 0 0 30px rgba(0,0,0,0.2);
+    border-radius: 25px;
     overflow: hidden;
+    position: relative;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.2);
+}
+
+.container {
+    position: relative;
+    margin: auto;
+}
+
+.form-box {
+    padding: 50px;   /* more breathing room */
 }
 
 .container h1{
@@ -59,6 +69,7 @@ form{
     align-items: center;
     color: #000000;
     padding: 40px;
+    overflow: auto;
     z-index: 1;
     transition: 0.6s ease-in-out 1.2s;
     visibility: 0s 1s;
