@@ -1,0 +1,16 @@
+{
+  "name": "the_campus_marketplace",
+  "version": "1.0.0",
+  "description": "A full-stack campus marketplace web app — React + Node/Express, deployed on Azure",
+  "engines": {
+    "node": "20.x"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "jest --coverage",
+    "build": "react-scripts build"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT"
+}
