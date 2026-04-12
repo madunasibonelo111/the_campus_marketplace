@@ -1,7 +1,10 @@
+import { useNavigate } from "react-router-dom";
+
 import { useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
 export default function Login() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -15,7 +18,7 @@ export default function Login() {
       alert(error.message);
     } else {
       alert("✅ Login successful!");
-      window.location.assign("/basket"); // ✅ FIX (safe for tests)
+      navigate("/basket");
     }
   };
 
