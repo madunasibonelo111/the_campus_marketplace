@@ -10,7 +10,7 @@ export default function AuthContainer() {
     <div className={`container ${isActive ? "active" : ""}`}>
 
       <Login />
-      <Register />
+      <Register switchToLogin={() => setIsActive(false)} />
 
       {/* TOGGLE */}
       <div className="toggle-box">
