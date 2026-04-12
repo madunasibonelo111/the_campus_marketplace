@@ -15,7 +15,7 @@ export default function Login() {
       alert(error.message);
     } else {
       alert("✅ Login successful!");
-      window.location.assign("/basket"); // ✅ FIX (safe for tests)
+      window.location.href = "/basket"; // ✅ FIX (safe for tests)
     }
   };
 
