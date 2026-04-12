@@ -36,7 +36,7 @@ export default function Login({ switchToRegister }) {
           name: data.name
         }));
         alert("✅ Login successful!");
-        window.location.href = "/basket";
+        window.location.assign("/basket");
       } else {
         alert("Invalid email or password");
       }
