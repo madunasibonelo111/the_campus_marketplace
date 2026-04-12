@@ -1,165 +1,225 @@
-import React, { useState } from "react";
-import "./Basket.css";
+import React, { useEffect, useState } from "react";
+import { supabase } from "./supabaseClient";
 
-export default function Basket() {
+export default function Basket({ onSelectListing }) {
+  const [items, setItems] = useState([]);
   const [basket, setBasket] = useState([]);
-  const [showBasket, setShowBasket] = useState(false);
+
+  const [categories, setCategories] = useState([]);
+  const [category, setCategory] = useState("All");
+
   const [search, setSearch] = useState("");
-  const [sortOrder, setSortOrder] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All");
-  const [showPopup, setShowPopup] = useState(false);
+  const [showBasket, setShowBasket] = useState(false);
 
-  const categories = ["All", "Clothing", "Stationery", "Electronics", "Sports"];
+  // ✅ FETCH CATEGORIES FROM DATABASE
+  const fetchCategories = async () => {
+    const { data, error } = await supabase
+      .from("categories")
+      .select("id, name");
 
-  const [items] = useState([
-    { id: 1, title: "Wits Hoodie", price: 400, category: "Clothing" },
-    { id: 2, title: "Jeans", price: 600, category: "Clothing" },
-    { id: 3, title: "Notebook", price: 100, category: "Stationery" },
-    { id: 4, title: "Calculator", price: 250, category: "Stationery" },
-    { id: 5, title: "Laptop", price: 8000, category: "Electronics" },
-    { id: 6, title: "Headphones", price: 300, category: "Electronics" },
-    { id: 7, title: "Soccer Ball", price: 250, category: "Sports" }
-  ]);
+    if (error) {
+      console.error("❌ Error fetching categories:", error);
+      return;
+    }
+
+    // Add "All" manually at the front
+    setCategories([{ id: "all", name: "All" }, ...(data || [])]);
+  };
+
+  // FETCH LISTINGS
+  const fetchListings = async () => {
+    const { data, error } = await supabase
+      .from("listings")
+      .select(`
+        id,
+        title,
+        price,
+        category_id,
+        categories (
+          name
+        ),
+        listing_images (
+          image_url,
+          display_order
+        )
+      `);
+
+    if (error) {
+      console.error("❌ Error fetching listings:", error);
+      return;
+    }
+
+    const formatted = (data || []).map((item) => {
+      const sorted = item.listing_images?.sort(
+        (a, b) => a.display_order - b.display_order
+      );
+
+      return {
+        ...item,
+        image: sorted?.[0]?.image_url || "https://via.placeholder.com/300",
+        listing_images: sorted || [],
+      };
+    });
+
+    setItems(formatted);
+  };
+
+  useEffect(() => {
+    fetchCategories();
+    fetchListings();
+  }, []);
+
+  // ADD TO BASKET
+  const addToBasket = (item) => {
+    setBasket((prev) => {
+      const exists = prev.find((i) => i.id === item.id);
+
+      if (exists) {
+        return prev.map((i) =>
+          i.id === item.id
+            ? { ...i, quantity: i.quantity + 1 }
+            : i
+        );
+      }
+
+      return [...prev, { ...item, quantity: 1 }];
+    });
+  };
+
+  // REMOVE FROM BASKET
+  const removeFromBasket = (item) => {
+    setBasket((prev) => {
+      const exists = prev.find((i) => i.id === item.id);
+
+      if (!exists) return prev;
+
+      if (exists.quantity > 1) {
+        return prev.map((i) =>
+          i.id === item.id
+            ? { ...i, quantity: i.quantity - 1 }
+            : i
+        );
+      }
+
+      return prev.filter((i) => i.id !== item.id);
+    });
+  };
+
+  const total = basket.reduce(
+    (sum, i) => sum + (i.price || 0) * i.quantity,
+    0
+  );
+
+  const handleCheckout = () => {
+    alert("✅ Order placed successfully!");
+    setBasket([]);
+    setShowBasket(false);
+  };
 
   // FILTER
-  let filteredItems = items.filter((item) => {
-    return (
-      item.title.toLowerCase().includes(search.toLowerCase()) &&
-      (selectedCategory === "All" || item.category === selectedCategory)
-    );
+  const filtered = items.filter((i) => {
+    const matchCategory =
+      category === "All" ||
+      i.categories?.name === category;
+
+    const matchSearch = (i.title || "")
+      .toLowerCase()
+      .includes(search.toLowerCase());
+
+    return matchCategory && matchSearch;
   });
 
-  // SORT
-  if (sortOrder === "low") {
-    filteredItems.sort((a, b) => a.price - b.price);
-  } else if (sortOrder === "high") {
-    filteredItems.sort((a, b) => b.price - a.price);
-  }
-
-  // ADD
-  const addToBasket = (item) => {
-    const existing = basket.find((i) => i.id === item.id);
-
-    if (existing) {
-      setBasket(
-        basket.map((i) =>
-          i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
-        )
-      );
-    } else {
-      setBasket([...basket, { ...item, quantity: 1 }]);
-    }
-
-    setShowPopup(true);
-    setTimeout(() => setShowPopup(false), 2000);
-  };
-
-  // REMOVE
-  const removeFromBasket = (item) => {
-    const existing = basket.find((i) => i.id === item.id);
-    if (existing.quantity > 1) {
-      setBasket(
-        basket.map((i) =>
-          i.id === item.id ? { ...i, quantity: i.quantity - 1 } : i
-        )
-      );
-    } else {
-      setBasket(basket.filter((i) => i.id !== item.id));
-    }
-  };
-
   return (
-    <div className="page">
-      {/* MAIN CONTENT */}
-      <div className="main">
-        <div className="header">
-          <img src="/campus-marketplace-logo.png" alt="logo" className="logo" />
+    <div>
 
-          <input
-            type="text"
-            placeholder="Search items..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="search-bar"
-          />
-
-          <select onChange={(e) => setSortOrder(e.target.value)}>
-            <option value="">Sort</option>
-            <option value="low">Price: Low → High</option>
-            <option value="high">Price: High → Low</option>
-          </select>
-
-          <button onClick={() => setShowBasket(!showBasket)} className="basket-btn">
-            🛒 {basket.reduce((sum, i) => sum + i.quantity, 0)}
+      {/* CATEGORY FILTER (FROM DATABASE) */}
+      <div className="tabs">
+        {categories.map((c) => (
+          <button
+            key={c.id}
+            onClick={() => setCategory(c.name)}
+            className={category === c.name ? "activeTab" : ""}
+          >
+            {c.name}
           </button>
-        </div>
-
-        <div className="category-bar">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              className={selectedCategory === cat ? "active" : ""}
-              onClick={() => setSelectedCategory(cat)}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-
-        <div className="items-grid">
-          {filteredItems.length === 0 ? (
-            <p className="no-items">No items available 😢</p>
-          ) : (
-            filteredItems.map((item) => (
-              <div key={item.id} className="item-card">
-                <div className="image-placeholder"></div>
-
-                <h3>{item.title}</h3>
-                <p className="price">R{item.price}</p>
-
-                <button onClick={() => addToBasket(item)}>
-                  Add to Basket
-                </button>
-              </div>
-            ))
-          )}
-        </div>
+        ))}
       </div>
 
-      {/* BASKET */}
-      {showBasket && (
-        <div className="basket-panel">
-          <button className="close-btn" onClick={() => setShowBasket(false)}>
-            ✖
-          </button>
+      {/* SEARCH */}
+      <div className="searchBox">
+        <input
+          placeholder="Search listings..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
 
-          <h2>My Basket</h2>
+      {/* LISTINGS */}
+      <div className="gridItems">
+
+        {filtered.length === 0 ? (
+          <p>No products available</p>
+        ) : (
+          filtered.map((item) => (
+            <div
+              key={item.id}
+              className="card"
+              style={{ cursor: "pointer" }}
+              onClick={() => onSelectListing?.(item.id)}
+            >
+              <img src={item.image} alt={item.title} />
+              <h3>{item.title}</h3>
+              <p>R{item.price}</p>
+
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  addToBasket(item);
+                }}
+              >
+                Add
+              </button>
+            </div>
+          ))
+        )}
+
+      </div>
+
+      {/* BASKET BUTTON */}
+      <div className="basketBtn">
+        <button onClick={() => setShowBasket(true)}>
+          🛒 ({basket.reduce((s, i) => s + i.quantity, 0)})
+        </button>
+      </div>
+
+      {/* BASKET PANEL */}
+      {showBasket && (
+        <div className="basket">
+          <button onClick={() => setShowBasket(false)}>
+            Close
+          </button>
 
           {basket.length === 0 && <p>Basket is empty</p>}
 
-          {basket.map((item) => (
-            <div key={item.id} className="basket-item">
-              <div>
-                {item.title} x{item.quantity}
-              </div>
-
-              <div>
-                <button onClick={() => addToBasket(item)}>➕</button>
-                <button onClick={() => removeFromBasket(item)}>➖</button>
-              </div>
+          {basket.map((i) => (
+            <div key={i.id}>
+              {i.title} x{i.quantity}
+              <button onClick={() => addToBasket(i)}>+</button>
+              <button onClick={() => removeFromBasket(i)}>-</button>
             </div>
           ))}
 
-          <h3>
-            Total: R
-            {basket.reduce(
-              (total, item) => total + item.price * item.quantity,
-              0
-            )}
-          </h3>
+          <h3>Total: R{total}</h3>
+
+          <button onClick={handleCheckout}>
+            Checkout
+          </button>
         </div>
       )}
 
+    </div>
+  );
+}
       {showPopup && <div className="popup">Item added to basket ✅</div>}
     </div>
   );
