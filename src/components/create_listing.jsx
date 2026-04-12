@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import React, {useState, useEffect} from 'react';
 import {supabase} from '../lib/supabaseClient'; //connect to the supabase instance
 
@@ -265,6 +265,16 @@ const CreateListing = () => {
         {loading ? 'Posting...' : '🚀 Post Listing'}
       </button>
     </form>
+    <div className="bottomNav">
+        {/* 🟢 This Link takes the user back to your marketplace grid */}
+        <Link to="/basket">
+          <button>SHOP</button>
+        </Link>
+        
+        <button className="activeBottom">SELL</button>
+        
+        <button onClick={() => alert("Profile coming soon!")}>PROFILE</button>
+      </div>
   </div>
 );
 };

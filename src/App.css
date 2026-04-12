@@ -155,5 +155,5 @@ input[type="file"] {
   transition: transform 0.2s;
 }
 .card:hover {
-  transform: translateY(-5px); /* 🟢 Hover lift from video */
+  transform: translateY(-5px);
 }

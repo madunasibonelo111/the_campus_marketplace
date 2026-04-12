@@ -1,39 +1,50 @@
-import { TextEncoder, TextDecoder } from "util";
-
-global.TextEncoder = TextEncoder;
-global.TextDecoder = TextDecoder;
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 
 export default function Login({ switchToRegister }) {
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-
   const handleLogin = async () => {
     if (loading) return;
+
     if (!email || !password) {
       alert("Please fill in all fields");
       return;
     }
-    setLoading(true);
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
 
-      if (error || !data.user) {
+    setLoading(true);
+
+    try {
+      const { data, error } = await supabase
+        .from("users")
+        .select("id, email, name, password_hash")
+        .eq("email", email)
+        .single();
+
+      if (error || !data) {
         alert("Invalid email or password");
+        setLoading(false);
         return;
       }
 
-      alert("✅ Login successful!");
-      navigate("/basket");
-
+      // 🟢 Compare the plain text password from your table
+      if (data.password_hash === password) {
+        // Save user session locally so other pages know who you are
+        localStorage.setItem("user", JSON.stringify({
+          id: data.id,
+          email: data.email,
+          name: data.name
+        }));
+        
+        alert("✅ Login successful!");
+        navigate("/basket"); 
+      } else {
+        alert("Invalid email or password");
+      }
     } catch (error) {
       alert("An error occurred during login");
     } finally {

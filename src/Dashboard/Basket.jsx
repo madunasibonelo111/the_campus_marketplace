@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import React, { useEffect, useState } from "react";
 import {supabase} from "../lib/supabaseClient";
 import "./Basket.css";
@@ -113,15 +114,16 @@ export default function Basket({ onViewListing }) {
 
   return (
   <div>
-    {/*welcome to site banner ..*/}
-    <div style={{ 
-      textAlign: 'left', 
-      marginBottom: '40px', 
-      padding: '30px', 
-      background: 'white', 
-      borderRadius: '20px',
-      boxShadow: '0 4px 15px rgba(0,0,0,0.02)',
-      borderLeft: '6px solid #D4AF37' 
+    {/* Welcome Banner in Basket.jsx */}
+  <div style={{ 
+    textAlign: 'left', 
+    marginBottom: '20px', 
+    padding: '25px', 
+    background: 'white', 
+    borderRadius: '20px',
+    boxShadow: '0 4px 15px rgba(0,0,0,0.02)',
+    borderLeft: '6px solid #D4AF37',
+    width: 'auto' 
     }}>
       <h2 style={{ margin: 0, color: '#0b1f3a', fontSize: '32px' }}>
         Find what you need, <span style={{ color: '#3b82f6' }}>instantly.</span>
@@ -220,6 +222,18 @@ export default function Basket({ onViewListing }) {
         <button onClick={handleCheckout}>Checkout</button>
       </div>
     )}
+    <div className="bottomNav">
+        <button className="activeBottom">SHOP</button>
+        
+        {/* 🟢 This Link connects back to your Create Listing page */}
+        <Link to="/sell">
+          <button>SELL</button>
+        </Link>
+        
+        <button onClick={() => alert("Profile coming soon!")}>PROFILE</button>
+      </div>
+
+    
   </div>
 );
 }
