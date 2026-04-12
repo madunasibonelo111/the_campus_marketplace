@@ -1,21 +1,49 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
-export default function Login() {
+export default function Login({ switchToRegister }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
+    if (loading) return;
 
-    if (error) {
-      alert(error.message);
-    } else {
-      alert("✅ Login successful!");
-      window.location.assign("/basket"); // ✅ FIX (safe for tests)
+    if (!email || !password) {
+      alert("Please fill in all fields");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const { data, error } = await supabase
+        .from("users")
+        .select("id, email, name, password_hash")
+        .eq("email", email)
+        .single();
+
+      if (error || !data) {
+        alert("Invalid email or password");
+        setLoading(false);
+        return;
+      }
+
+      if (data.password_hash === password) {
+        localStorage.setItem("user", JSON.stringify({
+          id: data.id,
+          email: data.email,
+          name: data.name
+        }));
+        alert("✅ Login successful!");
+        window.location.href = "/basket";
+      } else {
+        alert("Invalid email or password");
+      }
+    } catch (error) {
+      alert("An error occurred during login");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -31,7 +59,7 @@ export default function Login() {
             required
             onChange={(e) => setEmail(e.target.value)}
           />
-          <i className="fa-solid fa-user"></i>
+          <i className="fa-solid fa-envelope"></i>
         </div>
 
         <div className="input-box">
@@ -52,9 +80,12 @@ export default function Login() {
           type="button"
           className="btn"
           onClick={handleLogin}
+          disabled={loading}
         >
-          Login
+          {loading ? "Logging in..." : "Login"}
         </button>
+
+        <p>Don't have an account? <a href="#" onClick={switchToRegister}>Register</a></p>
 
         <p>Or login with social platform</p>
 

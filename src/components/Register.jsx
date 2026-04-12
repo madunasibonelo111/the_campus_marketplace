@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { supabase } from "../lib/supabaseClient"; // ✅ fix path if needed
+import { supabase } from "../lib/supabaseClient";
 
 export default function Register({ switchToLogin }) {
   const [email, setEmail] = useState("");
@@ -9,60 +9,70 @@ export default function Register({ switchToLogin }) {
   const [role, setRole] = useState("");
   const [loading, setLoading] = useState(false);
 
-
   const handleRegister = async () => {
-  if (loading) return;
+    if (loading) return;
 
-  if (!email || !password || !name || !gender || !role) {
-    alert("Please fill in all fields");
-    return;
-  }
-
-  setLoading(true);
-
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password
-  });
-
-  if (error) {
-    alert(error.message);
-    setLoading(false);
-    return;
-  }
-
-  // ✅ INSERT PROFILE AFTER USER CREATED
-  if (data?.user) {
-    const { error: profileError } = await supabase
-      .from("profiles")
-      .insert([
-        {
-          id: data.user.id,
-          email,
-          name,
-          gender,
-          role
-        }
-      ]);
-
-    if (profileError) {
-      console.error(profileError);
-      alert("Profile not saved, but account created.");
+    if (!email || !password || !name || !gender || !role) {
+      alert("Please fill in all fields");
+      return;
     }
-  }
 
-  alert("✅ Registered successfully! Please login.");
-  switchToLogin();
+    setLoading(true);
 
-  setLoading(false);
-};
+    try {
+      const { data: userData, error: userError } = await supabase
+        .from("users")
+        .insert([
+          {
+            email: email,
+            name: name,
+            password_hash: password
+          }
+        ])
+        .select();
+
+      if (userError) {
+        alert("User error: " + userError.message);
+        setLoading(false);
+        return;
+      }
+
+      if (userData && userData.length > 0) {
+        const userId = userData[0].id;
+
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .insert([
+            {
+              user_id: userId,
+              name: name,
+              gender: gender,
+              role: role
+            }
+          ]);
+
+        if (profileError) {
+          console.error("Profile error:", profileError);
+          alert("User created but profile not saved: " + profileError.message);
+        } else {
+          alert("✅ Registered successfully! Please login.");
+          switchToLogin();
+        }
+      } else {
+        alert("No user data returned");
+      }
+    } catch (error) {
+      alert("An error occurred during registration: " + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="form-box register">
       <form onSubmit={(e) => e.preventDefault()}>
         <h1>Register</h1>
 
-        {/* Email */}
         <div className="input-box">
           <input
             type="email"
@@ -73,7 +83,6 @@ export default function Register({ switchToLogin }) {
           <i className="fa-solid fa-envelope"></i>
         </div>
 
-        {/* Username */}
         <div className="input-box">
           <input
             type="text"
@@ -84,7 +93,6 @@ export default function Register({ switchToLogin }) {
           <i className="fa-solid fa-user"></i>
         </div>
 
-        {/* Password */}
         <div className="input-box">
           <input
             type="password"
@@ -95,34 +103,33 @@ export default function Register({ switchToLogin }) {
           <i className="fa-solid fa-lock"></i>
         </div>
 
-        {/* Gender */}
         <div className="input-box">
           <select required onChange={(e) => setGender(e.target.value)}>
-  <option value="">Select Gender</option>
-  <option value="male">Male</option>
-  <option value="female">Female</option>
-  <option value="other">Other</option>
-</select>
+            <option value="">Select Gender</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+          </select>
         </div>
 
-        {/* Role */}
         <div className="input-box">
           <select required onChange={(e) => setRole(e.target.value)}>
-  <option value="">Select Role</option>
-  <option value="student">Student</option>
-  <option value="staff">Staff Member</option>
-</select>
+            <option value="">Select Role</option>
+            <option value="Student">Student</option>
+            <option value="Staff">Staff</option>
+            <option value="Admin">Admin</option>
+          </select>
         </div>
 
-        {/* ✅ BUTTON NOW WORKS */}
-       <button
-  type="button"
-  className="btn"
-  onClick={handleRegister}
-  disabled={loading}
->
-  {loading ? "Registering..." : "Register"}
-</button>
+        <button
+          type="button"
+          className="btn"
+          onClick={handleRegister}
+          disabled={loading}
+          data-testid="register-button"
+        >
+          {loading ? "Registering..." : "Register"}
+        </button>
 
         <p>Or register with social platform</p>
 
