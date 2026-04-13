@@ -1,6 +1,6 @@
 
 -- ============================================================
--- USEFUL DEBUG QUERIES
+
 --  Werun  these in Supabase SQL Editor to check ourdata data
 -- ============================================================
 
