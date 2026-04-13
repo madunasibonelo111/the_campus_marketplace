@@ -22,6 +22,11 @@ steps:
 
   - script: npm run build
     displayName: 'Build app'
+    env:
+      VITE_SUPABASE_URL: $(VITE_SUPABASE_URL)
+      VITE_SUPABASE_ANON_KEY: $(VITE_SUPABASE_ANON_KEY)
+
+
 
 
   - task: ArchiveFiles@2
