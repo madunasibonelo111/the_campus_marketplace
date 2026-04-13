@@ -2,13 +2,11 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- ============================================================
 -- Campus Marketplace – Sprint 1 SQL Schema
 -- Tables: USERS, CATEGORIES, LISTINGS, LISTING_IMAGES, TRANSACTIONS
--- Database: PostgreSQL
+
 -- ============================================================
 
-/*Backend must call fromusers table*/
--- ------------------------------------------------------------
--- ENUMS
--- Define all custom types 
+
+-- -------------------------------------------------------
 -- ------------------------------------------------------------
 CREATE TYPE user_role AS ENUM ('student', 'staff', 'admin');
 
@@ -37,7 +35,7 @@ CREATE TABLE categories (
 
 -- ------------------------------------------------------------
 -- 2. USERS
--- Created before LISTINGS and TRANSACTIONS (both reference it)
+-- 
 -- ------------------------------------------------------------
 CREATE TABLE users (
     id                  UUID                PRIMARY KEY DEFAULT gen_random_uuid(),
