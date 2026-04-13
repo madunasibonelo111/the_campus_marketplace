@@ -182,6 +182,7 @@ SELECT
     l.price,
     l.listing_type,
     c.name           AS category,
+    u.id             AS seller_id, 
     u.name           AS seller_name,
     li.image_url     AS cover_image
 FROM listings l
