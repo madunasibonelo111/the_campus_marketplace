@@ -1,9 +1,9 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useState } from "react";
-import CreateListing from "./components/create_listing";
-import Home from "./components/Home";
-import AuthContainer from "./components/AuthContainer";
-import Basket from "./Dashboard/Basket";
+import CreateListing from "./pages/Posting/create_listing";
+import Home from "./pages/Home/Home";
+import AuthContainer from "./pages/Auth/AuthContainer";
+import Basket from "./pages/Browse/Basket";
 import "./App.css";
 
 function App() {

@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import React, {useState, useEffect} from 'react';
-import {supabase} from '../lib/supabaseClient'; //connect to the supabase instance
+import {supabase} from '../../supabase/supabaseClient'; //connect to the supabase instance
 
 //create an item listing with these features
 const CreateListing = () => { 
