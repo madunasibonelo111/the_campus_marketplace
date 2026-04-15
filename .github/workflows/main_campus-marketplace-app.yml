@@ -21,7 +21,7 @@ jobs:
  
       - name: Run Tests & Generate Coverage
 
-        run: npm run coverage
+        run: npx vitest run --coverage
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
