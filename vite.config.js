@@ -21,7 +21,7 @@ export default defineConfig({
     },
     coverage: {
       provider: 'istanbul', 
-      reporter: ['text', 'html'],
+      reporter: ['text', 'html', 'lcov'], // 🟢 Added 'lcov' here for Codecov
       all: true,
       include: ['src/**/*.{js,jsx}'],
       exclude: [
