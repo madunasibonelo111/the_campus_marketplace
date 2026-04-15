@@ -20,8 +20,8 @@ jobs:
         run: npm install
  
       - name: Run Tests & Generate Coverage
-        # This will fail the build if coverage is < 90% per your config
-        run: npm test -- --coverage
+
+        run: npm run coverage
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
