@@ -41,7 +41,7 @@ We utilize **Vitest** as our primary testing framework, integrated with the **Is
 
 ## 🏗️ Repository Architecture
 The project follows a **Component-Colocated Design**.
-
+```text
 src/
 ├── 📁 components/      # Reusable UI fragments (Auth forms, Navigation)
 ├── 📁 pages/           # Module-based views (Colocated with Logic and Tests)
