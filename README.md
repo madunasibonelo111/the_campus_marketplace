@@ -1,3 +1,5 @@
+[![codecov](https://codecov.io/gh/madunasibonelo111/the_campus_marketplace/graph/badge.svg?token=BGZUWE6M8Z)](https://codecov.io/gh/madunasibonelo111/the_campus_marketplace)
+
 # The Campus Marketplace — Full-Stack Student Trade & Commerce Platform
 
 Built as part of the 2026 Software Design Project at the University of the Witwatersrand.  
