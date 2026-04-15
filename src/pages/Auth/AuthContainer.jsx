@@ -1,8 +1,9 @@
 import { useState } from "react";
-import Login from "../../components/Auth/Login";
-import Register from "../../components/Auth/Register";
+import Login from "@/components/Auth/Login";
+import Register from "@/components/Auth/Register";
 import "./AuthForm.css";
-import { supabase } from "../../supabase/supabaseClient";
+import { supabase } from "@/supabase/supabaseClient";
+
 
 export default function AuthContainer() {
   const [isActive, setIsActive] = useState(false);

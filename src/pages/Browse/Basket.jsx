@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import React, { useEffect, useState } from "react";
-import {supabase} from "../../supabase/supabaseClient";
+import {supabase} from "@/supabase/supabaseClient";
 import "./Basket.css";
 
 export default function Basket({ onViewListing }) {

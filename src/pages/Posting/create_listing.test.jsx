@@ -1,32 +1,66 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import CreateListing from './create_listing';
 
+// The alert mock is defined in jest.setup.js
 describe('CreateListing Logic', () => {
-  const renderComponent = () => render(
-    <BrowserRouter>
-      <CreateListing />
-    </BrowserRouter>
-  );
+  
+  // Reset mocks before each test to ensure fresh call counts
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
 
-  test('suggests higher prices for Electronics (Laptops)', async () => {
-    renderComponent();
+  // Helper to render with Router context
+  const renderComponent = async () => {
+    await act(async () => {
+      render(
+        <BrowserRouter>
+          <CreateListing />
+        </BrowserRouter>
+      );
+    });
+  };
+
+  test('updates input fields correctly', async () => {
+    await renderComponent();
     
-    // Simulate typing "Macbook"
     const titleInput = screen.getByPlaceholderText(/e.g. Engineering Maths/i);
     fireEvent.change(titleInput, { target: { value: 'Macbook Pro' } });
-
-    // Note: In a real test, you'd mock the Supabase category fetch
-    // This is a "Smoke Test" to ensure the suggestion box appears
+    
+    // Verify state update via input value
     expect(titleInput.value).toBe('Macbook Pro');
   });
 
-  test('prevents submission without a category', () => {
-    renderComponent();
-    const submitBtn = screen.getByText(/Post Listing/i);
+  test('prevents submission without a category', async () => {
+    await renderComponent();
     
-    // Clicking without category triggers alert (mocked in jest.setup.js)
-    fireEvent.click(submitBtn);
-    expect(global.alert).toHaveBeenCalledWith("Please select a category first!");
+    // Find the submit button
+    const submitBtn = screen.getByText(/🚀 Post Listing/i);
+    
+    // In JSDOM, HTML5 'required' attributes can block fireEvent.click()
+    // We target the closest form and trigger a submit event directly
+    const form = submitBtn.closest('form');
+    
+    await act(async () => {
+      fireEvent.submit(form);
+    });
+
+    // waitFor is necessary because the alert is triggered after an async check
+    await waitFor(() => {
+      expect(global.alert).toHaveBeenCalledWith("Please select a category first!");
+    }, { timeout: 2000 });
+  });
+
+  test('switches price input to disabled when listing type is Swap', async () => {
+    await renderComponent();
+    
+    const typeSelect = screen.getAllByRole('combobox')[1]; // Listing Type select
+    const priceInput = screen.getByPlaceholderText(/e.g. 250/i);
+
+    fireEvent.change(typeSelect, { target: { value: 'trade' } });
+
+    // Verify UI updates based on listing type
+    expect(priceInput).toBeDisabled();
+    expect(priceInput).toHaveStyle('background-color: rgb(243, 244, 246)');
   });
 });
