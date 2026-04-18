@@ -7,13 +7,13 @@
     "node": ">=22.0.0"
   },
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "lint": "eslint .",
-    "preview": "vite preview",
-    "test": "vitest",
-    "coverage": "vitest run --coverage"
-  },
+  "dev": "vite",
+  "build": "vite build",
+  "lint": "eslint .",
+  "preview": "vite preview",
+  "test": "vitest --setupFiles ./vitest-setup.js",
+  "coverage": "vitest run --coverage --setupFiles ./vitest-setup.js"
+},
   "dependencies": {
     "@supabase/supabase-js": "^2.103.0",
     "react": "^19.2.4",
