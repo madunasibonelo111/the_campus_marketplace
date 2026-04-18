@@ -11,8 +11,8 @@
   "build": "vite build",
   "lint": "eslint .",
   "preview": "vite preview",
-  "test": "vitest --pool=forks --setupFiles ./vitest-setup.js",
-  "coverage": "vitest run --coverage --pool=forks --setupFiles ./vitest-setup.js"
+  "test": "vitest --pool=forks",
+  "coverage": "vitest run --coverage --pool=forks"
 },
   "dependencies": {
     "@supabase/supabase-js": "^2.103.0",
