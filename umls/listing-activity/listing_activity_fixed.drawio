@@ -1,0 +1,339 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net">
+  <diagram id="activity-list-product-fixed" name="Activity Diagram - List Product (Fixed)">
+    <mxGraphModel dx="1200" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1100" math="0" shadow="1">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Title -->
+        <mxCell id="title" value="Activity Diagram: Create a Listing" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="250" y="15" width="700" height="40" as="geometry"/>
+        </mxCell>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- SWIMLANES                                           -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <mxCell id="lane-seller" value="Seller" style="swimlane;startSize=30;horizontal=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;fontStyle=1;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="40" y="70" width="300" height="940" as="geometry"/>
+        </mxCell>
+        <mxCell id="lane-system" value="System / Backend" style="swimlane;startSize=30;horizontal=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=14;fontStyle=1;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="340" y="70" width="380" height="940" as="geometry"/>
+        </mxCell>
+        <mxCell id="lane-storage" value="Supabase Storage" style="swimlane;startSize=30;horizontal=0;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=14;fontStyle=1;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="720" y="70" width="260" height="940" as="geometry"/>
+        </mxCell>
+        <mxCell id="lane-db" value="Database" style="swimlane;startSize=30;horizontal=0;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=14;fontStyle=1;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="980" y="70" width="260" height="940" as="geometry"/>
+        </mxCell>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- START NODE                                          -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <mxCell id="start" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="180" y="120" width="24" height="24" as="geometry"/>
+        </mxCell>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- SELLER LANE ACTIONS                                 -->
+        <!-- ═══════════════════════════════════════════════════ -->
+
+        <!-- Action 1: Fill form -->
+        <mxCell id="action-fill-form" value="Fill listing form&#xa;(title, description, condition,&#xa;price, listing_type, category_id)" style="shape=mxgraph.flowchart.process;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;align=center;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="60" y="175" width="240" height="65" as="geometry"/>
+        </mxCell>
+
+        <!-- Action 2: Upload images -->
+        <mxCell id="action-upload-images" value="Upload one or more images" style="shape=mxgraph.flowchart.process;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;align=center;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="70" y="310" width="220" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- Decision: at least 1 image? -->
+        <mxCell id="decision-min-images" value="At least 1&#xa;image selected?" style="shape=mxgraph.flowchart.decision;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d6b656;fontSize=11;align=center;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="90" y="410" width="160" height="65" as="geometry"/>
+        </mxCell>
+
+        <!-- Error: show error to seller -->
+        <mxCell id="action-seller-error" value="Show error:&#xa;'At least 1 image required'" style="shape=mxgraph.flowchart.process;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;align=center;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="60" y="530" width="220" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- Action 3: Submit form -->
+        <mxCell id="action-submit" value="Submit listing form" style="shape=mxgraph.flowchart.process;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;align=center;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="80" y="650" width="200" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- SYSTEM / BACKEND LANE ACTIONS                       -->
+        <!-- ═══════════════════════════════════════════════════ -->
+
+        <!-- Action 4: Validate all input -->
+        <mxCell id="action-validate" value="Validate input&#xa;(price ≥ 0, required fields&#xa;not empty, listing_type valid)" style="shape=mxgraph.flowchart.process;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;align=center;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="380" y="175" width="220" height="65" as="geometry"/>
+        </mxCell>
+
+        <!-- Decision: valid? -->
+        <mxCell id="decision-valid" value="Input valid?" style="shape=mxgraph.flowchart.decision;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d6b656;fontSize=12;fontStyle=1;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="430" y="305" width="130" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- Action: show validation error -->
+        <mxCell id="action-validation-error" value="Return validation error&#xa;to frontend" style="shape=mxgraph.flowchart.process;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;align=center;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="570" y="305" width="140" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- FORK BAR — parallel: upload images + create listing record -->
+        <mxCell id="fork-bar" value="" style="shape=mxgraph.flowchart.annotation_2;html=1;fillColor=#000000;strokeColor=#000000;align=center;strokeWidth=4;direction=south;" vertex="1" parent="1">
+          <mxGeometry x="370" y="430" width="240" height="12" as="geometry"/>
+        </mxCell>
+
+        <!-- Action: generate image path -->
+        <mxCell id="action-generate-path" value="Generate unique file path&#xa;(listings/{listing_id}/{filename})" style="shape=mxgraph.flowchart.process;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;align=center;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="355" y="480" width="220" height="55" as="geometry"/>
+        </mxCell>
+
+        <!-- Action: send to storage -->
+        <mxCell id="action-send-storage" value="POST file to&#xa;Supabase Storage API" style="shape=mxgraph.flowchart.process;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;align=center;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="355" y="570" width="220" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- Action: receive public URL -->
+        <mxCell id="action-receive-url" value="Receive public_url&#xa;from Storage bucket" style="shape=mxgraph.flowchart.process;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;align=center;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="355" y="660" width="220" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- JOIN BAR — both paths complete before DB insert -->
+        <mxCell id="join-bar" value="" style="shape=mxgraph.flowchart.annotation_2;html=1;fillColor=#000000;strokeColor=#000000;align=center;strokeWidth=4;direction=south;" vertex="1" parent="1">
+          <mxGeometry x="370" y="750" width="240" height="12" as="geometry"/>
+        </mxCell>
+
+        <!-- Action: INSERT listings + listing_images -->
+        <mxCell id="action-db-inserts" value="INSERT INTO listings&#xa;INSERT INTO listing_images&#xa;(listing_id, image_url, display_order)" style="shape=mxgraph.flowchart.process;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;align=center;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="360" y="800" width="230" height="65" as="geometry"/>
+        </mxCell>
+
+        <!-- Action: return success -->
+        <mxCell id="action-confirm" value="Return 201 Created&#xa;{ listing_id, status: active }" style="shape=mxgraph.flowchart.process;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;align=center;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="375" y="900" width="200" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- SUPABASE STORAGE LANE                               -->
+        <!-- ═══════════════════════════════════════════════════ -->
+
+        <!-- Action: receive file -->
+        <mxCell id="storage-receive" value="Receive image file" style="shape=mxgraph.flowchart.process;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;align=center;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="745" y="570" width="180" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- Action: store file -->
+        <mxCell id="storage-store" value="Store file in&#xa;listing-images bucket" style="shape=mxgraph.flowchart.process;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;align=center;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="745" y="645" width="180" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- Action: return url -->
+        <mxCell id="storage-return-url" value="Return public_url" style="shape=mxgraph.flowchart.process;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;align=center;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="745" y="720" width="180" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- DATABASE LANE                                        -->
+        <!-- ═══════════════════════════════════════════════════ -->
+
+        <!-- DB: insert listing -->
+        <mxCell id="db-insert-listing" value="INSERT INTO listings&#xa;(id, user_id, category_id,&#xa;title, description, condition,&#xa;price, listing_type, status)" style="shape=mxgraph.flowchart.process;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;align=center;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="800" width="210" height="80" as="geometry"/>
+        </mxCell>
+
+        <!-- DB: insert images -->
+        <mxCell id="db-insert-images" value="INSERT INTO listing_images&#xa;(listing_id, image_url,&#xa;display_order)" style="shape=mxgraph.flowchart.process;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;align=center;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="900" width="210" height="65" as="geometry"/>
+        </mxCell>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- END NODE                                            -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <mxCell id="end" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;strokeWidth=3;" vertex="1" parent="1">
+          <mxGeometry x="180" y="960" width="24" height="24" as="geometry"/>
+        </mxCell>
+        <!-- End ring -->
+        <mxCell id="end-ring" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=3;" vertex="1" parent="1">
+          <mxGeometry x="174" y="954" width="36" height="36" as="geometry"/>
+        </mxCell>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- EDGES / ARROWS                                      -->
+        <!-- ═══════════════════════════════════════════════════ -->
+
+        <!-- start → fill form -->
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" source="start" target="action-fill-form" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- fill form → upload images -->
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" source="action-fill-form" target="action-upload-images" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- upload → decision min images -->
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" source="action-upload-images" target="decision-min-images" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- decision min images → No → seller error -->
+        <mxCell id="e4" value="No" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeWidth=2;fontSize=12;fontStyle=1;strokeColor=#b85450;" edge="1" source="decision-min-images" target="action-seller-error" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- seller error → back to upload (loop) -->
+        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeWidth=2;dashed=1;strokeColor=#b85450;" edge="1" source="action-seller-error" target="action-upload-images" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="40" y="555"/>
+              <mxPoint x="40" y="335"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- decision min images → Yes → submit -->
+        <mxCell id="e6" value="Yes" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeWidth=2;fontSize=12;fontStyle=1;strokeColor=#82b366;" edge="1" source="decision-min-images" target="action-submit" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- submit → validate (crosses to system lane) -->
+        <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" source="action-submit" target="action-validate" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="490" y="675"/>
+              <mxPoint x="490" y="207"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- validate → decision valid -->
+        <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" source="action-validate" target="decision-valid" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- decision valid → No → validation error -->
+        <mxCell id="e9" value="No" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeWidth=2;fontSize=12;fontStyle=1;strokeColor=#b85450;" edge="1" source="decision-valid" target="action-validation-error" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- validation error → back to validate (loop) -->
+        <mxCell id="e10" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeWidth=2;dashed=1;strokeColor=#b85450;" edge="1" source="action-validation-error" target="action-fill-form" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="710" y="335"/>
+              <mxPoint x="710" y="140"/>
+              <mxPoint x="180" y="140"/>
+              <mxPoint x="180" y="207"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- decision valid → Yes → fork bar -->
+        <mxCell id="e11" value="Yes" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeWidth=2;fontSize=12;fontStyle=1;strokeColor=#82b366;" edge="1" source="decision-valid" target="fork-bar" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- fork bar → generate path -->
+        <mxCell id="e12" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" source="fork-bar" target="action-generate-path" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- generate path → send to storage -->
+        <mxCell id="e13" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" source="action-generate-path" target="action-send-storage" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- send to storage → storage receive -->
+        <mxCell id="e14" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#d6b656;" edge="1" source="action-send-storage" target="storage-receive" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- storage receive → storage store -->
+        <mxCell id="e15" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" source="storage-receive" target="storage-store" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- storage store → return url -->
+        <mxCell id="e16" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" source="storage-store" target="storage-return-url" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- storage return url → receive url (backend) -->
+        <mxCell id="e17" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeWidth=2;dashed=1;strokeColor=#d6b656;" edge="1" source="storage-return-url" target="action-receive-url" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- receive url → join bar -->
+        <mxCell id="e18" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" source="action-receive-url" target="join-bar" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- join bar → db inserts -->
+        <mxCell id="e19" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" source="join-bar" target="action-db-inserts" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- db inserts → db lane insert listing -->
+        <mxCell id="e20" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#9673a6;" edge="1" source="action-db-inserts" target="db-insert-listing" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- db inserts → db lane insert images -->
+        <mxCell id="e21" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#9673a6;" edge="1" source="action-db-inserts" target="db-insert-images" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="475" y="865"/>
+              <mxPoint x="1105" y="865"/>
+              <mxPoint x="1105" y="900"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- db inserts → confirm -->
+        <mxCell id="e22" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" source="action-db-inserts" target="action-confirm" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- confirm → end -->
+        <mxCell id="e23" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" source="action-confirm" target="end" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="475" y="970"/>
+              <mxPoint x="192" y="970"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- LEGEND                                              -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <mxCell id="legend-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="1010" y="100" width="210" height="180" as="geometry"/>
+        </mxCell>
+        <mxCell id="legend-title" value="Legend" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontStyle=1;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="1010" y="108" width="210" height="25" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg1" value="Normal flow" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1025" y="140" width="180" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg2" value="Error / retry loop (dashed red)" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=11;fontColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="1025" y="165" width="185" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg3" value="Storage response (dashed amber)" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=11;fontColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="1025" y="190" width="185" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg4" value="DB write (purple arrow)" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=11;fontColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="1025" y="215" width="185" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg5" value="Fork/Join = parallel actions" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=11;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="1025" y="240" width="185" height="20" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

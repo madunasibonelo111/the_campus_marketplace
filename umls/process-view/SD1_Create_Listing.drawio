@@ -1,0 +1,123 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="SD1" name="SD1 - Create Listing">
+    <mxGraphModel dx="725" dy="426" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="900" math="0" shadow="1">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;fontSize=20;fontStyle=1;align=center;fillColor=none;strokeColor=none;" value="SD1 – Create Listing" vertex="1">
+          <mxGeometry height="40" width="600" x="400" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="h1" parent="1" style="shape=mxgraph.uml.actor;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=16;" value="Seller" vertex="1">
+          <mxGeometry height="80" width="80" x="80" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="h2" parent="1" style="rounded=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=13;" value="Frontend" vertex="1">
+          <mxGeometry height="50" width="120" x="260" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="h3" parent="1" style="rounded=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=13;" value="Backend API" vertex="1">
+          <mxGeometry height="50" width="120" x="460" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="h4" parent="1" style="rounded=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;fontSize=13;" value="Storage Bucket" vertex="1">
+          <mxGeometry height="50" width="120" x="660" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="h5" parent="1" style="rounded=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=13;" value="Database" vertex="1">
+          <mxGeometry height="50" width="120" x="860" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="l1" edge="1" parent="1" style="endArrow=none;dashed=1;strokeColor=#6c8ebf;strokeWidth=2;" value="">
+          <mxGeometry x="120" y="160" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l2" edge="1" parent="1" source="h2" style="endArrow=none;dashed=1;strokeColor=#82b366;strokeWidth=3;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="320" y="150" as="sourcePoint" />
+            <mxPoint x="320" y="840" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l3" edge="1" parent="1" source="h3" style="endArrow=none;dashed=1;strokeColor=#d6b656;strokeWidth=3;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="520" y="150" as="sourcePoint" />
+            <mxPoint x="520" y="840" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l4" edge="1" parent="1" source="h4" style="endArrow=none;dashed=1;strokeColor=#b85450;strokeWidth=3;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="720" y="150" as="sourcePoint" />
+            <mxPoint x="720" y="840" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l5" edge="1" parent="1" source="h5" style="endArrow=none;dashed=1;strokeColor=#9673a6;strokeWidth=3;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="920" y="150" as="sourcePoint" />
+            <mxPoint x="920" y="840" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="s1" edge="1" parent="1" style="endArrow=block;endFill=1;strokeColor=#6c8ebf;strokeWidth=6;fontSize=11;verticalAlign=bottom;" value="1. submitListingForm(title, description, category, condition, price, listing_type)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="120" y="210" as="sourcePoint" />
+            <mxPoint x="320" y="210" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="s2box" parent="1" style="rounded=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;" value="validate input" vertex="1">
+          <mxGeometry height="30" width="100" x="270" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="s3" edge="1" parent="1" style="endArrow=block;endFill=1;strokeColor=#d6b656;strokeWidth=5;fontSize=12;verticalAlign=bottom;" value="2. POST /api/listings">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="320" y="285" as="sourcePoint" />
+            <mxPoint x="520" y="285" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="s4box" parent="1" style="rounded=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" value="verify JWT token" vertex="1">
+          <mxGeometry height="30" width="100" x="470" y="305" as="geometry" />
+        </mxCell>
+        <mxCell id="s5" edge="1" parent="1" style="endArrow=block;endFill=1;strokeColor=#9673a6;strokeWidth=5;fontSize=11;verticalAlign=bottom;" value="3. INSERT INTO listings">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="520" y="360" as="sourcePoint" />
+            <mxPoint x="920" y="360" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="s6" edge="1" parent="1" style="endArrow=open;endFill=0;dashed=1;strokeColor=#9673a6;strokeWidth=5;fontSize=12;verticalAlign=bottom;" value="listing_id returned">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="920" y="390" as="sourcePoint" />
+            <mxPoint x="520" y="390" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="s7" edge="1" parent="1" style="endArrow=block;endFill=1;strokeColor=#b85450;strokeWidth=5;fontSize=11;verticalAlign=bottom;" value="4. uploadImage(file, listing_id)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="520" y="440" as="sourcePoint" />
+            <mxPoint x="720" y="440" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="s8" edge="1" parent="1" style="endArrow=open;endFill=0;dashed=1;strokeColor=#b85450;strokeWidth=6;fontSize=12;verticalAlign=bottom;" value="image_url returned">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="720" y="470" as="sourcePoint" />
+            <mxPoint x="520" y="470" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="s9" edge="1" parent="1" style="endArrow=block;endFill=1;strokeColor=#9673a6;strokeWidth=6;fontSize=11;verticalAlign=bottom;" value="5. INSERT INTO listing_images (listing_id, image_url, display_order)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="520" y="520" as="sourcePoint" />
+            <mxPoint x="920" y="520" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="s10" edge="1" parent="1" style="endArrow=open;endFill=0;dashed=1;strokeColor=#9673a6;strokeWidth=5;fontSize=12;verticalAlign=bottom;" value="image record saved">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="920" y="550" as="sourcePoint" />
+            <mxPoint x="520" y="550" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="s11" edge="1" parent="1" style="endArrow=open;endFill=0;dashed=1;strokeColor=#d6b656;strokeWidth=6;fontSize=14;verticalAlign=bottom;" value="6. 201 Created { listing_id, status: active }">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="520" y="600" as="sourcePoint" />
+            <mxPoint x="320" y="600" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="s12" edge="1" parent="1" style="endArrow=open;endFill=0;dashed=1;strokeColor=#6c8ebf;strokeWidth=7;fontSize=14;verticalAlign=top;" value="7. Show listing created confirmation">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="320" y="640" as="sourcePoint" />
+            <mxPoint x="120" y="640" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

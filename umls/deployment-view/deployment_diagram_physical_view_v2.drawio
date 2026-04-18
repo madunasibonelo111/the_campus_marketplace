@@ -1,0 +1,238 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="deployment-physical-v2" name="Deployment Diagram - Physical View v2">
+    <mxGraphModel dx="967" dy="568" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1900" pageHeight="1200" math="0" shadow="1">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=29;fontStyle=1;" value="Deployment Diagram – Physical View v2 (Campus Marketplace)" vertex="1">
+          <mxGeometry height="40" width="1300" x="300" y="15" as="geometry" />
+        </mxCell>
+        <mxCell id="node-student" parent="1" style="shape=mxgraph.network.laptop;html=1;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;fontSize=12;fontStyle=1;verticalLabelPosition=bottom;verticalAlign=top;" value="«device»&#xa;Student Device&#xa;(Buyer / Seller)" vertex="1">
+          <mxGeometry height="80" width="100" x="32.5" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="art-browser-student" parent="1" style="shape=mxgraph.flowchart.process;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;strokeWidth=1;" value="«artifact»&#xa;Web Browser&#xa;(loads React SPA)" vertex="1">
+          <mxGeometry height="45" width="135" x="15" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="node-staff" parent="1" style="shape=mxgraph.network.laptop;html=1;whiteSpace=wrap;fillColor=#e1d5e7;strokeColor=#9673a6;strokeWidth=2;fontSize=12;fontStyle=1;verticalLabelPosition=bottom;verticalAlign=top;" value="«device»&#xa;Staff / Admin Terminal&#xa;(Trade Facility)" vertex="1">
+          <mxGeometry height="80" width="100" x="20" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="art-browser-staff" parent="1" style="shape=mxgraph.flowchart.process;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;strokeWidth=1;" value="«artifact»&#xa;Web Browser&#xa;(Staff/Admin views,&#xa;role-based access)" vertex="1">
+          <mxGeometry height="55" width="135" y="457.5" as="geometry" />
+        </mxCell>
+        <mxCell id="note-staff" parent="1" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" value="Same web app as students.&#xa;Role-based views enforced&#xa;via React Router guards." vertex="1">
+          <mxGeometry height="55" width="175" x="120" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="node-cdn" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=13;fontStyle=1;strokeWidth=3;arcSize=5;align=left;" value="&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;«node»&lt;/span&gt;&lt;/div&gt;CDN Edge Network&lt;br&gt;(Vercel Edge — Global)" vertex="1">
+          <mxGeometry height="120" width="260" x="240" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="art-cdn" parent="1" style="shape=mxgraph.flowchart.process;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=14;strokeWidth=1;" value="«artifact»&#xa;Static Asset Cache&#xa;(HTML, JS bundles, CSS,&#xa;served from nearest edge)" vertex="1">
+          <mxGeometry height="60" width="200" x="390" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="node-vercel" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=13;fontStyle=1;strokeWidth=3;arcSize=5;verticalAlign=top;" value="«executionEnvironment»&#xa;Vercel Cloud (Frontend Hosting)" vertex="1">
+          <mxGeometry height="340" width="440" x="240" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="vercel-nodejs" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;fontStyle=1;strokeWidth=2;verticalAlign=top;" value="«executionEnvironment»&#xa;Node.js 22 LTS&#xa;(Vercel Build Runtime)" vertex="1">
+          <mxGeometry height="190" width="410" x="255" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="art-react-spa" parent="1" style="shape=mxgraph.flowchart.process;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;strokeWidth=2;" value="«artifact»&#xa;Frontend Build (React SPA)&#xa;(HTML / JS / CSS — compiled by Vite)" vertex="1">
+          <mxGeometry height="60" width="240" x="270" y="385" as="geometry" />
+        </mxCell>
+        <mxCell id="art-env" parent="1" style="shape=mxgraph.flowchart.process;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=13;strokeWidth=1;" value="«artifact»&#xa;.env.production&#xa;(VITE_SUPABASE_URL,&#xa;VITE_SUPABASE_ANON_KEY)" vertex="1">
+          <mxGeometry height="60" width="220" x="430" y="385" as="geometry" />
+        </mxCell>
+        <mxCell id="art-staging" parent="1" style="shape=mxgraph.flowchart.process;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;strokeWidth=1;" value="«artifact»&#xa;Vercel Preview (Staging)&#xa;— per PR branch&#xa;«artifact»&#xa;Vercel Production&#xa;— main branch only" vertex="1">
+          <mxGeometry height="55" width="375" x="270" y="465" as="geometry" />
+        </mxCell>
+        <mxCell id="note-jwt" parent="1" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" value="«note»&#xa;JWT Authentication&#xa;User session validation&#xa;via Supabase Auth" vertex="1">
+          <mxGeometry height="70" width="175" x="255" y="545" as="geometry" />
+        </mxCell>
+        <mxCell id="note-https" parent="1" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" value="«note»&#xa;HTTPS / TLS encryption&#xa;All traffic encrypted&#xa;in transit" vertex="1">
+          <mxGeometry height="70" width="175" x="450" y="545" as="geometry" />
+        </mxCell>
+        <mxCell id="node-backend" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=14;fontStyle=1;strokeWidth=3;arcSize=5;verticalAlign=top;" value="«executionEnvironment»&#xa;Backend Server" vertex="1">
+          <mxGeometry height="340" width="360" x="760" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="backend-nodejs" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=13;fontStyle=1;strokeWidth=2;verticalAlign=top;" value="«executionEnvironment»&#xa;Node.js 22 LTS&#xa;(JavaScript Runtime)" vertex="1">
+          <mxGeometry height="270" width="330" x="775" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="art-api" parent="1" style="shape=mxgraph.flowchart.process;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=13;strokeWidth=2;" value="«artifact»&#xa;REST API Server&#xa;(Services Layer:&#xa;AuthService, ListingService,&#xa;MessageService, PaymentService)" vertex="1">
+          <mxGeometry height="90" width="300" x="790" y="400" as="geometry" />
+        </mxCell>
+        <mxCell id="art-img-svc" parent="1" style="shape=mxgraph.flowchart.process;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=13;strokeWidth=2;" value="«artifact»&#xa;ImageUploadService&#xa;(receives file, POSTs to Supabase&#xa;Storage, returns public_url)" vertex="1">
+          <mxGeometry height="70" width="300" x="790" y="490" as="geometry" />
+        </mxCell>
+        <mxCell id="art-supabase-client" parent="1" style="shape=mxgraph.flowchart.process;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=14;strokeWidth=2;" value="«artifact»&#xa;Supabase JS Client&#xa;(DB queries, Auth, Realtime)" vertex="1">
+          <mxGeometry height="55" width="300" x="790" y="575" as="geometry" />
+        </mxCell>
+        <mxCell id="node-supabase" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=16;fontStyle=1;strokeWidth=3;arcSize=5;verticalAlign=top;" value="«executionEnvironment»&#xa;Supabase Cloud (Managed PostgreSQL)" vertex="1">
+          <mxGeometry height="590" width="480" x="1200" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="art-supa-auth" parent="1" style="shape=mxgraph.flowchart.process;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=15;strokeWidth=2;" value="«artifact»&#xa;Auth Service&#xa;(JWT generation, OAuth callbacks,&#xa;Session management,&#xa;provider_id → users table)" vertex="1">
+          <mxGeometry height="100" width="210" x="1215" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="art-supa-api" parent="1" style="shape=mxgraph.flowchart.process;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=18;strokeWidth=2;" value="«artifact»&#xa;PostgREST API&#xa;(Auto-generated REST&#xa;from DB schema)" vertex="1">
+          <mxGeometry height="100" width="210" x="1450" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="art-supa-db" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=15;strokeWidth=2;backgroundOutline=1;size=15;" value="«artifact»&#xa;PostgreSQL 15 Database&#xa;(users, categories, listings,&#xa;listing_images, transactions,&#xa;messages, payments, ratings,&#xa;bookings, facility_slots,&#xa;trade_facilities, activity_logs,&#xa;reports, price_suggestions)" vertex="1">
+          <mxGeometry height="160" width="220" x="1215" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="art-supa-storage" parent="1" style="shape=mxgraph.flowchart.process;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=14;strokeWidth=2;" value="«artifact»&#xa;Object Storage&#xa;Bucket: listing-images&#xa;Bucket: profile-images&#xa;(public, authenticated upload)" vertex="1">
+          <mxGeometry height="100" width="210" x="1450" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="art-supa-realtime" parent="1" style="shape=mxgraph.flowchart.process;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=15;strokeWidth=2;" value="«artifact»&#xa;Realtime Server&#xa;(WebSocket subscriptions&#xa;wss:// — live chat,&#xa;offer notifications)" vertex="1">
+          <mxGeometry height="90" width="210" x="1215" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="art-rls" parent="1" style="shape=mxgraph.flowchart.process;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=15;strokeWidth=2;" value="«artifact»&#xa;Row Level Security (RLS)&#xa;Disabled in dev&#xa;Enabled in production&#xa;Per-user data isolation" vertex="1">
+          <mxGeometry height="100" width="210" x="1450" y="380" as="geometry" />
+        </mxCell>
+        <mxCell id="art-supa-sql" parent="1" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=14;" value="«note»&#xa;Internal:&#xa;DB Engine ↔ Tables via SQL" vertex="1">
+          <mxGeometry height="50" width="195" x="1450" y="500" as="geometry" />
+        </mxCell>
+        <mxCell id="node-idp" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=15;fontStyle=1;strokeWidth=3;arcSize=5;verticalAlign=top;" value="«executionEnvironment»&#xa;Identity Provider&#xa;(Auth0 / Azure AD)" vertex="1">
+          <mxGeometry height="160" width="360" x="760" y="680" as="geometry" />
+        </mxCell>
+        <mxCell id="art-idp" parent="1" style="shape=mxgraph.flowchart.process;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=15;strokeWidth=2;" value="«artifact»&#xa;OAuth 2.0 / OIDC&#xa;(University SSO, Email verification,&#xa;issues provider_id,&#xa;verified_status set on users table)" vertex="1">
+          <mxGeometry height="100" width="330" x="775" y="720" as="geometry" />
+        </mxCell>
+        <mxCell id="node-payment" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=14;fontStyle=1;strokeWidth=3;arcSize=5;verticalAlign=top;" value="«executionEnvironment»&#xa;Payment Gateway (Sprint 2)&#xa;e.g. Stripe / Yoco / PayFast" vertex="1">
+          <mxGeometry height="150" width="440" x="240" y="690" as="geometry" />
+        </mxCell>
+        <mxCell id="art-payment" parent="1" style="shape=mxgraph.flowchart.process;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=15;strokeWidth=2;" value="«artifact»&#xa;Payment API&#xa;(Online full/partial payments,&#xa;payment_reference returned,&#xa;cash shortfall tracked in DB)" vertex="1">
+          <mxGeometry height="90" width="410" x="255" y="730" as="geometry" />
+        </mxCell>
+        <mxCell id="node-cicd" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=17;fontStyle=1;strokeWidth=3;arcSize=5;verticalAlign=top;" value="«executionEnvironment»&#xa;CI/CD Infrastructure" vertex="1">
+          <mxGeometry height="280" width="480" x="1200" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="art-github-ci" parent="1" style="shape=mxgraph.flowchart.process;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=15;strokeWidth=2;" value="«artifact»&#xa;GitHub Repository&#xa;(Source code, branch strategy,&#xa;PR reviews, .github/workflows/ci.yml)" vertex="1">
+          <mxGeometry height="90" width="215" x="1215" y="750" as="geometry" />
+        </mxCell>
+        <mxCell id="art-azure-ci" parent="1" style="shape=mxgraph.flowchart.process;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=16;strokeWidth=2;" value="«artifact»&#xa;Azure Pipelines&#xa;(azure-pipelines.yml,&#xa;lint → test → build)" vertex="1">
+          <mxGeometry height="90" width="210" x="1450" y="750" as="geometry" />
+        </mxCell>
+        <mxCell id="art-vitest-ci" parent="1" style="shape=mxgraph.flowchart.process;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=15;strokeWidth=2;" value="«artifact»&#xa;Vitest&#xa;(Unit + integration tests,&#xa;coverage ≥ 50% gate)" vertex="1">
+          <mxGeometry height="80" width="210" x="1215" y="870" as="geometry" />
+        </mxCell>
+        <mxCell id="art-codecov-ci" parent="1" style="shape=mxgraph.flowchart.process;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=15;strokeWidth=2;" value="«artifact»&#xa;Codecov&#xa;(Coverage delta reports,&#xa;PR gating)" vertex="1">
+          <mxGeometry height="80" width="210" x="1450" y="870" as="geometry" />
+        </mxCell>
+        <mxCell id="note-gate" parent="1" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;align=left;" value="Quality Gates:&#xa;✓ Vitest coverage ≥ 50%&#xa;✓ Codecov delta positive&#xa;✓ PR approval required&#xa;✓ Build must pass&#xa;→ Pipeline deploys to Vercel" vertex="1">
+          <mxGeometry height="150" width="220" x="1215" y="960" as="geometry" />
+        </mxCell>
+        <mxCell id="comm-student-cdn" edge="1" parent="1" source="node-student" style="endArrow=block;endFill=1;startArrow=block;startFill=0;strokeColor=#6c8ebf;strokeWidth=2;fontSize=11;fontStyle=1;" target="node-cdn" value="HTTPS">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="comm-staff-cdn" edge="1" parent="1" source="node-staff" style="endArrow=block;endFill=1;startArrow=block;startFill=0;strokeColor=#9673a6;strokeWidth=2;fontSize=11;fontStyle=1;" target="node-cdn" value="HTTPS">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="160" y="390" />
+              <mxPoint x="215" y="390" />
+              <mxPoint x="215" y="180" />
+              <mxPoint x="240" y="180" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="comm-cdn-vercel" edge="1" parent="1" source="node-cdn" style="endArrow=block;endFill=1;strokeColor=#666666;strokeWidth=2;fontSize=11;fontStyle=1;dashed=1;" target="node-vercel" value="CDN origin pull">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="comm-vercel-backend" edge="1" parent="1" source="node-vercel" style="endArrow=block;endFill=1;strokeColor=#82b366;strokeWidth=2;fontSize=15;fontStyle=1;" target="node-backend" value="HTTPS REST API">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="comm-backend-supa" edge="1" parent="1" source="node-backend" style="endArrow=block;endFill=1;strokeColor=#9673a6;strokeWidth=2;fontSize=14;fontStyle=1;" target="node-supabase" value="HTTPS (Supabase JS SDK) / SQL">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="comm-backend-idp" edge="1" parent="1" source="node-backend" style="endArrow=block;endFill=1;strokeColor=#b85450;strokeWidth=2;fontSize=17;fontStyle=1;dashed=1;" target="node-idp" value="OAuth 2.0 redirect">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="comm-vercel-pay" edge="1" parent="1" source="node-vercel" style="endArrow=block;endFill=1;strokeColor=#b85450;strokeWidth=2;fontSize=16;fontStyle=1;dashed=1;" target="node-payment" value="HTTPS Payment API">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="comm-supa-idp" edge="1" parent="1" source="art-supa-auth" style="endArrow=block;endFill=1;strokeColor=#b85450;strokeWidth=2;fontSize=14;fontStyle=2;dashed=1;" target="node-idp" value="OAuth callback">
+          <mxGeometry relative="1" x="0.0411" y="30" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="1320" y="220" />
+              <mxPoint x="1150" y="220" />
+              <mxPoint x="1150" y="750" />
+              <mxPoint x="1120" y="750" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="comm-vercel-realtime" edge="1" parent="1" source="art-react-spa" style="endArrow=block;endFill=0;startArrow=block;startFill=0;dashed=1;strokeColor=#82b366;strokeWidth=2;fontSize=14;fontStyle=1;" target="art-supa-realtime" value="WebSocket (wss://)">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="390" y="415" />
+              <mxPoint x="390" y="490" />
+              <mxPoint x="1175" y="490" />
+              <mxPoint x="1175" y="485" />
+              <mxPoint x="1215" y="485" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="comm-gh-az" edge="1" parent="1" source="art-github-ci" style="endArrow=block;endFill=1;strokeColor=#666666;strokeWidth=2;fontSize=13;fontStyle=2;" target="art-azure-ci" value="webhook on push/PR">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="comm-az-vt" edge="1" parent="1" source="art-azure-ci" style="endArrow=block;endFill=1;strokeColor=#666666;strokeWidth=2;fontSize=15;fontStyle=2;" target="art-vitest-ci" value="runs tests">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1555" y="840" />
+              <mxPoint x="1555" y="870" />
+              <mxPoint x="1450" y="870" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="comm-vt-cc" edge="1" parent="1" source="art-vitest-ci" style="endArrow=block;endFill=1;strokeColor=#666666;strokeWidth=2;fontSize=14;fontStyle=2;" target="art-codecov-ci" value="reports coverage">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="comm-az-vercel" edge="1" parent="1" source="art-azure-ci" style="endArrow=block;endFill=1;strokeColor=#666666;strokeWidth=2;fontSize=10;fontStyle=2;dashed=1;" target="node-vercel" value="if coverage gate passes,&#xa;pipeline deploys to Vercel&#xa;(Staging: PR branch, Prod: main)">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1555" y="795" />
+              <mxPoint x="1555" y="650" />
+              <mxPoint x="700" y="650" />
+              <mxPoint x="700" y="295" />
+              <mxPoint x="680" y="295" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="comm-fe-github" edge="1" parent="1" source="node-vercel" style="endArrow=block;endFill=1;dashed=1;strokeColor=#6c8ebf;strokeWidth=2;fontSize=10;fontStyle=2;" target="art-github-ci" value="git push / PR">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="460" y="640" />
+              <mxPoint x="460" y="680" />
+              <mxPoint x="1175" y="680" />
+              <mxPoint x="1175" y="795" />
+              <mxPoint x="1215" y="795" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="legend-box" parent="1" style="rounded=1;fillColor=#f9f9f9;strokeColor=#666;strokeWidth=2;fontSize=17;" value="" vertex="1">
+          <mxGeometry height="220" width="270" x="30" y="880" as="geometry" />
+        </mxCell>
+        <mxCell id="leg-title" parent="1" style="text;html=1;fillColor=none;strokeColor=none;align=center;fontStyle=1;fontSize=17;" value="Legend" vertex="1">
+          <mxGeometry height="25" width="200" x="30" y="888" as="geometry" />
+        </mxCell>
+        <mxCell id="leg1" parent="1" style="text;html=1;fillColor=#dae8fc;strokeColor=none;align=left;fontSize=15;rounded=1;" value="Frontend / React SPA" vertex="1">
+          <mxGeometry height="22" width="250" x="40" y="913" as="geometry" />
+        </mxCell>
+        <mxCell id="leg2" parent="1" style="text;html=1;fillColor=#d5e8d4;strokeColor=none;align=left;fontSize=15;rounded=1;" value="Node.js 22 LTS Runtime" vertex="1">
+          <mxGeometry height="22" width="240" x="40" y="945" as="geometry" />
+        </mxCell>
+        <mxCell id="leg3" parent="1" style="text;html=1;fillColor=#e1d5e7;strokeColor=none;align=left;fontSize=14;rounded=1;" value="Supabase (DB, Auth, Storage, RT)" vertex="1">
+          <mxGeometry height="22" width="240" x="40" y="972" as="geometry" />
+        </mxCell>
+        <mxCell id="leg4" parent="1" style="text;html=1;fillColor=#fff2cc;strokeColor=none;align=left;fontSize=16;rounded=1;" value="Storage (Image Buckets)" vertex="1">
+          <mxGeometry height="22" width="230" x="40" y="999" as="geometry" />
+        </mxCell>
+        <mxCell id="leg5" parent="1" style="text;html=1;fillColor=#f8cecc;strokeColor=none;align=left;fontSize=14;rounded=1;" value="External (Auth IDP, Payments)" vertex="1">
+          <mxGeometry height="22" width="230" x="40" y="1026" as="geometry" />
+        </mxCell>
+        <mxCell id="leg6" parent="1" style="text;html=1;fillColor=#f5f5f5;strokeColor=none;align=left;fontSize=17;rounded=1;" value="CI/CD Pipeline" vertex="1">
+          <mxGeometry height="22" width="230" x="40" y="1053" as="geometry" />
+        </mxCell>
+        <mxCell id="leg7" parent="1" style="text;html=1;fillColor=#f5f5f5;strokeColor=#666;align=left;fontSize=17;rounded=1;" value="CDN Edge Network" vertex="1">
+          <mxGeometry height="22" width="220" x="40" y="1080" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
