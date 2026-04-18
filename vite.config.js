@@ -1,15 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import { TextEncoder, TextDecoder } from 'util'; 
-
-// defines TextEncoder globally before Vitest/esbuild can run their invariant checks.
-if (typeof global.TextEncoder === 'undefined') {
-  global.TextEncoder = TextEncoder;
-}
-if (typeof global.TextDecoder === 'undefined') {
-  global.TextDecoder = TextDecoder;
-}
 
 export default defineConfig({
   plugins: [react()],
