@@ -1,6 +1,15 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
+import { TextEncoder, TextDecoder } from 'util'; 
+
+// defines TextEncoder globally before Vitest/esbuild can run their invariant checks.
+if (typeof global.TextEncoder === 'undefined') {
+  global.TextEncoder = TextEncoder;
+}
+if (typeof global.TextDecoder === 'undefined') {
+  global.TextDecoder = TextDecoder;
+}
 
 export default defineConfig({
   plugins: [react()],
@@ -10,7 +19,7 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
- test: {
+  test: {
     globals: true,
     environment: 'jsdom',
     setupFiles: './src/setupTests.js',
@@ -21,7 +30,7 @@ export default defineConfig({
     },
     coverage: {
       provider: 'istanbul', 
-      reporter: ['text', 'html', 'lcov'], // 🟢 Added 'lcov' here for Codecov
+      reporter: ['text', 'html', 'lcov'], //  Added 'lcov' here for Codecov
       all: true,
       include: ['src/**/*.{js,jsx}'],
       exclude: [
@@ -32,7 +41,7 @@ export default defineConfig({
         '**/*.test.jsx'
       ],
       thresholds: {
-        lines: 20, 
+        lines: 20, //
       }
     },
   },
