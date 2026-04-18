@@ -3,59 +3,69 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/supabase/supabaseClient";
 
 export default function Login({ switchToRegister }) {
-  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async () => {
-    if (loading) return;
+  const navigate = useNavigate();
 
-    if (!email || !password) {
-      alert("Please fill in all fields");
+  // ✅ LOGIN (EMAIL VERIFICATION ENFORCED)
+const handleLogin = async () => {
+  if (loading) return;
+
+  if (!email || !password) {
+    alert("Please fill in all fields");
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      alert(error.message);
       return;
     }
 
-    setLoading(true);
+    // 🔥 IMPORTANT FIX: session-based verification
+    const session = data.session;
+    const user = data.user;
 
-    try {
-      const { data, error } = await supabase
-        .from("users")
-        .select("id, email, name, password_hash")
-        .eq("email", email)
-        .single();
-
-      if (error || !data) {
-        alert("Invalid email or password");
-        setLoading(false);
-        return;
-      }
-
-      // 🟢 Compare the plain text password from your table
-      if (data.password_hash === password) {
-        // Save user session locally so other pages know who you are
-        localStorage.setItem("user", JSON.stringify({
-          id: data.id,
-          email: data.email,
-          name: data.name
-        }));
-        
-        alert("✅ Login successful!");
-        navigate("/basket"); 
-      } else {
-        alert("Invalid email or password");
-      }
-    } catch (error) {
-      alert("An error occurred during login");
-    } finally {
-      setLoading(false);
+    if (!session || !user?.email_confirmed_at) {
+      alert("Please verify your email before logging in.");
+      await supabase.auth.signOut();
+      return;
     }
-  };
+
+    // ✅ OPTIONAL: only save if verified
+    localStorage.setItem(
+      "user",
+      JSON.stringify({
+        id: user.id,
+        email: user.email,
+      })
+    );
+
+    alert("✅ Login successful!");
+    window.location.assign("/basket");
+
+  } catch (error) {
+    alert("An error occurred during login");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="form-box login">
       <form onSubmit={(e) => e.preventDefault()}>
         <h1>Login</h1>
+
+        {/* EMAIL */}
         <div className="input-box">
           <input
             type="email"
@@ -63,8 +73,9 @@ export default function Login({ switchToRegister }) {
             required
             onChange={(e) => setEmail(e.target.value)}
           />
-          <i className="fa-solid fa-envelope"></i>
         </div>
+
+        {/* PASSWORD */}
         <div className="input-box">
           <input
             type="password"
@@ -72,11 +83,19 @@ export default function Login({ switchToRegister }) {
             required
             onChange={(e) => setPassword(e.target.value)}
           />
-          <i className="fa-solid fa-lock"></i>
         </div>
+
+        {/* FORGOT PASSWORD */}
         <div className="forgot-link">
-          <a href="#">Forgot Password?</a>
+          <span
+            onClick={() => navigate("/forgot-password")}
+            style={{ cursor: "pointer", color: "#7494ec" }}
+          >
+            Forgot Password?
+          </span>
         </div>
+
+        {/* LOGIN BUTTON */}
         <button
           type="button"
           className="btn"
@@ -85,13 +104,14 @@ export default function Login({ switchToRegister }) {
         >
           {loading ? "Logging in..." : "Login"}
         </button>
-        <p>Don't have an account? <a href="#" onClick={switchToRegister}>Register</a></p>
-        <p>Or login with social platform</p>
-        <div className="social-icons">
-          <a href="#"><i className="fa-brands fa-google"></i></a>
-          <a href="#"><i className="fa-brands fa-facebook"></i></a>
-          <a href="#"><i className="fa-brands fa-instagram"></i></a>
-        </div>
+
+        {/* SWITCH TO REGISTER */}
+        <p>
+          Don't have an account?{" "}
+          <a href="#" onClick={switchToRegister}>
+            Register
+          </a>
+        </p>
       </form>
     </div>
   );

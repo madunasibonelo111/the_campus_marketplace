@@ -4,107 +4,168 @@ import { supabase } from "@/supabase/supabaseClient";
 export default function Register({ switchToLogin }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [name, setName] = useState("");
   const [gender, setGender] = useState("");
   const [role, setRole] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleRegister = async () => {
-    if (loading) return;
+  const passwordsMatch = password === confirmPassword;
 
-    if (!email || !password || !name || !gender || !role) {
-      alert("Please fill in all fields");
+  const getStrength = () => {
+    let score = 0;
+    if (password.length >= 8) score++;
+    if (/[A-Z]/.test(password)) score++;
+    if (/[a-z]/.test(password)) score++;
+    if (/\d/.test(password)) score++;
+    if (/[@$!%*?&]/.test(password)) score++;
+    return score;
+  };
+
+  const strength = getStrength();
+
+  const passwordChecks = {
+    length: password.length >= 8,
+    uppercase: /[A-Z]/.test(password),
+    lowercase: /[a-z]/.test(password),
+    number: /\d/.test(password),
+    special: /[@$!%*?&]/.test(password),
+  };
+
+  const isStrongPassword = Object.values(passwordChecks).every(Boolean);
+
+  const handleRegister = async () => {
+  if (loading) return;
+
+  if (!email || !password || !confirmPassword || !name || !gender || !role) {
+    alert("Please fill in all fields");
+    return;
+  }
+
+  if (!isStrongPassword) {
+    alert("Password is not strong enough");
+    return;
+  }
+
+  if (!passwordsMatch) {
+    alert("Passwords do not match");
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          name,
+          gender,
+          role,
+        },
+        emailRedirectTo: `${window.location.origin}/auth`,
+      },
+    });
+
+    if (error) {
+      alert(error.message);
       return;
     }
 
-    setLoading(true);
+    // 🚨 IMPORTANT FIX:
+    // DO NOT insert profile here anymore (prevents unverified users)
+    alert("📧 Check your email to verify your account before logging in.");
 
-    try {
-      const { data: userData, error: userError } = await supabase
-        .from("users")
-        .insert([
-          {
-            email: email,
-            name: name,
-            password_hash: password
-          }
-        ])
-        .select();
+    switchToLogin();
 
-      if (userError) {
-        alert("User error: " + userError.message);
-        setLoading(false);
-        return;
-      }
-
-      if (userData && userData.length > 0) {
-        const userId = userData[0].id;
-
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .insert([
-            {
-              user_id: userId,
-              name: name,
-              gender: gender,
-              role: role
-            }
-          ]);
-
-        if (profileError) {
-          console.error("Profile error:", profileError);
-          alert("User created but profile not saved: " + profileError.message);
-        } else {
-          alert("✅ Registered successfully! Please login.");
-          switchToLogin();
-        }
-      } else {
-        alert("No user data returned");
-      }
-    } catch (error) {
-      alert("An error occurred during registration: " + error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  } catch (error) {
+    alert("Error: " + error.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="form-box register">
       <form onSubmit={(e) => e.preventDefault()}>
         <h1>Register</h1>
 
+        {/* EMAIL */}
         <div className="input-box">
           <input
             type="email"
             placeholder="Email"
-            required
             onChange={(e) => setEmail(e.target.value)}
           />
-          <i className="fa-solid fa-envelope"></i>
         </div>
 
+        {/* NAME */}
         <div className="input-box">
           <input
             type="text"
             placeholder="Name"
-            required
             onChange={(e) => setName(e.target.value)}
           />
-          <i className="fa-solid fa-user"></i>
         </div>
 
+        {/* PASSWORD */}
         <div className="input-box">
           <input
             type="password"
             placeholder="Password"
-            required
             onChange={(e) => setPassword(e.target.value)}
           />
-          <i className="fa-solid fa-lock"></i>
         </div>
 
+        {/* STRENGTH BAR */}
+        <div className="strength-bar-container">
+          <div className={`strength-bar strength-${strength}`}></div>
+        </div>
+
+        <p className="strength-text">
+          {strength <= 2 && "Weak"}
+          {strength === 3 && "Medium"}
+          {strength >= 4 && "Strong"}
+        </p>
+
+        {/* RULES */}
+        <div style={{ fontSize: "12px", marginBottom: "10px" }}>
+          <p style={{ color: passwordChecks.length ? "green" : "red" }}>
+            • At least 8 characters
+          </p>
+          <p style={{ color: passwordChecks.uppercase ? "green" : "red" }}>
+            • Uppercase letter
+          </p>
+          <p style={{ color: passwordChecks.lowercase ? "green" : "red" }}>
+            • Lowercase letter
+          </p>
+          <p style={{ color: passwordChecks.number ? "green" : "red" }}>
+            • Number
+          </p>
+          <p style={{ color: passwordChecks.special ? "green" : "red" }}>
+            • Special character
+          </p>
+        </div>
+
+        {/* CONFIRM PASSWORD */}
         <div className="input-box">
-          <select required onChange={(e) => setGender(e.target.value)}>
+          <input
+            type="password"
+            placeholder="Confirm Password"
+            onChange={(e) => setConfirmPassword(e.target.value)}
+          />
+        </div>
+
+        {confirmPassword && (
+          <p style={{ color: passwordsMatch ? "green" : "red", fontSize: "12px" }}>
+            {passwordsMatch ? "✓ Passwords match" : "✗ Passwords do not match"}
+          </p>
+        )}
+
+        {/* GENDER */}
+        <div className="input-box">
+          <select onChange={(e) => setGender(e.target.value)}>
             <option value="">Select Gender</option>
             <option value="male">Male</option>
             <option value="female">Female</option>
@@ -112,32 +173,31 @@ export default function Register({ switchToLogin }) {
           </select>
         </div>
 
+        {/* ROLE */}
         <div className="input-box">
-          <select required onChange={(e) => setRole(e.target.value)}>
+          <select onChange={(e) => setRole(e.target.value)}>
             <option value="">Select Role</option>
-            <option value="Student">Student</option>
-            <option value="Staff">Staff</option>
-            <option value="Admin">Admin</option>
+            <option value="student">Student</option>
+            <option value="staff">Staff</option>
           </select>
         </div>
 
+        {/* BUTTON */}
         <button
           type="button"
           className="btn"
           onClick={handleRegister}
-          disabled={loading}
-          data-testid="register-button"
+          disabled={loading || !isStrongPassword || !passwordsMatch}
         >
           {loading ? "Registering..." : "Register"}
         </button>
 
-        <p>Or register with social platform</p>
-
-        <div className="social-icons">
-          <a href="#"><i className="fa-brands fa-google"></i></a>
-          <a href="#"><i className="fa-brands fa-facebook"></i></a>
-          <a href="#"><i className="fa-brands fa-instagram"></i></a>
-        </div>
+        <p>
+          Already have an account?{" "}
+          <a href="#" onClick={switchToLogin}>
+            Login
+          </a>
+        </p>
       </form>
     </div>
   );
