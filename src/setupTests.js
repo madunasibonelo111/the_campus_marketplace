@@ -1,11 +1,8 @@
 import { TextEncoder, TextDecoder } from 'util';
 
-if (typeof global.TextEncoder === 'undefined') {
-  global.TextEncoder = TextEncoder;
-}
-if (typeof global.TextDecoder === 'undefined') {
-  global.TextDecoder = TextDecoder;
-}
+
+Object.defineProperty(global, 'TextEncoder', { value: TextEncoder });
+Object.defineProperty(global, 'TextDecoder', { value: TextDecoder });
 
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
