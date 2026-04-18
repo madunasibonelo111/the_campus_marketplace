@@ -1,5 +1,11 @@
-// vitest-setup.js
-import { TextEncoder, TextDecoder } from 'util';
+import { TextEncoder, TextDecoder } from 'node:util';
 
-globalThis.TextEncoder = TextEncoder;
-globalThis.TextDecoder = TextDecoder;
+
+Object.defineProperties(globalThis, {
+  TextEncoder: { value: TextEncoder, writable: true },
+  TextDecoder: { value: TextDecoder, writable: true },
+});
+
+
+global.TextEncoder = TextEncoder;
+global.TextDecoder = TextDecoder;
