@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from 'react-router-dom';
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/supabase/supabaseClient";
 import "./Basket.css";
@@ -22,18 +22,30 @@ export default function Basket({ onViewListing }) {
     fetchSession();
   }, []);
 
-  const fetchListings = async () => {
-    const { data } = await supabase.from("listings").select(`
+const fetchListings = async () => {
+  try {
+    const { data, error } = await supabase.from("listings").select(`
       id, title, price, description, condition, category_id, user_id, status, listing_type,
-      profiles ( name ), categories ( name ),
+      profiles ( full_name ), categories ( name ),
       listing_images ( image_url, display_order )
     `);
+
+    if (error) throw error;
+
+    
     const formatted = (data || []).map((item) => ({
       ...item,
+      // Fix: Use profiles.full_name to match our DB schema
+      seller_name: item.profiles?.name || "Unknown Seller", 
       image: item.listing_images?.[0]?.image_url || "https://via.placeholder.com/300",
     }));
+
     setItems(formatted);
-  };
+  } catch (err) {
+    console.error("Error fetching listings:", err);
+    setItems([]); 
+  }
+};
 
   useEffect(() => {
     fetchListings();
@@ -83,20 +95,20 @@ export default function Basket({ onViewListing }) {
       
       // Ensure user exists in users table
       let { data: existingUser, error: userFetchError } = await supabase
-        .from('users')
+        .from('profiles')
         .select('id')
         .eq('id', currentUser.id)
         .single();
       
       if (userFetchError && userFetchError.code === 'PGRST116') {
         const { data: newUser, error: createUserError } = await supabase
-          .from('users')
+          .from('profiles')
           .insert({
             id: currentUser.id,
             name: currentUser.user_metadata?.name || currentUser.email?.split('@')[0] || 'User',
             email: currentUser.email,
             role: 'student',
-            verified_status: 'unverified'
+            
           })
           .select()
           .single();
@@ -113,7 +125,7 @@ export default function Basket({ onViewListing }) {
         .insert({
           listing_id: basket[0].id,
           buyer_id: existingUser.id,
-          seller_id: existingUser.id,
+          seller_id: basket[0].user_id,
           type: 'purchase',
           status: 'pending',
           offer_amount: null,
