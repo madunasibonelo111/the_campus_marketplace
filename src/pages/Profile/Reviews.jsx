@@ -16,7 +16,7 @@ export default function Reviews() {
       .from("profiles")
       .select("id, name");
 
-    //  get all ratings for those users
+    //  get ratings for all those users
     const { data: ratingsData } = await supabase
       .from("ratings")
       .select("reviewee_id, score, comment");

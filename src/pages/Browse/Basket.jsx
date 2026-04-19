@@ -274,6 +274,7 @@ const fetchListings = async () => {
         <button className="activeBottom">SHOP</button>
         <button onClick={() => navigate("/sell")}>SELL</button>
         <button onClick={() => navigate("/messages")}>MESSAGES</button>
+          <button onClick={() => navigate("/reviews")}>REVIEWS</button>
         <button onClick={() => navigate("/history")}>HISTORY</button>
       </div>
     </div>

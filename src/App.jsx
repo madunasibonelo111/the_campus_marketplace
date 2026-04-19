@@ -6,6 +6,7 @@ import ForgotPassword from "./components/Auth/ForgotPassword";
 import ResetPassword from "./components/Auth/ResetPassword";
 import EmailConfirmed from "./components/Auth/EmailConfirmed";
 import CreateListing from "./pages/Posting/create_listing";
+import Reviews from "./pages/Profile/Reviews";
 
 import Home from "./pages/Home/Home";
 import AuthContainer from "./pages/Auth/AuthContainer";
@@ -189,7 +190,7 @@ function App() {
         {/* Other protected routes */}
         <Route path="/sell" element={currentUser ? <CreateListing /> : <Navigate to="/auth" replace />} />
         <Route path="/messages" element={currentUser ? <Messaging /> : <Navigate to="/auth" replace />} />
-
+         <Route path="/reviews"element={currentUser ? <Reviews /> : <Navigate to="/auth" replace />}/>
       </Routes>
     </BrowserRouter>
   );
