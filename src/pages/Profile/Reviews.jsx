@@ -32,7 +32,7 @@ export default function Reviews() {
       ratingsMap[r.reviewee_id].push(r);
     });
 
-    //  merge into profiles
+    // merge profiles with their ratings to calculate avg rating and review count
     const merged = profilesData.map(profile => {
       const userRatings = ratingsMap[profile.id] || [];
 
