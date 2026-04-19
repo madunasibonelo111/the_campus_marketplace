@@ -49,7 +49,7 @@ vi.mock('@/supabase/supabaseClient', () => ({
 
 describe('Reviews Page', () => {
 
-  it('renders page title', async () => {
+  it('renders Reviews page title', async () => {
     await act(async () => {
       render(<Reviews />);
     });
