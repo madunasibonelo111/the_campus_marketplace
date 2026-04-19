@@ -23,7 +23,7 @@ export default function Reviews() {
 
     if (!profilesData) return;
 
-    //  group ratings by user
+    //  group ratings by reviewee_id for easy lookup
     const ratingsMap = {};
     (ratingsData || []).forEach(r => {
       if (!ratingsMap[r.reviewee_id]) {
