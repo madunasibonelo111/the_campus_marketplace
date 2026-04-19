@@ -65,15 +65,11 @@ export default function PaymentForm() {
 
   const fetchSavedCards = async (userId) => {
     try {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('saved_cards')
         .select('*')
         .eq('user_id', userId)
         .order('is_default', { ascending: false });
-      
-      if (error && error.code !== '42P01') {
-        console.error("Error fetching saved cards:", error);
-      }
       
       if (data) {
         setSavedCards(data);
@@ -83,8 +79,8 @@ export default function PaymentForm() {
           setUseSavedCard(true);
         }
       }
-    } catch (error) {
-      console.log("Saved cards table not ready yet");
+    } catch {
+      // Silently fail
     }
   };
 
@@ -102,55 +98,38 @@ export default function PaymentForm() {
     return 'Card';
   };
 
-  // Luhn algorithm check for card validation
   const simulateLuhnCheck = (cardNumber) => {
     let sum = 0;
     let isEven = false;
     
     for (let i = cardNumber.length - 1; i >= 0; i--) {
       let digit = parseInt(cardNumber.charAt(i), 10);
-      
       if (isEven) {
         digit *= 2;
-        if (digit > 9) {
-          digit -= 9;
-        }
+        if (digit > 9) digit -= 9;
       }
-      
       sum += digit;
       isEven = !isEven;
     }
-    
     return (sum % 10) === 0;
   };
 
-  // Simulate payment gateway integration - MOVED BEFORE processPayment
   const simulatePaymentGateway = async (method, amount, cardData) => {
-    // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 1500));
     
-    // Basic validation for card payments
     if (method === 'card' && cardData.cardNumber) {
       const cleanNumber = cardData.cardNumber.replace(/\s/g, '');
-      
-      // Simulate validation
       if (cleanNumber.length < 15 || cleanNumber.length > 16) {
         return { success: false, error: "Invalid card number length" };
       }
-      
-      // Simulate Luhn algorithm check
-      const isValid = simulateLuhnCheck(cleanNumber);
-      if (!isValid) {
+      if (!simulateLuhnCheck(cleanNumber)) {
         return { success: false, error: "Invalid card number" };
       }
-      
-      // Simulate CVV check
       if (cardData.cvv.length < 3 || cardData.cvv.length > 4) {
         return { success: false, error: "Invalid CVV" };
       }
     }
     
-    // Simulate successful payment
     return {
       success: true,
       transactionId: `GATEWAY_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -171,35 +150,29 @@ export default function PaymentForm() {
         .eq('card_brand', cardBrand)
         .single();
       
-      if (existingCard) {
-        console.log("Card already saved");
-        return;
-      }
+      if (existingCard) return;
       
       const [expiryMonth, expiryYear] = cardDetails.expiry.split('/');
       
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('saved_cards')
-        .insert([{
+        .insert({
           user_id: user.id,
           card_holder_name: cardDetails.holderName.toUpperCase(),
-          last4: last4,
+          last4,
           card_brand: cardBrand,
           expiry_month: parseInt(expiryMonth),
           expiry_year: parseInt(expiryYear),
           is_default: savedCards.length === 0,
           created_at: new Date().toISOString()
-        }])
-        .select()
-        .single();
+        });
       
-      if (error) throw error;
-      
-      setSavedCards([data, ...savedCards]);
-      console.log("Card saved successfully");
-      
-    } catch (error) {
-      console.error("Error saving card:", error);
+      if (!error) {
+        const { data } = await supabase.from('saved_cards').select('*').eq('user_id', user.id);
+        if (data) setSavedCards(data);
+      }
+    } catch {
+      // Silent fail
     }
   };
 
@@ -208,83 +181,55 @@ export default function PaymentForm() {
       const bookingDate = new Date();
       bookingDate.setDate(bookingDate.getDate() + 3);
       
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('facility_bookings')
-        .insert([{
+        .insert({
           transaction_id: currentTransaction?.id,
           user_id: user.id,
           amount_due: shortfallAmount,
           booking_date: bookingDate.toISOString(),
           status: 'pending',
           created_at: new Date().toISOString()
-        }])
+        })
         .select()
         .single();
       
-      if (error) throw error;
-      
-      setFacilityBooking(data);
+      if (data) setFacilityBooking(data);
       return data;
-      
-    } catch (error) {
-      console.error("Error creating facility booking:", error);
+    } catch {
       return null;
     }
   };
 
   const sendPaymentConfirmation = async (paymentResult) => {
     try {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('email, full_name')
-        .eq('user_id', user.id)
-        .single();
-      
       const listing = basketItems[0] || location.state?.listing;
-      
-      await supabase
-        .from('notifications')
-        .insert([{
-          user_id: user.id,
-          type: 'payment_confirmation',
-          title: paymentResult.hasShortfall ? 'Partial Payment Received' : 'Payment Confirmed',
-          message: paymentResult.hasShortfall 
-            ? `Partial payment of R${paymentAmount.toFixed(2)} received. Remaining balance: R${paymentResult.shortfallAmount.toFixed(2)}. Please visit the facility to complete payment.`
-            : `Your payment of R${paymentAmount.toFixed(2)} for ${listing?.title || 'item'} has been confirmed.`,
-          is_read: false,
-          created_at: new Date().toISOString()
-        }]);
-      
-      console.log("Payment confirmation notification sent");
-      
-    } catch (error) {
-      console.error("Error sending notification:", error);
+      await supabase.from('notifications').insert({
+        user_id: user.id,
+        type: 'payment_confirmation',
+        title: paymentResult.hasShortfall ? 'Partial Payment Received' : 'Payment Confirmed',
+        message: paymentResult.hasShortfall 
+          ? `Partial payment of R${paymentAmount.toFixed(2)} received. Remaining balance: R${paymentResult.shortfallAmount.toFixed(2)}. Please visit the facility to complete payment.`
+          : `Your payment of R${paymentAmount.toFixed(2)} for ${listing?.title || 'item'} has been confirmed.`,
+        is_read: false,
+        created_at: new Date().toISOString()
+      });
+    } catch {
+      // Silent fail
     }
   };
 
   const updateListingStatus = async () => {
     try {
-      if (basketItems.length > 0) {
-        for (const item of basketItems) {
-          await supabase
-            .from('listings')
-            .update({ 
-              status: 'sold',
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', item.id);
-        }
-      } else if (location.state?.listing) {
+      const items = basketItems.length > 0 ? basketItems : (location.state?.listing ? [location.state.listing] : []);
+      for (const item of items) {
         await supabase
           .from('listings')
-          .update({ 
-            status: 'sold',
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', location.state.listing.id);
+          .update({ status: 'sold', updated_at: new Date().toISOString() })
+          .eq('id', item.id);
       }
-    } catch (error) {
-      console.error("Error updating listing status:", error);
+    } catch {
+      // Silent fail
     }
   };
 
@@ -292,31 +237,14 @@ export default function PaymentForm() {
     try {
       const cashShortfall = originalAmount - finalAmount;
       const paymentStatus = cashShortfall === 0 ? 'completed' : 'partial';
+      const paymentMethodValue = paymentMethod === 'card' ? 'card' : paymentMethod === 'paypal' ? 'paypal' : 'online';
       
-      let paymentMethodValue = '';
-      if (paymentMethod === 'card') {
-        paymentMethodValue = 'card';
-      } else if (paymentMethod === 'paypal') {
-        paymentMethodValue = 'paypal';
-      } else {
-        paymentMethodValue = 'online';
-      }
-      
-      console.log("Processing payment with method:", paymentMethodValue);
-      console.log("Payment amount:", finalAmount);
-      console.log("Transaction ID:", currentTransaction?.id);
-      
-      // Simulate payment gateway processing
       const gatewayResult = await simulatePaymentGateway(paymentMethodValue, finalAmount, cardDetails);
+      if (!gatewayResult.success) throw new Error(gatewayResult.error);
       
-      if (!gatewayResult.success) {
-        throw new Error(gatewayResult.error);
-      }
-      
-      // Insert payment record
       const { data: payment, error: paymentError } = await supabase
         .from('payments')
-        .insert([{
+        .insert({
           transaction_id: currentTransaction?.id,
           payer_id: user.id,
           amount: finalAmount,
@@ -327,35 +255,17 @@ export default function PaymentForm() {
           payment_reference: `PAY-${Date.now()}-${user.id.slice(0, 8)}`,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
-        }])
+        })
         .select()
         .single();
       
-      if (paymentError) {
-        console.error("Payment insert error:", paymentError);
-        throw paymentError;
-      }
+      if (paymentError) throw paymentError;
       
-      console.log("Payment inserted:", payment);
-      
-      // Calculate new amounts
       const currentAmountPaid = (currentTransaction?.amount_paid || 0) + finalAmount;
       const newRemainingBalance = (currentTransaction?.total_amount || originalAmount) - currentAmountPaid;
+      const transactionStatus = newRemainingBalance <= 0 ? 'completed' : paymentStatus === 'partial' ? 'partial_payment' : 'pending_payment';
       
-      // Update transaction status
-      let transactionStatus = '';
-      let completedAt = null;
-      
-      if (newRemainingBalance <= 0) {
-        transactionStatus = 'completed';
-        completedAt = new Date().toISOString();
-      } else if (paymentStatus === 'partial') {
-        transactionStatus = 'partial_payment';
-      } else {
-        transactionStatus = 'pending_payment';
-      }
-      
-      const { error: updateError } = await supabase
+      await supabase
         .from('transactions')
         .update({ 
           status: transactionStatus,
@@ -363,70 +273,49 @@ export default function PaymentForm() {
           remaining_balance: newRemainingBalance,
           partial_payment_amount: paymentStatus === 'partial' ? finalAmount : null,
           updated_at: new Date().toISOString(),
-          ...(completedAt && { completed_at: completedAt })
+          ...(newRemainingBalance <= 0 && { completed_at: new Date().toISOString() })
         })
         .eq('id', currentTransaction?.id);
       
-      if (updateError) {
-        console.error("Transaction update error:", updateError);
-      }
-      
-      // Create facility booking for shortfall
-      let booking = null;
       if (cashShortfall > 0 && newRemainingBalance > 0) {
-        booking = await createFacilityBooking(newRemainingBalance);
+        await createFacilityBooking(newRemainingBalance);
       }
       
-      // Update listing status if payment is completed
       if (newRemainingBalance <= 0) {
         await updateListingStatus();
       }
       
-      // Save card if user opted in
       if (paymentMethod === 'card' && !useSavedCard && saveCardForFuture && cardDetails.cardNumber) {
         await saveCardToDatabase();
       }
       
-      // Send confirmation
       await sendPaymentConfirmation({ 
         success: true, 
         hasShortfall: cashShortfall > 0 && newRemainingBalance > 0, 
-        shortfallAmount: newRemainingBalance,
-        booking: booking
+        shortfallAmount: newRemainingBalance
       });
       
       return { 
         success: true, 
         hasShortfall: cashShortfall > 0 && newRemainingBalance > 0, 
         shortfallAmount: newRemainingBalance,
-        booking: booking,
-        payment: payment
+        payment
       };
-      
     } catch (error) {
-      console.error('Payment error:', error);
       return { success: false, error: error.message };
     }
   };
 
   const handleCardInputChange = (e) => {
     let value = e.target.value;
-    
     if (e.target.name === 'cardNumber') {
       value = value.replace(/\s/g, '').replace(/(\d{4})/g, '$1 ').trim();
     }
-    
     if (e.target.name === 'expiry') {
       value = value.replace(/[^0-9]/g, '');
-      if (value.length >= 2) {
-        value = value.slice(0, 2) + '/' + value.slice(2, 4);
-      }
+      if (value.length >= 2) value = value.slice(0, 2) + '/' + value.slice(2, 4);
     }
-    
-    setCardDetails({
-      ...cardDetails,
-      [e.target.name]: value,
-    });
+    setCardDetails({ ...cardDetails, [e.target.name]: value });
   };
 
   const handleSavedCardSelect = (card) => {
@@ -462,21 +351,19 @@ export default function PaymentForm() {
       return;
     }
     
-    if (paymentMethod === "card") {
-      if (!useSavedCard) {
-        if (!cardDetails.holderName || !cardDetails.cardNumber || !cardDetails.expiry || !cardDetails.cvv) {
-          setError("Please fill in all card details");
-          return;
-        }
-        
-        const [month, year] = cardDetails.expiry.split('/');
-        const currentYear = new Date().getFullYear() % 100;
-        const currentMonth = new Date().getMonth() + 1;
-        
-        if (parseInt(year) < currentYear || (parseInt(year) === currentYear && parseInt(month) < currentMonth)) {
-          setError("Card has expired");
-          return;
-        }
+    if (paymentMethod === "card" && !useSavedCard) {
+      if (!cardDetails.holderName || !cardDetails.cardNumber || !cardDetails.expiry || !cardDetails.cvv) {
+        setError("Please fill in all card details");
+        return;
+      }
+      
+      const [month, year] = cardDetails.expiry.split('/');
+      const currentYear = new Date().getFullYear() % 100;
+      const currentMonth = new Date().getMonth() + 1;
+      
+      if (parseInt(year) < currentYear || (parseInt(year) === currentYear && parseInt(month) < currentMonth)) {
+        setError("Card has expired");
+        return;
       }
     }
     
@@ -489,7 +376,6 @@ export default function PaymentForm() {
       const successMessage = result.hasShortfall 
         ? `Partial payment of R${paymentAmount.toFixed(2)} received! Remaining balance: R${result.shortfallAmount.toFixed(2)}`
         : `Payment of R${paymentAmount.toFixed(2)} completed successfully!`;
-      
       alert(successMessage);
       
       if (result.hasShortfall) {
@@ -539,12 +425,8 @@ export default function PaymentForm() {
             </>
           )}
           <p className="success-text">A confirmation has been sent to your email and notification center.</p>
-          <button className="success-btn" onClick={() => navigate("/history")}>
-            View Transaction History
-          </button>
-          <button className="success-btn secondary" onClick={() => navigate("/basket")} style={{ marginTop: '10px', background: '#666' }}>
-            Continue Shopping
-          </button>
+          <button className="success-btn" onClick={() => navigate("/history")}>View Transaction History</button>
+          <button className="success-btn secondary" onClick={() => navigate("/basket")} style={{ marginTop: '10px', background: '#666' }}>Continue Shopping</button>
         </div>
       </div>
     );
@@ -588,37 +470,18 @@ export default function PaymentForm() {
           <div className="payment-methods">
             <h3>Select Payment Method</h3>
             <label className="payment-radio">
-              <input 
-                type="radio" 
-                name="payment" 
-                value="card"
-                checked={paymentMethod === "card"}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-              /> 
+              <input type="radio" name="payment" value="card" checked={paymentMethod === "card"} onChange={(e) => setPaymentMethod(e.target.value)} /> 
               <span>Credit / Debit Card</span>
             </label>
             <label className="payment-radio">
-              <input 
-                type="radio" 
-                name="payment" 
-                value="paypal"
-                checked={paymentMethod === "paypal"}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-              /> 
+              <input type="radio" name="payment" value="paypal" checked={paymentMethod === "paypal"} onChange={(e) => setPaymentMethod(e.target.value)} /> 
               <span>PayPal</span>
             </label>
           </div>
 
           <div className="discount-section">
-            <input 
-              className="discount-input"
-              placeholder="Discount Coupon (Optional)" 
-              value={discountCode}
-              onChange={(e) => setDiscountCode(e.target.value)}
-            />
-            <button onClick={applyDiscount} className="apply-discount-btn">
-              Apply
-            </button>
+            <input className="discount-input" placeholder="Discount Coupon (Optional)" value={discountCode} onChange={(e) => setDiscountCode(e.target.value)} />
+            <button onClick={applyDiscount} className="apply-discount-btn">Apply</button>
           </div>
         </div>
 
@@ -627,14 +490,7 @@ export default function PaymentForm() {
           
           <div className="payment-amount-input">
             <label>Enter Payment Amount</label>
-            <input 
-              type="number"
-              className="payment-input"
-              value={paymentAmount}
-              onChange={(e) => setPaymentAmount(parseFloat(e.target.value))}
-              max={originalAmount}
-              step="0.01"
-            />
+            <input type="number" className="payment-input" value={paymentAmount} onChange={(e) => setPaymentAmount(parseFloat(e.target.value))} max={originalAmount} step="0.01" />
             <small>Total due: R{originalAmount.toFixed(2)}</small>
           </div>
 
@@ -647,17 +503,8 @@ export default function PaymentForm() {
                   <label className="section-label">Saved Cards</label>
                   <div className="saved-cards-list">
                     {savedCards.map((card) => (
-                      <div 
-                        key={card.id} 
-                        className={`saved-card-option ${selectedSavedCard?.id === card.id && useSavedCard ? 'selected' : ''}`}
-                        onClick={() => handleSavedCardSelect(card)}
-                      >
-                        <input
-                          type="radio"
-                          name="savedCard"
-                          checked={selectedSavedCard?.id === card.id && useSavedCard}
-                          onChange={() => handleSavedCardSelect(card)}
-                        />
+                      <div key={card.id} className={`saved-card-option ${selectedSavedCard?.id === card.id && useSavedCard ? 'selected' : ''}`} onClick={() => handleSavedCardSelect(card)}>
+                        <input type="radio" name="savedCard" checked={selectedSavedCard?.id === card.id && useSavedCard} onChange={() => handleSavedCardSelect(card)} />
                         <span className="card-type">{card.card_brand}</span>
                         <span className="card-number-masked">{card.last4 ? `**** **** **** ${card.last4}` : card.card_number}</span>
                         <span className="card-expiry">{card.expiry_month}/{card.expiry_year}</span>
@@ -665,56 +512,21 @@ export default function PaymentForm() {
                       </div>
                     ))}
                   </div>
-                  <div className="or-divider">
-                    <span>OR</span>
-                  </div>
+                  <div className="or-divider"><span>OR</span></div>
                 </div>
               )}
 
               {!useSavedCard ? (
                 <>
-                  <input 
-                    name="holderName"
-                    className="payment-input"
-                    placeholder="Card Holder Name" 
-                    value={cardDetails.holderName}
-                    onChange={handleCardInputChange}
-                  />
-                  <input 
-                    name="cardNumber"
-                    className="payment-input"
-                    placeholder="Card Number" 
-                    value={cardDetails.cardNumber}
-                    onChange={handleCardInputChange}
-                    maxLength="19"
-                  />
+                  <input name="holderName" className="payment-input" placeholder="Card Holder Name" value={cardDetails.holderName} onChange={handleCardInputChange} />
+                  <input name="cardNumber" className="payment-input" placeholder="Card Number" value={cardDetails.cardNumber} onChange={handleCardInputChange} maxLength="19" />
                   <div className="payment-row">
-                    <input 
-                      name="expiry"
-                      className="payment-input"
-                      placeholder="Expiry date (MM/YY)" 
-                      value={cardDetails.expiry}
-                      onChange={handleCardInputChange}
-                      maxLength="5"
-                    />
-                    <input 
-                      name="cvv"
-                      className="payment-input"
-                      placeholder="CVV" 
-                      value={cardDetails.cvv}
-                      onChange={handleCardInputChange}
-                      type="password"
-                      maxLength="4"
-                    />
+                    <input name="expiry" className="payment-input" placeholder="Expiry date (MM/YY)" value={cardDetails.expiry} onChange={handleCardInputChange} maxLength="5" />
+                    <input name="cvv" className="payment-input" placeholder="CVV" value={cardDetails.cvv} onChange={handleCardInputChange} type="password" maxLength="4" />
                   </div>
-                  
                   <div className="save-card-checkbox">
                     <label>
-                      <input
-                        type="checkbox"
-                        checked={saveCardForFuture}
-                        onChange={(e) => setSaveCardForFuture(e.target.checked)}
-                      />
+                      <input type="checkbox" checked={saveCardForFuture} onChange={(e) => setSaveCardForFuture(e.target.checked)} />
                       Save this card for future payments
                     </label>
                   </div>
@@ -723,21 +535,11 @@ export default function PaymentForm() {
                 <div className="selected-card-info">
                   <p>Using saved card: <strong>{selectedSavedCard?.card_brand}</strong> ending in {selectedSavedCard?.last4}</p>
                   <p className="card-expiry-info">Expires: {selectedSavedCard?.expiry_month}/{selectedSavedCard?.expiry_year}</p>
-                  <button 
-                    className="change-card-btn"
-                    onClick={() => {
-                      setUseSavedCard(false);
-                      setSelectedSavedCard(null);
-                      setCardDetails({
-                        holderName: "",
-                        cardNumber: "",
-                        expiry: "",
-                        cvv: "",
-                      });
-                    }}
-                  >
-                    Use different card
-                  </button>
+                  <button className="change-card-btn" onClick={() => {
+                    setUseSavedCard(false);
+                    setSelectedSavedCard(null);
+                    setCardDetails({ holderName: "", cardNumber: "", expiry: "", cvv: "" });
+                  }}>Use different card</button>
                 </div>
               )}
             </div>
@@ -746,17 +548,10 @@ export default function PaymentForm() {
           {paymentMethod === "paypal" && (
             <div className="paypal-container">
               <div className="paypal-logo">
-                <img 
-                  src="https://www.paypalobjects.com/webstatic/mktg/logo/pp_cc_mark_37x23.jpg" 
-                  alt="PayPal"
-                />
+                <img src="https://www.paypalobjects.com/webstatic/mktg/logo/pp_cc_mark_37x23.jpg" alt="PayPal" />
               </div>
-              <p className="paypal-text">
-                You will be redirected to PayPal to complete your payment securely.
-              </p>
-              <div className="paypal-simulation">
-                <small>Demo Mode: PayPal integration simulated for demonstration</small>
-              </div>
+              <p className="paypal-text">You will be redirected to PayPal to complete your payment securely.</p>
+              <div className="paypal-simulation"><small>Demo Mode: PayPal integration simulated for demonstration</small></div>
             </div>
           )}
 
@@ -764,9 +559,7 @@ export default function PaymentForm() {
             {processing ? "Processing..." : `Pay R${finalAmount.toFixed(2)}`}
           </button>
           
-          <p className="payment-footer">
-            All payments are secure and encrypted. For partial payments, remaining balance must be paid at campus facility.
-          </p>
+          <p className="payment-footer">All payments are secure and encrypted. For partial payments, remaining balance must be paid at campus facility.</p>
         </div>
       </div>
     </div>

@@ -1,32 +1,16 @@
+// src/pages/Payments/PaymentStatusTracker.jsx
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/supabase/supabaseClient";
 
 export default function PaymentStatusTracker({ transactionId }) {
+  const navigate = useNavigate();
   const [paymentStatus, setPaymentStatus] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [remainingBalance, setRemainingBalance] = useState(0);
 
   useEffect(() => {
     if (transactionId) {
       fetchPaymentStatus();
-      
-      // Subscribe to real-time updates
-      const subscription = supabase
-        .channel('payment-updates')
-        .on('postgres_changes', 
-          { 
-            event: 'INSERT', 
-            schema: 'public', 
-            table: 'payments',
-            filter: `transaction_id=eq.${transactionId}`
-          }, 
-          () => fetchPaymentStatus()
-        )
-        .subscribe();
-      
-      return () => {
-        subscription.unsubscribe();
-      };
     }
   }, [transactionId]);
 
@@ -35,7 +19,7 @@ export default function PaymentStatusTracker({ transactionId }) {
       // Get transaction details
       const { data: transaction, error: transactionError } = await supabase
         .from('transactions')
-        .select('amount, remaining_balance, partial_payment_amount, status')
+        .select('total_amount, amount_paid, remaining_balance, status')
         .eq('id', transactionId)
         .single();
       
@@ -50,32 +34,49 @@ export default function PaymentStatusTracker({ transactionId }) {
       
       if (paymentsError) throw paymentsError;
       
-      const totalPaid = payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
-      const remaining = (transaction?.amount || 0) - totalPaid;
+      const totalPaid = payments?.reduce((sum, p) => sum + (p.amount || 0), 0) || 0;
+      const totalAmount = transaction?.total_amount || 0;
+      const remaining = totalAmount - totalPaid;
       
       setPaymentStatus({
-        totalAmount: transaction?.amount || 0,
+        totalAmount: totalAmount,
         totalPaid: totalPaid,
-        remainingBalance: remaining,
+        remainingBalance: remaining > 0 ? remaining : 0,
         isComplete: remaining <= 0,
         payments: payments || [],
         status: transaction?.status
       });
       
-      setRemainingBalance(remaining);
-      
     } catch (error) {
       console.error("Error fetching payment status:", error);
+      setPaymentStatus(null);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleMakePayment = () => {
+    navigate(`/payment`, {
+      state: {
+        transaction: { id: transactionId, total_amount: paymentStatus?.totalAmount },
+        totalAmount: paymentStatus?.remainingBalance,
+        remainingBalance: paymentStatus?.remainingBalance,
+        isPartialPayment: true
+      }
+    });
   };
 
   if (loading) {
     return <div>Loading payment status...</div>;
   }
 
-  const percentageComplete = (paymentStatus.totalPaid / paymentStatus.totalAmount) * 100;
+  if (!paymentStatus) {
+    return <div>Unable to load payment status</div>;
+  }
+
+  const percentageComplete = paymentStatus.totalAmount > 0 
+    ? ((paymentStatus.totalPaid / paymentStatus.totalAmount) * 100).toFixed(0)
+    : 0;
 
   return (
     <div className="payment-status-tracker">
@@ -86,7 +87,9 @@ export default function PaymentStatusTracker({ transactionId }) {
           className="progress-bar-fill"
           style={{ width: `${percentageComplete}%` }}
         />
-        <span className="progress-text">{percentageComplete.toFixed(0)}% Complete</span>
+        <span className="progress-text">
+          {percentageComplete}% Complete
+        </span>
       </div>
       
       <div className="payment-summary">
@@ -100,7 +103,7 @@ export default function PaymentStatusTracker({ transactionId }) {
         </div>
         <div className="summary-item highlight">
           <span className="label">Remaining Balance:</span>
-          <span className="value">R{remainingBalance.toFixed(2)}</span>
+          <span className="value">R{paymentStatus.remainingBalance.toFixed(2)}</span>
         </div>
       </div>
       
@@ -122,9 +125,9 @@ export default function PaymentStatusTracker({ transactionId }) {
         </div>
       )}
       
-      {remainingBalance > 0 && paymentStatus.status !== 'partial_payment' && (
+      {paymentStatus.remainingBalance > 0 && (
         <div className="make-payment-btn">
-          <button onClick={() => window.location.href = `/payment/${transactionId}`}>
+          <button onClick={handleMakePayment}>
             Make Additional Payment
           </button>
         </div>

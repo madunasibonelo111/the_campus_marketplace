@@ -570,4 +570,250 @@ describe('PaymentForm Component', () => {
       expect(cvvInput).toHaveAttribute('maxlength', '4');
     });
   });
+
+  test('detects Visa card brand from number', async () => {
+    supabase.auth.getUser.mockResolvedValue({ data: { user: mockUser } });
+    
+    const mockOrder = vi.fn().mockResolvedValue({ data: [], error: null });
+    const mockEq = vi.fn().mockReturnValue({ order: mockOrder });
+    const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
+    
+    supabase.from.mockReturnValue({ select: mockSelect });
+    
+    await act(async () => {
+      renderComponent();
+    });
+    
+    await waitFor(() => {
+      const cardNumberInput = screen.getByPlaceholderText('Card Number');
+      fireEvent.change(cardNumberInput, { target: { value: '4111111111111111' } });
+      expect(cardNumberInput.value).toBe('4111 1111 1111 1111');
+    });
+  });
+
+  test('detects Mastercard brand from number', async () => {
+    supabase.auth.getUser.mockResolvedValue({ data: { user: mockUser } });
+    
+    const mockOrder = vi.fn().mockResolvedValue({ data: [], error: null });
+    const mockEq = vi.fn().mockReturnValue({ order: mockOrder });
+    const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
+    
+    supabase.from.mockReturnValue({ select: mockSelect });
+    
+    await act(async () => {
+      renderComponent();
+    });
+    
+    await waitFor(() => {
+      const cardNumberInput = screen.getByPlaceholderText('Card Number');
+      fireEvent.change(cardNumberInput, { target: { value: '5555555555554444' } });
+      expect(cardNumberInput.value).toBe('5555 5555 5555 4444');
+    });
+  });
+
+  test('detects Amex brand from number', async () => {
+    supabase.auth.getUser.mockResolvedValue({ data: { user: mockUser } });
+    
+    const mockOrder = vi.fn().mockResolvedValue({ data: [], error: null });
+    const mockEq = vi.fn().mockReturnValue({ order: mockOrder });
+    const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
+    
+    supabase.from.mockReturnValue({ select: mockSelect });
+    
+    await act(async () => {
+      renderComponent();
+    });
+    
+    await waitFor(() => {
+      const cardNumberInput = screen.getByPlaceholderText('Card Number');
+      fireEvent.change(cardNumberInput, { target: { value: '378282246310005' } });
+      expect(cardNumberInput.value).toBe('3782 8224 6310 005');
+    });
+  });
+
+  test('detects Discover brand from number', async () => {
+    supabase.auth.getUser.mockResolvedValue({ data: { user: mockUser } });
+    
+    const mockOrder = vi.fn().mockResolvedValue({ data: [], error: null });
+    const mockEq = vi.fn().mockReturnValue({ order: mockOrder });
+    const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
+    
+    supabase.from.mockReturnValue({ select: mockSelect });
+    
+    await act(async () => {
+      renderComponent();
+    });
+    
+    await waitFor(() => {
+      const cardNumberInput = screen.getByPlaceholderText('Card Number');
+      fireEvent.change(cardNumberInput, { target: { value: '6011111111111117' } });
+      expect(cardNumberInput.value).toBe('6011 1111 1111 1117');
+    });
+  });
+
+  test('handles error fetching saved cards gracefully', async () => {
+    supabase.auth.getUser.mockResolvedValue({ data: { user: mockUser } });
+    
+    const mockOrder = vi.fn().mockRejectedValue(new Error('Network error'));
+    const mockEq = vi.fn().mockReturnValue({ order: mockOrder });
+    const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
+    
+    supabase.from.mockReturnValue({ select: mockSelect });
+    
+    await act(async () => {
+      renderComponent();
+    });
+    
+    await waitFor(() => {
+      expect(screen.getByText('Complete Payment')).toBeInTheDocument();
+    });
+  });
+
+  test('validates card expiry date with invalid month (13)', async () => {
+    supabase.auth.getUser.mockResolvedValue({ data: { user: mockUser } });
+    
+    const mockOrder = vi.fn().mockResolvedValue({ data: [], error: null });
+    const mockEq = vi.fn().mockReturnValue({ order: mockOrder });
+    const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
+    
+    supabase.from.mockReturnValue({ select: mockSelect });
+    
+    await act(async () => {
+      renderComponent();
+    });
+    
+    await waitFor(() => {
+      const holderName = screen.getByPlaceholderText('Card Holder Name');
+      const cardNumber = screen.getByPlaceholderText('Card Number');
+      const expiry = screen.getByPlaceholderText('Expiry date (MM/YY)');
+      const cvv = screen.getByPlaceholderText('CVV');
+      
+      fireEvent.change(holderName, { target: { value: 'Test User' } });
+      fireEvent.change(cardNumber, { target: { value: '4242424242424242' } });
+      fireEvent.change(expiry, { target: { value: '13/25' } });
+      fireEvent.change(cvv, { target: { value: '123' } });
+    });
+    
+    await waitFor(() => {
+      const payButton = screen.getByText('Pay R150.00');
+      fireEvent.click(payButton);
+    });
+    
+    await waitFor(() => {
+      expect(screen.getByText('Card has expired')).toBeInTheDocument();
+    });
+  });
+
+  test('handles credit card number formatting with existing spaces', async () => {
+    supabase.auth.getUser.mockResolvedValue({ data: { user: mockUser } });
+    
+    const mockOrder = vi.fn().mockResolvedValue({ data: [], error: null });
+    const mockEq = vi.fn().mockReturnValue({ order: mockOrder });
+    const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
+    
+    supabase.from.mockReturnValue({ select: mockSelect });
+    
+    await act(async () => {
+      renderComponent();
+    });
+    
+    await waitFor(() => {
+      const cardNumberInput = screen.getByPlaceholderText('Card Number');
+      fireEvent.change(cardNumberInput, { target: { value: '4111 1111 1111 1111' } });
+      expect(cardNumberInput.value).toBe('4111 1111 1111 1111');
+    });
+  });
+
+  test('handles discount code with empty string', async () => {
+    supabase.auth.getUser.mockResolvedValue({ data: { user: mockUser } });
+    
+    const mockOrder = vi.fn().mockResolvedValue({ data: [], error: null });
+    const mockEq = vi.fn().mockReturnValue({ order: mockOrder });
+    const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
+    
+    supabase.from.mockReturnValue({ select: mockSelect });
+    
+    await act(async () => {
+      renderComponent();
+    });
+    
+    await waitFor(() => {
+      const discountInput = screen.getByPlaceholderText('Discount Coupon (Optional)');
+      const applyButton = screen.getByText('Apply');
+      
+      fireEvent.change(discountInput, { target: { value: '' } });
+      fireEvent.click(applyButton);
+      
+      expect(global.alert).toHaveBeenCalledWith('Please enter a coupon code');
+    });
+  });
+
+  test('shows correct button text when not processing', async () => {
+    supabase.auth.getUser.mockResolvedValue({ data: { user: mockUser } });
+    
+    const mockOrder = vi.fn().mockResolvedValue({ data: [], error: null });
+    const mockEq = vi.fn().mockReturnValue({ order: mockOrder });
+    const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
+    
+    supabase.from.mockReturnValue({ select: mockSelect });
+    
+    await act(async () => {
+      renderComponent();
+    });
+    
+    await waitFor(() => {
+      const payButton = screen.getByText('Pay R150.00');
+      expect(payButton).toBeInTheDocument();
+      expect(payButton).not.toBeDisabled();
+    });
+  });
+
+  test('displays discount in order summary when applied', async () => {
+    supabase.auth.getUser.mockResolvedValue({ data: { user: mockUser } });
+    
+    const mockOrder = vi.fn().mockResolvedValue({ data: [], error: null });
+    const mockEq = vi.fn().mockReturnValue({ order: mockOrder });
+    const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
+    
+    supabase.from.mockReturnValue({ select: mockSelect });
+    
+    await act(async () => {
+      renderComponent();
+    });
+    
+    await waitFor(() => {
+      const discountInput = screen.getByPlaceholderText('Discount Coupon (Optional)');
+      const applyButton = screen.getByText('Apply');
+      
+      fireEvent.change(discountInput, { target: { value: 'SAVE10' } });
+      fireEvent.click(applyButton);
+    });
+    
+    await waitFor(() => {
+      expect(screen.getByText('Discount (10%)')).toBeInTheDocument();
+      expect(screen.getByText('-R15.00')).toBeInTheDocument();
+    });
+  });
+
+  test('handles partial payment amount change', async () => {
+    supabase.auth.getUser.mockResolvedValue({ data: { user: mockUser } });
+    
+    const mockOrder = vi.fn().mockResolvedValue({ data: [], error: null });
+    const mockEq = vi.fn().mockReturnValue({ order: mockOrder });
+    const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
+    
+    supabase.from.mockReturnValue({ select: mockSelect });
+    
+    await act(async () => {
+      renderComponent();
+    });
+    
+    await waitFor(() => {
+      const amountInput = screen.getByDisplayValue('150');
+      fireEvent.change(amountInput, { target: { value: '50' } });
+      expect(amountInput.value).toBe('50');
+      const payButton = screen.getByText('Pay R50.00');
+      expect(payButton).toBeInTheDocument();
+    });
+  });
 });
