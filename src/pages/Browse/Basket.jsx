@@ -61,54 +61,87 @@ export default function Basket({ onViewListing }) {
     });
   };
 
-const handleCheckout = async () => {
-  if (!currentUser) {
-    alert("You must be logged in");
-    return;
-  }
-
-  try {
-    for (const item of basket) {
-
-      // create/get conversation
-      let { data: conversation } = await supabase
-        .from("conversations")
-        .select("*")
-        .eq("listing_id", item.id)
-        .eq("buyer_id", currentUser.id)
-        .eq("seller_id", item.user_id)
-        .maybeSingle();
-
-      if (!conversation) {
-        const { data: newConv } = await supabase
-          .from("conversations")
+  const handleCheckout = async () => {
+    if (!currentUser) {
+      alert("Please login to checkout");
+      navigate("/auth");
+      return;
+    }
+    
+    if (basket.length === 0) {
+      alert("Your basket is empty");
+      return;
+    }
+    
+    try {
+      const totalAmount = basket.reduce((sum, i) => sum + (i.price || 0) * i.quantity, 0);
+      
+      if (totalAmount <= 0) {
+        alert("Invalid total amount");
+        return;
+      }
+      
+      // Ensure user exists in users table
+      let { data: existingUser, error: userFetchError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', currentUser.id)
+        .single();
+      
+      if (userFetchError && userFetchError.code === 'PGRST116') {
+        const { data: newUser, error: createUserError } = await supabase
+          .from('users')
           .insert({
-            listing_id: item.id,
-            buyer_id: currentUser.id,
-            seller_id: item.user_id,
+            id: currentUser.id,
+            name: currentUser.user_metadata?.name || currentUser.email?.split('@')[0] || 'User',
+            email: currentUser.email,
+            role: 'student',
+            verified_status: 'unverified'
           })
           .select()
           .single();
-
-        conversation = newConv;
+        
+        if (createUserError) throw createUserError;
+        existingUser = newUser;
+      } else if (userFetchError) {
+        throw userFetchError;
       }
-
-      // send message (notification)
-      await supabase.from("messages").insert({
-        conversation_id: conversation.id,
-        sender_id: currentUser.id,
-        body: `Hi! I'm interested in buying "${item.title}" for R${item.price}.`,
+      
+      // Create transaction - offer_status can be NULL after SQL change
+      const { data: transaction, error: transactionError } = await supabase
+        .from('transactions')
+        .insert({
+          listing_id: basket[0].id,
+          buyer_id: existingUser.id,
+          seller_id: existingUser.id,
+          type: 'purchase',
+          status: 'pending',
+          offer_amount: null,
+          offer_status: null,
+          total_amount: totalAmount,
+          amount_paid: 0,
+          remaining_balance: totalAmount,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+      
+      if (transactionError) throw transactionError;
+      
+      setShowBasket(false);
+      navigate("/payment", {
+        state: {
+          basket: basket,
+          totalAmount: totalAmount,
+          transaction: transaction
+        }
       });
+    } catch (error) {
+      console.error("Checkout error:", error);
+      alert(`Error processing checkout: ${error.message}`);
     }
-
-    alert("✅ Seller notified!");
-    setBasket([]);
-    setShowBasket(false);
-
-  } catch (err) {
-    alert("Checkout failed: " + err.message);
-  }
-};
+  };
 
   const filtered = items.filter(i => {
     const matchCat = category === "All" || i.categories?.name === category;
@@ -137,7 +170,6 @@ const handleCheckout = async () => {
             <h2>Find what you need, <span>instantly.</span></h2>
             <p>The official campus hub for textbooks, tech, and style.</p>
           </div>
-          
           <div className="basketBtn">
           <button onClick={() => setShowBasket(!showBasket)}
             aria-label="Open basket"
@@ -146,12 +178,10 @@ const handleCheckout = async () => {
           </button>
           </div>
         </div>
-
         <div className="filter-bar">
           <button className="filter-toggle-btn" onClick={() => setIsFilterOpen(true)}>
             <span>☰</span> Explore Categories
           </button>
-          
           <div className="search-container">
             <span className="search-icon">🔍</span>
             <input placeholder="Search listings..." value={search} onChange={(e) => setSearch(e.target.value)} />
@@ -186,7 +216,9 @@ const handleCheckout = async () => {
               <span>Total Amount</span> 
               <strong className="final-total">R{basket.reduce((sum, i) => sum + (i.price || 0) * i.quantity, 0).toFixed(2)}</strong>
             </div>
-            <button className="checkout-btn" onClick={handleCheckout}> Proceed to Checkout</button>
+            <button className="checkout-btn" onClick={handleCheckout}>
+              Proceed to Checkout
+            </button>
           </div>
         </div>
       )}
@@ -210,7 +242,7 @@ const handleCheckout = async () => {
                   ) : isOwner ? (
                     <button disabled className="btn-owner">Your Listing</button>
                   ) : item.listing_type === 'either' ? (
-                    <div className="dual-action-gap"> {/* 🟢 Added Gap */}
+                    <div className="dual-action-gap">
                       <button className="btn-buy" onClick={() => addToBasket(item)}>Add to Basket</button>
                       <button className="btn-trade-outline" onClick={() => navigate(`/messages?listingId=${item.id}&trade=true`)}>Offer Trade</button>
                     </div>
@@ -230,7 +262,7 @@ const handleCheckout = async () => {
         <button className="activeBottom">SHOP</button>
         <button onClick={() => navigate("/sell")}>SELL</button>
         <button onClick={() => navigate("/messages")}>MESSAGES</button>
-        <button onClick={() => navigate("/reviews")}>REVIEWS</button>
+        <button onClick={() => navigate("/history")}>HISTORY</button>
       </div>
     </div>
   );

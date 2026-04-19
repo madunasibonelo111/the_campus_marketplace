@@ -11,8 +11,8 @@ import Home from "./pages/Home/Home";
 import AuthContainer from "./pages/Auth/AuthContainer";
 import Basket from "./pages/Browse/Basket";
 import Messaging from "./pages/Messaging/Messaging";
-import Reviews from "./pages/Profile/Reviews";
-
+import PaymentForm from "./pages/Payments/PaymentForm";
+import TransactionHistory from "./pages/Profile/TransactionHistory";
 import "./App.css";
 
 
@@ -163,14 +163,10 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/email-confirmed" element={<EmailConfirmed />} />
-
-        {/* ✅ NEW: REVIEWS ROUTE (PROTECTED) */}
-        <Route
-          path="/reviews"
-          element={currentUser ? <Reviews /> : <Navigate to="/auth" replace />}
-        />
-
-        {/* Basket */}
+        <Route path="/payment" element={<PaymentForm />} />
+        <Route path="/history" element={<TransactionHistory />} />
+        
+        {/* Protected Browse Route */}
         <Route
           path="/basket"
           element={
