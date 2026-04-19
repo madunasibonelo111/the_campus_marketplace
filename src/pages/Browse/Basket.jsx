@@ -61,6 +61,55 @@ export default function Basket({ onViewListing }) {
     });
   };
 
+const handleCheckout = async () => {
+  if (!currentUser) {
+    alert("You must be logged in");
+    return;
+  }
+
+  try {
+    for (const item of basket) {
+
+      // create/get conversation
+      let { data: conversation } = await supabase
+        .from("conversations")
+        .select("*")
+        .eq("listing_id", item.id)
+        .eq("buyer_id", currentUser.id)
+        .eq("seller_id", item.user_id)
+        .maybeSingle();
+
+      if (!conversation) {
+        const { data: newConv } = await supabase
+          .from("conversations")
+          .insert({
+            listing_id: item.id,
+            buyer_id: currentUser.id,
+            seller_id: item.user_id,
+          })
+          .select()
+          .single();
+
+        conversation = newConv;
+      }
+
+      // send message (notification)
+      await supabase.from("messages").insert({
+        conversation_id: conversation.id,
+        sender_id: currentUser.id,
+        body: `Hi! I'm interested in buying "${item.title}" for R${item.price}.`,
+      });
+    }
+
+    alert("✅ Seller notified!");
+    setBasket([]);
+    setShowBasket(false);
+
+  } catch (err) {
+    alert("Checkout failed: " + err.message);
+  }
+};
+
   const filtered = items.filter(i => {
     const matchCat = category === "All" || i.categories?.name === category;
     const matchSearch = (i.title || "").toLowerCase().includes(search.toLowerCase());
@@ -135,9 +184,7 @@ export default function Basket({ onViewListing }) {
               <span>Total Amount</span> 
               <strong className="final-total">R{basket.reduce((sum, i) => sum + (i.price || 0) * i.quantity, 0).toFixed(2)}</strong>
             </div>
-            <button className="checkout-btn" onClick={() => setShowBasket(false)}>
-              Proceed to Checkout
-            </button>
+            <button className="checkout-btn" onClick={handleCheckout}> Proceed to Checkout</button>
           </div>
         </div>
       )}
@@ -163,10 +210,10 @@ export default function Basket({ onViewListing }) {
                   ) : item.listing_type === 'either' ? (
                     <div className="dual-action-gap"> {/* 🟢 Added Gap */}
                       <button className="btn-buy" onClick={() => addToBasket(item)}>Add to Basket</button>
-                      <button className="btn-trade-outline" onClick={() => navigate(`/messages?listingId=${item.id}`)}>Offer Trade</button>
+                      <button className="btn-trade-outline" onClick={() => navigate(`/messages?listingId=${item.id}&trade=true`)}>Offer Trade</button>
                     </div>
                   ) : item.listing_type === 'trade' ? (
-                    <button className="btn-trade" onClick={() => navigate(`/messages?listingId=${item.id}`)}>Chat to Trade</button>
+                    <button className="btn-trade"onClick={() => navigate(`/messages?listingId=${item.id}&trade=true`)}>Chat to Trade</button>
                   ) : (
                     <button className="btn-buy" onClick={() => addToBasket(item)}>Add to Basket</button>
                   )}

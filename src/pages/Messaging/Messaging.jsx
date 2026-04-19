@@ -17,6 +17,8 @@ export default function Messaging() {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
 
+  const [autoMessageSent, setAutoMessageSent] = useState(false);
+
   useEffect(() => {
     const init = async () => {
       const { data } = await supabase.auth.getUser();
@@ -79,20 +81,19 @@ export default function Messaging() {
       .maybeSingle();
 
     if (!convo && listing.user_id !== currentUser.id) {
-      const { data: newConvo, error: createErr } = await supabase
+      const { data: newConvo } = await supabase
         .from("conversations")
         .insert([{
-            listing_id: listing.id,
-            buyer_id: currentUser.id,
-            seller_id: listing.user_id,
+          listing_id: listing.id,
+          buyer_id: currentUser.id,
+          seller_id: listing.user_id,
         }])
         .select(`*, buyer:profiles!buyer_id(name), seller:profiles!seller_id(name)`)
         .single();
 
-      if (createErr) return;
       convo = newConvo;
-    } 
-    
+    }
+
     if (!convo && listing.user_id === currentUser.id) {
       setMessages([]);
       setConversation(null);
@@ -100,7 +101,33 @@ export default function Messaging() {
     }
 
     setConversation(convo);
-    loadMessages(convo.id);
+    await loadMessages(convo.id);
+
+    // ✅ UPDATED AUTO MESSAGE (WITH ITEM NAME)
+    const isTradeRequest = searchParams.get("trade");
+
+    if (isTradeRequest && !autoMessageSent) {
+      const { data: existing } = await supabase
+        .from("messages")
+        .select("id")
+        .eq("conversation_id", convo.id)
+        .ilike("body", `%${listing.title}%`)
+        .limit(1);
+
+      if (!existing || existing.length === 0) {
+        const autoMsg = {
+          conversation_id: convo.id,
+          sender_id: currentUser.id,
+          body: `Hey! I want to trade for "${listing.title}" `,
+          created_at: new Date().toISOString(),
+        };
+
+        await supabase.from("messages").insert(autoMsg);
+        setMessages(prev => [...prev, autoMsg]);
+      }
+
+      setAutoMessageSent(true);
+    }
   }
 
   async function loadMessages(conversationId) {
@@ -109,31 +136,71 @@ export default function Messaging() {
       .select("*")
       .eq("conversation_id", conversationId)
       .order("created_at", { ascending: true });
+
     setMessages(data || []);
   }
 
   async function sendMessage() {
     if (!conversation?.id || !newMessage.trim()) return;
+
     const tempMessage = {
-        conversation_id: conversation.id,
-        sender_id: currentUser.id,
-        body: newMessage,
-        created_at: new Date().toISOString(),
+      conversation_id: conversation.id,
+      sender_id: currentUser.id,
+      body: newMessage,
+      created_at: new Date().toISOString(),
     };
+
     const { error } = await supabase.from("messages").insert([tempMessage]);
+
     if (!error) {
       setMessages((prev) => [...prev, tempMessage]);
       setNewMessage("");
     }
   }
 
-  const formatFullDate = (dateStr) => new Date(dateStr).toLocaleDateString("en-ZA", {
-    weekday: "long", year: "numeric", month: "long", day: "numeric",
-  });
+  async function handleImageUpload(e) {
+    const file = e.target.files[0];
+    if (!file || !conversation) return;
 
-  const formatTime = (dateStr) => new Date(dateStr).toLocaleTimeString([], {
-    hour: "2-digit", minute: "2-digit",
-  });
+    try {
+      const filePath = `chat-images/${Date.now()}-${file.name}`;
+
+      const { error } = await supabase.storage
+        .from("chat-images")
+        .upload(filePath, file);
+
+      if (error) throw error;
+
+      const { data } = supabase.storage
+        .from("chat-images")
+        .getPublicUrl(filePath);
+
+      const msg = {
+        conversation_id: conversation.id,
+        sender_id: currentUser.id,
+        body: newMessage || `Trade offer for "${activeListing?.title}" 👇`,
+        image_url: data.publicUrl,
+        created_at: new Date().toISOString(),
+      };
+
+      await supabase.from("messages").insert(msg);
+      setMessages(prev => [...prev, msg]);
+      setNewMessage("");
+
+    } catch (err) {
+      alert("Upload failed: " + err.message);
+    }
+  }
+
+  const formatFullDate = (dateStr) =>
+    new Date(dateStr).toLocaleDateString("en-ZA", {
+      weekday: "long", year: "numeric", month: "long", day: "numeric",
+    });
+
+  const formatTime = (dateStr) =>
+    new Date(dateStr).toLocaleTimeString([], {
+      hour: "2-digit", minute: "2-digit",
+    });
 
   const groupedMessages = messages.reduce((groups, m) => {
     const key = new Date(m.created_at).toDateString();
@@ -142,31 +209,24 @@ export default function Messaging() {
     return groups;
   }, {});
 
- 
   const renderListings = (list, type) => (
     <>
       <div className="sidebar-section-header">{type}</div>
-      {list.length > 0 ? (
-        list.map((l) => (
-          <div
-            key={l.id}
-            className={`msg-listing ${activeListing?.id === l.id ? 'active-chat' : ''}`}
-            onClick={() => openChat(l)}
-          >
-            <img src={l.listing_images?.[0]?.image_url || "https://via.placeholder.com/60"} className="msg-img" alt="" />
-            <div className="msg-info">
-              <div className="msg-item-title">{l.title}</div>
-              <div className="msg-sub">
-                {type === "Selling" ? "🏷️ My Listing" : `Seller: ${l.profiles?.name || "Student"}`}
-              </div>
+      {list.map((l) => (
+        <div
+          key={l.id}
+          className={`msg-listing ${activeListing?.id === l.id ? 'active-chat' : ''}`}
+          onClick={() => openChat(l)}
+        >
+          <img src={l.listing_images?.[0]?.image_url || "https://via.placeholder.com/60"} className="msg-img" alt="" />
+          <div className="msg-info">
+            <div className="msg-item-title">{l.title}</div>
+            <div className="msg-sub">
+              {type === "Selling" ? "🏷️ My Listing" : `Seller: ${l.profiles?.name || "Student"}`}
             </div>
           </div>
-        ))
-      ) : (
-        <p className="empty-section-text">
-          {type === "Selling" ? "No items listed yet." : "No active purchases."}
-        </p>
-      )}
+        </div>
+      ))}
     </>
   );
 
@@ -174,7 +234,6 @@ export default function Messaging() {
     <div className="msg-container">
       <div className="msg-left">
         <h3 className="msg-title">Your Chats</h3>
-
         {renderListings(listings.filter(l => l.user_id === currentUser?.id), "Selling")}
         {renderListings(listings.filter(l => l.user_id !== currentUser?.id), "Buying")}
       </div>
@@ -203,6 +262,11 @@ export default function Messaging() {
                   <div key={m.created_at} className={`msg-bubble-wrapper ${m.sender_id === currentUser?.id ? 'sent' : 'received'}`}>
                     <div className="msg-bubble">
                       <div className="msg-text">{m.body}</div>
+
+                      {m.image_url && (
+                        <img src={m.image_url} className="msg-image" alt="trade" />
+                      )}
+
                       <div className="msg-timestamp">{formatTime(m.created_at)}</div>
                     </div>
                   </div>
@@ -217,19 +281,35 @@ export default function Messaging() {
         {conversation && (
           <div className="msg-footer">
             <div className="emoji-bar">
-                {['😊', '👋', '💰', '👍', '📍', '🙌'].map(emoji => (
-                    <button key={emoji} onClick={() => setNewMessage(prev => prev + emoji)}>{emoji}</button>
-                ))}
+              {['😊', '👋', '💰', '👍', '📍', '🙌'].map(emoji => (
+                <button key={emoji} onClick={() => setNewMessage(prev => prev + emoji)}>{emoji}</button>
+              ))}
             </div>
-            <div className="msg-input-area">
+
+           <div className="msg-input-area">
+              <label className="upload-btn" title="Update in next sprint">
+                    ✚
                 <input
+                type="file"
+                hidden
+                accept="image/*"
+                onChange={() => {
+                alert("📌 Image uploads will be added in the next sprint");
+                }}
+                />
+              </label>
+
+              <input
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
                 placeholder="Write a message..."
                 className="msg-input"
-                />
-                <button className="msg-send" onClick={sendMessage} disabled={!newMessage.trim()}>Send</button>
+              />
+
+              <button className="msg-send" onClick={sendMessage} disabled={!newMessage.trim()}>
+                Send
+              </button>
             </div>
           </div>
         )}
