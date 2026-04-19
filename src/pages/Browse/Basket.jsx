@@ -171,9 +171,11 @@ export default function Basket({ onViewListing }) {
             <p>The official campus hub for textbooks, tech, and style.</p>
           </div>
           <div className="basketBtn">
-            <button onClick={() => setShowBasket(!showBasket)}>
-              🛒 Basket ({basket.reduce((s, i) => s + i.quantity, 0)})
-            </button>
+          <button onClick={() => setShowBasket(!showBasket)}
+            aria-label="Open basket"
+            >
+          🛒 Basket ({basket.reduce((s, i) => s + i.quantity, 0)})
+          </button>
           </div>
         </div>
         <div className="filter-bar">
@@ -242,10 +244,10 @@ export default function Basket({ onViewListing }) {
                   ) : item.listing_type === 'either' ? (
                     <div className="dual-action-gap">
                       <button className="btn-buy" onClick={() => addToBasket(item)}>Add to Basket</button>
-                      <button className="btn-trade-outline" onClick={() => navigate(`/messages?listingId=${item.id}`)}>Offer Trade</button>
+                      <button className="btn-trade-outline" onClick={() => navigate(`/messages?listingId=${item.id}&trade=true`)}>Offer Trade</button>
                     </div>
                   ) : item.listing_type === 'trade' ? (
-                    <button className="btn-trade" onClick={() => navigate(`/messages?listingId=${item.id}`)}>Chat to Trade</button>
+                    <button className="btn-trade"onClick={() => navigate(`/messages?listingId=${item.id}&trade=true`)}>Chat to Trade</button>
                   ) : (
                     <button className="btn-buy" onClick={() => addToBasket(item)}>Add to Basket</button>
                   )}

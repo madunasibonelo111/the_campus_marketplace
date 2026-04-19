@@ -221,3 +221,9 @@
 .msg-back-btn:active {
   transform: translateY(0);
 }
+
+.msg-image {
+  max-width: 200px;
+  border-radius: 10px;
+  margin-top: 5px;
+}

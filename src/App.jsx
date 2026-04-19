@@ -6,6 +6,7 @@ import ForgotPassword from "./components/Auth/ForgotPassword";
 import ResetPassword from "./components/Auth/ResetPassword";
 import EmailConfirmed from "./components/Auth/EmailConfirmed";
 import CreateListing from "./pages/Posting/create_listing";
+
 import Home from "./pages/Home/Home";
 import AuthContainer from "./pages/Auth/AuthContainer";
 import Basket from "./pages/Browse/Basket";
@@ -46,10 +47,8 @@ function ItemDetailView({ selectedItem, setSelectedItem, currentUser }) {
           </div>
         </div>
 
-        {/* Main Content Grid */}
         <div className="detail-grid">
           
-          {/* LEFT COLUMN: Visuals */}
           <div className="detail-visuals">
             <div className="image-container-main">
               <img src={selectedItem.image} alt={selectedItem.title} />
@@ -59,7 +58,6 @@ function ItemDetailView({ selectedItem, setSelectedItem, currentUser }) {
             </div>
           </div>
 
-          {/* RIGHT COLUMN: Information */}
           <div className="detail-specs">
             <div className="specs-top">
               <h1 className="item-title-hero">{selectedItem.title}</h1>
@@ -75,7 +73,6 @@ function ItemDetailView({ selectedItem, setSelectedItem, currentUser }) {
                 <p>{selectedItem.description || "No description provided."}</p>
               </div>
 
-             
               <div className="perks-grid">
                 <div className="perk-item">
                   <div className="perk-icon">👤</div>
@@ -106,14 +103,15 @@ function ItemDetailView({ selectedItem, setSelectedItem, currentUser }) {
                   <div className="perk-text">
                     <small>Deal Type</small>
                     <span>
-                        {selectedItem.listing_type === 'either' ? "Sale or Trade" : selectedItem.listing_type}
+                      {selectedItem.listing_type === 'either' 
+                        ? "Sale or Trade" 
+                        : selectedItem.listing_type}
                     </span>
                   </div>
                 </div>
               </div>
             </div>
 
-           
             <div className="specs-footer">
               {currentUser?.id && String(selectedItem.user_id) === String(currentUser.id) ? (
                 <button className="btn-action-delete" onClick={() => handleDeleteListing(selectedItem.id)}>
@@ -159,6 +157,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+
         <Route path="/" element={<Home />} />
         <Route path="/auth" element={<AuthContainer />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -187,9 +186,10 @@ function App() {
           }
         />
 
-        {/* Protected Sell & Messages Routes */}
+        {/* Other protected routes */}
         <Route path="/sell" element={currentUser ? <CreateListing /> : <Navigate to="/auth" replace />} />
         <Route path="/messages" element={currentUser ? <Messaging /> : <Navigate to="/auth" replace />} />
+
       </Routes>
     </BrowserRouter>
   );
