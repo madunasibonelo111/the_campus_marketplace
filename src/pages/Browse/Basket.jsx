@@ -139,9 +139,11 @@ const handleCheckout = async () => {
           </div>
           
           <div className="basketBtn">
-            <button onClick={() => setShowBasket(!showBasket)}>
-              🛒 Basket ({basket.reduce((s, i) => s + i.quantity, 0)})
-            </button>
+          <button onClick={() => setShowBasket(!showBasket)}
+            aria-label="Open basket"
+            >
+          🛒 Basket ({basket.reduce((s, i) => s + i.quantity, 0)})
+          </button>
           </div>
         </div>
 
