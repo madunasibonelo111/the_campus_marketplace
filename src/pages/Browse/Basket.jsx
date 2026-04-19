@@ -1,239 +1,187 @@
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import React, { useEffect, useState } from "react";
-import {supabase} from "@/supabase/supabaseClient";
+import { supabase } from "@/supabase/supabaseClient";
 import "./Basket.css";
 
 export default function Basket({ onViewListing }) {
+  const navigate = useNavigate();
+  const [currentUser, setCurrentUser] = useState(null);
   const [items, setItems] = useState([]);
   const [basket, setBasket] = useState([]);
-
-  const [allCategories, setAllCategories] = useState([]); //To store everything from the DB
+  const [allCategories, setAllCategories] = useState([]);
   const [category, setCategory] = useState("All");
   const [search, setSearch] = useState("");
   const [showBasket, setShowBasket] = useState(false);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  // get listings
+  useEffect(() => {
+    const fetchSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setCurrentUser(session?.user ?? null);
+    };
+    fetchSession();
+  }, []);
+
   const fetchListings = async () => {
-    const { data, error } = await supabase
-      .from("listings")
-      .select(`
-        id,
-        title,
-        price,
-        description,
-        condition,
-        category_id,
-        user_id,
-        users ( name ),
-        categories ( name ),
-        listing_images (
-          image_url,
-          display_order
-        )
-      `);
-
-    if (error) {
-      console.error("Supabase Error:", error.message);
-      return;
-    }
-
-    const formatted = (data || []).map((item) => {
-      const sorted = item.listing_images?.sort(
-        (a, b) => a.display_order - b.display_order
-      );
-
-      return {
-        ...item,
-        image: sorted?.[0]?.image_url || "https://via.placeholder.com/300",
-      };
-    });
-
+    const { data } = await supabase.from("listings").select(`
+      id, title, price, description, condition, category_id, user_id, status, listing_type,
+      profiles ( name ), categories ( name ),
+      listing_images ( image_url, display_order )
+    `);
+    const formatted = (data || []).map((item) => ({
+      ...item,
+      image: item.listing_images?.[0]?.image_url || "https://via.placeholder.com/300",
+    }));
     setItems(formatted);
   };
 
   useEffect(() => {
-  fetchListings();
+    fetchListings();
+    const fetchCats = async () => {
+      const { data } = await supabase.from("categories").select("name");
+      if (data) setAllCategories(data.map(c => c.name));
+    };
+    fetchCats();
+  }, []);
 
-  // Fetch the actual category names from the db categories table
-  const fetchCategoryNames = async () => {
-    const { data } = await supabase.from('categories').select('name');
-    if (data) setAllCategories(data.map(c => c.name));
-  };
-  
-  fetchCategoryNames();
-}, []);
-
-  // basket logic
   const addToBasket = (item) => {
-    setBasket((prev) => {
-      const exists = prev.find((i) => i.id === item.id);
-      if (exists) {
-        return prev.map((i) =>
-          i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
-        );
-      }
+    setBasket(prev => {
+      const exists = prev.find(i => i.id === item.id);
+      if (exists) return prev.map(i => i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i);
       return [...prev, { ...item, quantity: 1 }];
     });
   };
 
   const removeFromBasket = (item) => {
-    setBasket((prev) => {
-      const exists = prev.find((i) => i.id === item.id);
+    setBasket(prev => {
+      const exists = prev.find(i => i.id === item.id);
       if (!exists) return prev;
-      if (exists.quantity > 1) {
-        return prev.map((i) =>
-          i.id === item.id ? { ...i, quantity: i.quantity - 1 } : i
-        );
-      }
-      return prev.filter((i) => i.id !== item.id);
+      if (exists.quantity > 1) return prev.map(i => i.id === item.id ? { ...i, quantity: i.quantity - 1 } : i);
+      return prev.filter(i => i.id !== item.id);
     });
   };
 
-  const total = basket.reduce(
-    (sum, i) => sum + (i.price || 0) * i.quantity,
-    0
-  );
-
-  const handleCheckout = () => {
-    alert("🚀 This feature will be available in the next sprint!");
-    setBasket([]);
-    setShowBasket(false);
-  };
-
-  // filter logic
-  const filtered = items.filter((i) => {
-    const matchCategory =
-      category === "All" || i.categories?.name === category;
-
-    const matchSearch = (i.title || "")
-      .toLowerCase()
-      .includes(search.toLowerCase());
-
-    return matchCategory && matchSearch;
+  const filtered = items.filter(i => {
+    const matchCat = category === "All" || i.categories?.name === category;
+    const matchSearch = (i.title || "").toLowerCase().includes(search.toLowerCase());
+    return matchCat && matchSearch;
   });
 
   return (
-  <div>
-    {/* Welcome Banner in Basket.jsx */}
-  <div style={{ 
-    textAlign: 'left', 
-    marginBottom: '20px', 
-    padding: '25px', 
-    background: 'white', 
-    borderRadius: '20px',
-    boxShadow: '0 4px 15px rgba(0,0,0,0.02)',
-    borderLeft: '6px solid #D4AF37',
-    width: 'auto' 
-    }}>
-      <h2 style={{ margin: 0, color: '#0b1f3a', fontSize: '32px' }}>
-        Find what you need, <span style={{ color: '#3b82f6' }}>instantly.</span>
-      </h2>
-      <p style={{ color: '#666', marginTop: '10px', fontSize: '16px' }}>
-        The official campus hub for textbooks, tech, and style.
-      </p>
-      
-      <div style={{ display: 'flex', gap: '20px', marginTop: '20px' }}>
-        <div style={{ fontSize: '13px', color: '#3b82f6', fontWeight: 'bold', background: '#f0f7ff', padding: '5px 12px', borderRadius: '15px' }}>
-          ✨ {items.length} Active Listings
+    <div className="browse-wrapper"> 
+      <aside className={`filter-sidebar ${isFilterOpen ? 'open' : ''}`}>
+        <div className="sidebar-header">
+          <h3 className="sidebar-title">Filters</h3>
+          <button className="close-sidebar" onClick={() => setIsFilterOpen(false)}>×</button>
         </div>
-        <div style={{ fontSize: '13px', color: '#D4AF37', fontWeight: 'bold', background: '#fffdf0', padding: '5px 12px', borderRadius: '15px' }}>
-          🛡️ Verified Student Sellers
+        <div className="sidebar-links">
+          <button onClick={() => { setCategory("All"); setIsFilterOpen(false); }} className={category === "All" ? "active" : ""}>All Items</button>
+          {allCategories.map(name => (
+            <button key={name} onClick={() => { setCategory(name); setIsFilterOpen(false); }} className={category === name ? "active" : ""}>{name}</button>
+          ))}
         </div>
-      </div>
-    </div>
+      </aside>
 
-    {/* category filters that show everything in the DB */}
-    <div className="tabs">
-      <button
-        onClick={() => setCategory("All")}
-        className={category === "All" ? "activeTab" : ""}
-      >
-        All
-      </button>
-      
-      {allCategories.map((catName) => (
-        <button
-          key={catName}
-          onClick={() => setCategory(catName)}
-          className={category === catName ? "activeTab" : ""}
-        >
-          {catName}
-        </button>
-      ))}
-    </div>
-
-    {/* SEARCH */}
-    <div className="searchBox">
-      <input
-        placeholder="Search listings..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-      />
-    </div>
-
-    {/* the items grid*/}
-    <div className="gridItems">
-      {filtered.map((item) => (
-        <div key={item.id} className="card">
-          {/*Click trigger for the image */}
-          <img 
-            src={item.image} 
-            onClick={() => onViewListing(item)} 
-            style={{ cursor: 'pointer' }}
-            alt={item.title}
-          />
-          
-          {/* Click trigger for the title */}
-          <h3 
-            onClick={() => onViewListing(item)} 
-            style={{ cursor: 'pointer', color: '#0b1f3a' }}
-          >
-            {item.title}
-          </h3>
-          
-          <p>R{item.price}</p>
-
-          <button onClick={() => addToBasket(item)}>
-            Add
-          </button>
-        </div>
-      ))}
-    </div>
-
-    {/* 🛒 BASKET BUTTON */}
-    <div className="basketBtn">
-      <button onClick={() => setShowBasket(true)}>
-        🛒 ({basket.reduce((s, i) => s + i.quantity, 0)})
-      </button>
-    </div>
-
-    {/* BASKET OVERLAY */}
-    {showBasket && (
-      <div className="basket">
-        <button onClick={() => setShowBasket(false)}>Close</button>
-        {basket.map((i) => (
-          <div key={i.id} style={{ marginBottom: '10px', borderBottom: '1px solid #eee' }}>
-            {i.title} x{i.quantity}
-            <button onClick={() => addToBasket(i)}>+</button>
-            <button onClick={() => removeFromBasket(i)}>-</button>
+      <div className="sticky-top">
+        <div className="designer-banner">
+          <div className="banner-content">
+            <h2>Find what you need, <span>instantly.</span></h2>
+            <p>The official campus hub for textbooks, tech, and style.</p>
           </div>
-        ))}
-        <h3>Total: R{total}</h3>
-        <button onClick={handleCheckout}>Checkout</button>
+          
+          <div className="basketBtn">
+            <button onClick={() => setShowBasket(!showBasket)}>
+              🛒 Basket ({basket.reduce((s, i) => s + i.quantity, 0)})
+            </button>
+          </div>
+        </div>
+
+        <div className="filter-bar">
+          <button className="filter-toggle-btn" onClick={() => setIsFilterOpen(true)}>
+            <span>☰</span> Explore Categories
+          </button>
+          
+          <div className="search-container">
+            <span className="search-icon">🔍</span>
+            <input placeholder="Search listings..." value={search} onChange={(e) => setSearch(e.target.value)} />
+            <div className="results-count">Showing {filtered.length} results</div>
+          </div>
+        </div>
       </div>
-    )}
-    <div className="bottomNav">
-        <button className="activeBottom">SHOP</button>
-        
-        {/* 🟢 This Link connects back to your Create Listing page */}
-        <Link to="/sell">
-          <button>SELL</button>
-        </Link>
-        
-        <button onClick={() => alert("Profile coming soon!")}>PROFILE</button>
+      
+      {showBasket && (
+        <div className="basket">
+          <button className="close-basket" onClick={() => setShowBasket(false)}>Close</button>
+          <h2>Your Basket</h2>
+          <div className="basket-items">
+            {basket.map(i => (
+              <div key={i.id} className="basket-row">
+                <div className="basket-item-info">
+                  <span className="basket-item-name">{i.title}</span>
+                  <span className="basket-item-qty">Qty: {i.quantity}</span>
+                </div>
+                <div className="basket-item-actions">
+                  <span className="basket-item-price">R{(i.price * i.quantity).toFixed(2)}</span>
+                  <div className="basket-controls">
+                    <button onClick={() => removeFromBasket(i)}>−</button>
+                    <button onClick={() => addToBasket(i)}>+</button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="basket-total-container">
+            <div className="basket-total-row">
+              <span>Total Amount</span> 
+              <strong className="final-total">R{basket.reduce((sum, i) => sum + (i.price || 0) * i.quantity, 0).toFixed(2)}</strong>
+            </div>
+            <button className="checkout-btn" onClick={() => setShowBasket(false)}>
+              Proceed to Checkout
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="scroll-area">
+        <div className="gridItems">
+          {filtered.map((item) => {
+            const isSold = item.status === 'sold';
+            const isOwner = currentUser?.id === String(item.user_id);
+            return (
+              <div key={item.id} className="card">
+                <div style={{ position: 'relative' }}>
+                  <img src={item.image} onClick={() => !isSold && onViewListing(item)} alt="" />
+                  {isSold && <div className="sold-overlay">SOLD</div>}
+                </div>
+                <h3>{item.title}</h3>
+                <p className="price-main-bold">R{parseFloat(item.price || 0).toFixed(2)}</p>
+                <div className="item-actions">
+                  {isSold ? (
+                    <button disabled className="btn-sold">Out of Stock</button>
+                  ) : isOwner ? (
+                    <button disabled className="btn-owner">Your Listing</button>
+                  ) : item.listing_type === 'either' ? (
+                    <div className="dual-action-gap"> {/* 🟢 Added Gap */}
+                      <button className="btn-buy" onClick={() => addToBasket(item)}>Add to Basket</button>
+                      <button className="btn-trade-outline" onClick={() => navigate(`/messages?listingId=${item.id}`)}>Offer Trade</button>
+                    </div>
+                  ) : item.listing_type === 'trade' ? (
+                    <button className="btn-trade" onClick={() => navigate(`/messages?listingId=${item.id}`)}>Chat to Trade</button>
+                  ) : (
+                    <button className="btn-buy" onClick={() => addToBasket(item)}>Add to Basket</button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
-    
-  </div>
-);
+      <div className="bottomNav">
+        <button className="activeBottom">SHOP</button>
+        <button onClick={() => navigate("/sell")}>SELL</button>
+        <button onClick={() => navigate("/messages")}>MESSAGES</button>
+      </div>
+    </div>
+  );
 }

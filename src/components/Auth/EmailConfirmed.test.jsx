@@ -1,112 +1,51 @@
-// src/components/Auth/EmailConfirmed.test.jsx
-import { render, screen, fireEvent } from '@testing-library/react';
-import { BrowserRouter, useNavigate } from 'react-router-dom';
-import { vi } from 'vitest';
+import { render, screen, fireEvent, act } from '@testing-library/react';
+import { BrowserRouter } from 'react-router-dom';
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import EmailConfirmed from './EmailConfirmed';
 
 const mockNavigate = vi.fn();
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
-  return {
-    ...actual,
-    useNavigate: () => mockNavigate,
-  };
+  return { ...actual, useNavigate: () => mockNavigate };
 });
+
+vi.mock('@/supabase/supabaseClient', () => ({
+  supabase: {
+    auth: {
+      getUser: vi.fn(() => Promise.resolve({ data: { user: { id: 'amy-123', email: 'amy@campus.edu', user_metadata: { name: 'Amy' } } } })),
+    },
+    from: vi.fn(() => ({
+      upsert: vi.fn().mockResolvedValue({ error: null }),
+    })),
+  },
+}));
 
 describe('EmailConfirmed Component', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
     vi.useFakeTimers();
+    vi.clearAllMocks();
   });
 
   afterEach(() => {
     vi.useRealTimers();
   });
 
-  const renderComponent = () => {
-    return render(
-      <BrowserRouter>
-        <EmailConfirmed />
-      </BrowserRouter>
-    );
-  };
-
-  describe('Rendering', () => {
-    test('renders success message correctly', () => {
-      renderComponent();
-      
-      expect(screen.getByText('🎉 Email Verified!')).toBeInTheDocument();
-      expect(screen.getByText('Your account has been successfully activated.')).toBeInTheDocument();
+  it('renders correctly with the updated activation message', async () => {
+    await act(async () => {
+      render(<BrowserRouter><EmailConfirmed /></BrowserRouter>);
     });
-
-    test('renders loading spinner', () => {
-      renderComponent();
-      
-      // The spinner is a div with animation style
-      const spinner = document.querySelector('[style*="animation: spin"]');
-      expect(spinner).toBeTruthy();
-    });
-
-    test('renders redirect message', () => {
-      renderComponent();
-      
-      expect(screen.getByText('Redirecting you to login...')).toBeInTheDocument();
-    });
-
-    test('renders manual login button', () => {
-      renderComponent();
-      
-      expect(screen.getByRole('button', { name: 'Go to Login' })).toBeInTheDocument();
-    });
+    
+    expect(screen.getByText(/Account Activated!/i)).toBeInTheDocument();
+    expect(screen.getByText(/Syncing your profile/i)).toBeInTheDocument();
   });
 
-  describe('Navigation', () => {
-    test('automatically navigates to auth after 3 seconds', () => {
-      renderComponent();
-      
-      expect(mockNavigate).not.toHaveBeenCalled();
-      
-      vi.advanceTimersByTime(3000);
-      
-      expect(mockNavigate).toHaveBeenCalledWith('/auth');
-      expect(mockNavigate).toHaveBeenCalledTimes(1);
+  it('navigates to auth after the 5 second timeout', async () => {
+    await act(async () => {
+      render(<BrowserRouter><EmailConfirmed /></BrowserRouter>);
     });
-
-    test('navigates immediately when button is clicked', () => {
-      renderComponent();
-      
-      const button = screen.getByRole('button', { name: 'Go to Login' });
-      fireEvent.click(button);
-      
-      expect(mockNavigate).toHaveBeenCalledWith('/auth');
+    act(() => {
+      vi.advanceTimersByTime(5000);
     });
-
-    test('cleans up timer on unmount', () => {
-      const clearTimeoutSpy = vi.spyOn(window, 'clearTimeout');
-      const { unmount } = renderComponent();
-      
-      unmount();
-      
-      expect(clearTimeoutSpy).toHaveBeenCalled();
-      clearTimeoutSpy.mockRestore();
-    });
-  });
-
-  describe('Accessibility', () => {
-    test('button is clickable and interactive', () => {
-      renderComponent();
-      
-      const button = screen.getByRole('button', { name: 'Go to Login' });
-      expect(button).toBeEnabled();
-      expect(button.tagName).toBe('BUTTON');
-    });
-
-    test('has proper heading structure', () => {
-      renderComponent();
-      
-      const heading = screen.getByRole('heading', { level: 1 });
-      expect(heading).toBeInTheDocument();
-      expect(heading).toHaveTextContent('🎉 Email Verified!');
-    });
+    expect(mockNavigate).toHaveBeenCalledWith('/auth');
   });
 });

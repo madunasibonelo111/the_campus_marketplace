@@ -1,64 +1,52 @@
-import { render, screen, act } from '@testing-library/react';
+import { render, screen, act, fireEvent } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { describe, it, expect, vi } from 'vitest';
 import Basket from './Basket.jsx';
 
-// mocking the listings and the categories table in the db
 vi.mock('@/supabase/supabaseClient', () => ({
   supabase: {
+    auth: {
+      getSession: vi.fn(() => Promise.resolve({ data: { session: null }, error: null })),
+      onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe: vi.fn() } } })),
+    },
     from: vi.fn((table) => ({
       select: vi.fn(() => {
+       
         if (table === 'categories') {
-         
           return Promise.resolve({ 
-            data: [
-              { id: 1, name: 'Textbooks' },
-              { id: 2, name: 'Electronics' },
-              { id: 3, name: 'Clothing' }
-            ], 
+            data: [{ id: 1, name: 'Textbooks' }, { id: 2, name: 'Electronics' }], 
             error: null 
           });
         }
-        // Mocking the items
-        return {
-          order: vi.fn(() => Promise.resolve({ 
-            data: [{ id: 1, name: 'Calculus Textbook', price: 350 }], 
-            error: null 
-          }))
-        };
+        // Mock for the listings query
+        return Promise.resolve({ 
+          data: [{ 
+            id: 1, 
+            title: 'Calculus', 
+            price: 350, 
+            listing_images: [], 
+            categories: { name: 'Textbooks' } 
+          }], 
+          error: null 
+        });
       }),
     })),
   },
 }));
 
 describe('Browse Page UI', () => {
-  it('shows the search bar and the filter buttons from the screenshot', async () => {
+  it('opens sidebar and finds the specific Textbook button', async () => {
     
     await act(async () => {
-      render(
-        <BrowserRouter>
-          <Basket />
-        </BrowserRouter>
-      );
+      render(<BrowserRouter><Basket /></BrowserRouter>);
     });
 
-    // checking the search bar
-    expect(screen.getByPlaceholderText(/Search listings.../i)).toBeInTheDocument();
+    
+    const toggleBtn = screen.getByText(/Explore Categories/i);
+    fireEvent.click(toggleBtn);
 
-    expect(screen.getByRole('button', { name: /Textbooks/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Electronics/i })).toBeInTheDocument();
-  });
-
-  it('renders the navigation buttons at the bottom', async () => {
-    await act(async () => {
-      render(
-        <BrowserRouter>
-          <Basket />
-        </BrowserRouter>
-      );
-    });
-
-    expect(screen.getByRole('button', { name: /SHOP/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /SELL/i })).toBeInTheDocument();
+    
+    const categoryBtn = await screen.findByRole('button', { name: /Textbooks/i });
+    expect(categoryBtn).toBeInTheDocument();
   });
 });

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { supabase } from "@/supabase/supabaseClient";
+import "./Auth.css";
 
 export default function ResetPassword() {
   const [password, setPassword] = useState("");

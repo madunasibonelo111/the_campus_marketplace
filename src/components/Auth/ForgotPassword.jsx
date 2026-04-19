@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { supabase } from "@/supabase/supabaseClient";
 import { useNavigate } from "react-router-dom";
+import "./Auth.css";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
@@ -31,8 +32,8 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="container">
-      <div className="form-box">
+    <div className="auth-container">
+      <div className="form-box-standalone">
         <form onSubmit={(e) => e.preventDefault()}>
           <h1>Forgot Password</h1>
 

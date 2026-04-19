@@ -1,90 +1,191 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useState } from "react";
+import { BrowserRouter, Routes, Route, useNavigate, Navigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { supabase } from "@/supabase/supabaseClient";
+
+import ForgotPassword from "./components/Auth/ForgotPassword";
+import ResetPassword from "./components/Auth/ResetPassword";
+import EmailConfirmed from "./components/Auth/EmailConfirmed";
 import CreateListing from "./pages/Posting/create_listing";
 import Home from "./pages/Home/Home";
 import AuthContainer from "./pages/Auth/AuthContainer";
 import Basket from "./pages/Browse/Basket";
+import Messaging from "./pages/Messaging/Messaging";
 import "./App.css";
 
+
+function ItemDetailView({ selectedItem, setSelectedItem, currentUser }) {
+  const navigate = useNavigate();
+
+  const handleDeleteListing = async (listingId) => {
+    if (!window.confirm("Are you sure you want to remove this listing?")) return;
+
+    try {
+      const { error } = await supabase.from('listings').delete().eq('id', listingId);
+      if (error) throw error;
+      
+      alert("Listing removed.");
+      setSelectedItem(null); 
+      window.location.reload(); 
+    } catch (err) {
+      alert("Error: " + err.message);
+    }
+  };
+
+  return (
+    <div className="detail-overlay">
+      <div className="detail-card">
+        
+        <div className="detail-header-nav">
+          <button onClick={() => setSelectedItem(null)} className="back-btn-pill">
+            <span>←</span> Back to Shop
+          </button>
+          <div className="category-chip">
+            {selectedItem.categories?.name || "Campus Item"}
+          </div>
+        </div>
+
+        {/* Main Content Grid */}
+        <div className="detail-grid">
+          
+          {/* LEFT COLUMN: Visuals */}
+          <div className="detail-visuals">
+            <div className="image-container-main">
+              <img src={selectedItem.image} alt={selectedItem.title} />
+              <div className="status-tag">
+                {selectedItem.condition?.toUpperCase() || "GOOD"}
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT COLUMN: Information */}
+          <div className="detail-specs">
+            <div className="specs-top">
+              <h1 className="item-title-hero">{selectedItem.title}</h1>
+              <div className="price-badge-hero">
+                {selectedItem.listing_type === 'trade' 
+                  ? "🤝 Trade Only" 
+                  : `R${parseFloat(selectedItem.price || 0).toFixed(2)}`}
+              </div>
+            </div>
+
+            <div className="specs-body">
+              <div className="description-well">
+                <p>{selectedItem.description || "No description provided."}</p>
+              </div>
+
+             
+              <div className="perks-grid">
+                <div className="perk-item">
+                  <div className="perk-icon">👤</div>
+                  <div className="perk-text">
+                    <small>Seller</small>
+                    <span>{selectedItem.profiles?.name || "Verified Student"}</span>
+                  </div>
+                </div>
+
+                <div className="perk-item">
+                  <div className="perk-icon">📍</div>
+                  <div className="perk-text">
+                    <small>Meeting Spot</small>
+                    <span>On-Campus (Safe Zone)</span>
+                  </div>
+                </div>
+
+                <div className="perk-item">
+                  <div className="perk-icon">🛡️</div>
+                  <div className="perk-text">
+                    <small>Safety</small>
+                    <span>Verified listing</span>
+                  </div>
+                </div>
+
+                <div className="perk-item">
+                  <div className="perk-icon">📦</div>
+                  <div className="perk-text">
+                    <small>Deal Type</small>
+                    <span>
+                        {selectedItem.listing_type === 'either' ? "Sale or Trade" : selectedItem.listing_type}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+           
+            <div className="specs-footer">
+              {currentUser?.id && String(selectedItem.user_id) === String(currentUser.id) ? (
+                <button className="btn-action-delete" onClick={() => handleDeleteListing(selectedItem.id)}>
+                  🗑️ Remove My Listing
+                </button>
+              ) : (
+                <button className="btn-action-contact" onClick={() => navigate(`/messages?listingId=${selectedItem.id}`)}>
+                  💬 Contact {selectedItem.profiles?.name || "Seller"}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 function App() {
-  const [selectedItem, setSelectedItem] = useState(null); // Tracks clicked item for details view
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const getSession = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUser(user);
+      setLoading(false);
+    };
+    getSession();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setCurrentUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    return () => authListener.subscription.unsubscribe();
+  }, []);
+
+  if (loading) return null;
 
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/auth" element={<AuthContainer />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/email-confirmed" element={<EmailConfirmed />} />
         
-        <Route 
-          path="/basket" 
+        {/* Protected Browse Route */}
+        <Route
+          path="/basket"
           element={
-            selectedItem ? (
-              /* --- Detailed Item View --- */
-              <div className="container">
-                <div className="form-card" style={{ maxWidth: '900px', margin: '40px auto' }}>
-                  <button 
-                    onClick={() => setSelectedItem(null)} 
-                    style={{ 
-                      marginBottom: '20px', 
-                      cursor: 'pointer', 
-                      background: 'none', 
-                      border: 'none', 
-                      color: '#3b82f6', 
-                      fontWeight: 'bold',
-                      fontSize: '16px' 
-                    }}
-                  >
-                    ← Back to Browse
-                  </button>
-
-                  <div style={{ display: 'flex', gap: '40px', flexWrap: 'wrap', alignItems: 'start' }}>
-                    {/* Left: Product Image */}
-                    <div style={{ flex: '1', minWidth: '320px' }}>
-                      <img 
-                        src={selectedItem.image} 
-                        style={{ width: '100%', borderRadius: '15px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} 
-                        alt={selectedItem.title}
-                      />
-                    </div>
-
-                    {/* Right: Product & Seller Details */}
-                    <div style={{ flex: '1.2', textAlign: 'left' }}>
-                      <h1 style={{ color: '#0b1f3a', margin: '0 0 10px 0' }}>{selectedItem.title}</h1>
-                      <h2 style={{ color: '#3b82f6', margin: '0' }}>R{selectedItem.price}</h2>
-                      
-                      <hr style={{ border: '0', borderTop: '1px solid #eee', margin: '20px 0' }} />
-
-                      <p><strong>Condition:</strong> <span style={{ color: '#D4AF37', fontWeight: 'bold' }}>{selectedItem.condition?.toUpperCase()}</span></p>
-                      
-                      {/* Seller name pulled from the users join query in Basket.jsx */}
-                      <p><strong>Seller:</strong> {selectedItem.users?.name || "Verified Student"}</p>
-                      
-                      <div style={{ marginTop: '20px' }}>
-                        <strong>Description:</strong>
-                        <p style={{ lineHeight: '1.6', color: '#555', marginTop: '8px' }}>
-                          {selectedItem.description}
-                        </p>
-                      </div>
-
-                      <button 
-                        className="btn-post" 
-                        style={{ marginTop: '30px' }}
-                        onClick={() => alert(`Messaging seller function coming soon !`)}
-                      >
-                        📧 Contact Seller
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+            currentUser ? (
+              selectedItem ? (
+                <ItemDetailView 
+                  selectedItem={selectedItem} 
+                  setSelectedItem={setSelectedItem}
+                  currentUser={currentUser} 
+                />
+              ) : (
+                <Basket onViewListing={(item) => setSelectedItem(item)} />
+              )
             ) : (
-              /* Standard Marketplace Grid */
-              <Basket onViewListing={(item) => setSelectedItem(item)} />
+              <Navigate to="/auth" replace />
             )
-          } 
+          }
         />
 
-        <Route path="/sell" element={<CreateListing />} />
+        {/* Protected Sell & Messages Routes */}
+        <Route path="/sell" element={currentUser ? <CreateListing /> : <Navigate to="/auth" replace />} />
+        <Route path="/messages" element={currentUser ? <Messaging /> : <Navigate to="/auth" replace />} />
       </Routes>
     </BrowserRouter>
   );
