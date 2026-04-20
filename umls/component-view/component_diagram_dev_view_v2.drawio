@@ -1,0 +1,273 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="component-dev-view-v2" name="Component Diagram - Development View v2">
+    <mxGraphModel dx="773" dy="455" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1200" math="0" shadow="1">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=20;fontStyle=1;" value="Component Diagram – Development View (Campus Marketplace)" vertex="1">
+          <mxGeometry height="40" width="1200" x="300" y="15" as="geometry" />
+        </mxCell>
+        <mxCell id="frontend-pkg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=20;fontStyle=1;strokeWidth=3;arcSize=3;verticalAlign=top;" value="«component» Frontend (React + Vite)" vertex="1">
+          <mxGeometry height="640" width="1100" x="30" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="comp-router" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=14;fontStyle=1;strokeWidth=2;" value="«library»&#xa;React Router&#xa;(Protected Routes, Role Guards)" vertex="1">
+          <mxGeometry height="70" width="220" x="50" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="comp-shared" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d6b656;fontSize=14;fontStyle=1;strokeWidth=2;" value="«component»&#xa;Shared Components&#xa;(Navbar, ListingCard, ImageUploader,&#xa;CategorySelector, InputValidator)" vertex="1">
+          <mxGeometry height="80" width="250" x="310" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="sprint1-box" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=18;fontStyle=3;strokeWidth=2;verticalAlign=top;" value="Sprint 1" vertex="1">
+          <mxGeometry height="140" width="780" x="50" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="page-auth" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=15;strokeWidth=2;" value="«component»&#xa;Auth&#xa;(Login, Register,&#xa;OAuth Callback)" vertex="1">
+          <mxGeometry height="80" width="150" x="65" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="page-browse" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=15;strokeWidth=2;" value="«component»&#xa;Browse&#xa;(Listings, Search,&#xa;Filter by cat/price)" vertex="1">
+          <mxGeometry height="80" width="150" x="240" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="page-posting" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=17;strokeWidth=2;" value="«component»&#xa;Posting&#xa;(Create, Edit,&#xa;Remove Listing)" vertex="1">
+          <mxGeometry height="80" width="150" x="415" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="page-profile" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;strokeWidth=2;" value="«component»&#xa;Profile&#xa;(Own Profile,&#xa;Seller Public Profile)" vertex="1">
+          <mxGeometry height="80" width="150" x="590" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="page-ratings-view" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;strokeWidth=2;" value="«component»&#xa;Ratings (view)&#xa;(Seller rating display,&#xa;Sprint 1 read-only)" vertex="1">
+          <mxGeometry height="80" width="150" x="765" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="sprint2-box" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=17;fontStyle=3;strokeWidth=2;verticalAlign=top;" value="Sprint 2" vertex="1">
+          <mxGeometry height="140" width="780" x="50" y="410" as="geometry" />
+        </mxCell>
+        <mxCell id="page-messaging" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=15;strokeWidth=2;" value="«component»&#xa;Messaging&#xa;(Chat UI,&#xa;Message Thread)" vertex="1">
+          <mxGeometry height="80" width="150" x="65" y="450" as="geometry" />
+        </mxCell>
+        <mxCell id="page-payments" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=15;strokeWidth=2;" value="«component»&#xa;Payments&#xa;(Pay Online, Partial,&#xa;Shortfall Tracking)" vertex="1">
+          <mxGeometry height="80" width="150" x="240" y="450" as="geometry" />
+        </mxCell>
+        <mxCell id="page-offers" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=14;strokeWidth=2;" value="«component»&#xa;Offers &amp;amp; Transactions&#xa;(Purchase Offer,&#xa;Trade Offer, History)" vertex="1">
+          <mxGeometry height="80" width="160" x="415" y="450" as="geometry" />
+        </mxCell>
+        <mxCell id="page-ratings-write" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=15;strokeWidth=2;" value="«component»&#xa;Ratings (submit)&#xa;(Post-transaction review,&#xa;Score 1–5)" vertex="1">
+          <mxGeometry height="80" width="155" x="600" y="450" as="geometry" />
+        </mxCell>
+        <mxCell id="sprint34-box" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=16;fontStyle=3;strokeWidth=2;verticalAlign=top;" value="Sprint 3 + 4" vertex="1">
+          <mxGeometry height="100" width="780" x="50" y="590" as="geometry" />
+        </mxCell>
+        <mxCell id="page-booking" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=15;strokeWidth=2;" value="«component»&#xa;Trade Facility&#xa;(Drop-off/Collection Booking)" vertex="1">
+          <mxGeometry height="60" width="175" x="65" y="620" as="geometry" />
+        </mxCell>
+        <mxCell id="page-staff" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=14;strokeWidth=2;" value="«component»&#xa;Staff Dashboard&#xa;(Confirm Drop-off/Collection,&#xa;Settle Cash Shortfall)" vertex="1">
+          <mxGeometry height="60" width="185" x="260" y="620" as="geometry" />
+        </mxCell>
+        <mxCell id="page-admin" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=14;strokeWidth=2;" value="«component»&#xa;Admin Dashboard&#xa;(Configure Facility, Moderate&#xa;Content, View Analytics)" vertex="1">
+          <mxGeometry height="60" width="190" x="465" y="620" as="geometry" />
+        </mxCell>
+        <mxCell id="page-analytics" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=14;strokeWidth=2;" value="«component»&#xa;Analytics&#xa;(3 Dashboard Reports,&#xa;CSV/PDF Export)" vertex="1">
+          <mxGeometry height="60" width="145" x="675" y="620" as="geometry" />
+        </mxCell>
+        <mxCell id="comp-config" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=15;strokeWidth=1;" value="vite.config.js&#xa;eslint.config.js&#xa;package.json&#xa;.env" vertex="1">
+          <mxGeometry height="70" width="140" x="870" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="services-pkg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=18;fontStyle=1;strokeWidth=3;arcSize=3;verticalAlign=top;" value="«component» Services Layer" vertex="1">
+          <mxGeometry height="150" width="1100" x="30" y="740" as="geometry" />
+        </mxCell>
+        <mxCell id="svc-auth" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=15;strokeWidth=2;" value="«component»&#xa;AuthService&#xa;(JWT, session, role)" vertex="1">
+          <mxGeometry height="70" width="150" x="50" y="790" as="geometry" />
+        </mxCell>
+        <mxCell id="svc-listing" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=16;strokeWidth=2;" value="«component»&#xa;ListingService&#xa;(CRUD listings)" vertex="1">
+          <mxGeometry height="70" width="150" x="220" y="790" as="geometry" />
+        </mxCell>
+        <mxCell id="svc-image" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=15;strokeWidth=2;" value="«component»&#xa;ImageUploadService&#xa;(bucket upload, URL)" vertex="1">
+          <mxGeometry height="70" width="160" x="390" y="790" as="geometry" />
+        </mxCell>
+        <mxCell id="svc-message" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=15;strokeWidth=2;" value="«component»&#xa;MessagingService&#xa;(send, receive, read)" vertex="1">
+          <mxGeometry height="70" width="155" x="570" y="790" as="geometry" />
+        </mxCell>
+        <mxCell id="svc-payment" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=16;strokeWidth=2;" value="«component»&#xa;PaymentService&#xa;(online, partial, shortfall)" vertex="1">
+          <mxGeometry height="70" width="160" x="745" y="790" as="geometry" />
+        </mxCell>
+        <mxCell id="svc-rating" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=16;strokeWidth=2;" value="«component»&#xa;RatingService&#xa;(submit, flag, moderate)" vertex="1">
+          <mxGeometry height="70" width="155" x="925" y="790" as="geometry" />
+        </mxCell>
+        <mxCell id="supa-client-pkg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=17;fontStyle=1;strokeWidth=3;arcSize=3;verticalAlign=top;" value="«component» Supabase Client (supabase/client.js)" vertex="1">
+          <mxGeometry height="100" width="1100" x="30" y="920" as="geometry" />
+        </mxCell>
+        <mxCell id="supa-auth-client" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=15;strokeWidth=2;" value="«artifact»&#xa;Auth Client&#xa;(VITE_SUPABASE_URL,&#xa;ANON_KEY, OAuth)" vertex="1">
+          <mxGeometry height="55" width="180" x="50" y="955" as="geometry" />
+        </mxCell>
+        <mxCell id="supa-db-client" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=14;strokeWidth=2;" value="«artifact»&#xa;Database Client&#xa;(PostgREST queries,&#xa;parameterised $1..$n)" vertex="1">
+          <mxGeometry height="55" width="190" x="260" y="955" as="geometry" />
+        </mxCell>
+        <mxCell id="supa-storage-client" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=14;strokeWidth=2;" value="«artifact»&#xa;Storage Client&#xa;(listing-images bucket,&#xa;profile-images bucket)" vertex="1">
+          <mxGeometry height="55" width="190" x="480" y="955" as="geometry" />
+        </mxCell>
+        <mxCell id="supa-realtime-client" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=14;strokeWidth=2;" value="«artifact»&#xa;Realtime Client&#xa;(WebSocket wss://,&#xa;live chat subscription)" vertex="1">
+          <mxGeometry height="55" width="190" x="700" y="955" as="geometry" />
+        </mxCell>
+        <mxCell id="supa-rls-note" parent="1" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=13;" value="«note»&#xa;RLS disabled in dev&#xa;RLS enabled in production" vertex="1">
+          <mxGeometry height="60" width="180" x="920" y="950" as="geometry" />
+        </mxCell>
+        <mxCell id="ext-supabase" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=15;fontStyle=1;strokeWidth=3;" value="«external» Supabase Cloud&#xa;(PostgreSQL, Auth, Storage, Realtime)" vertex="1">
+          <mxGeometry height="80" width="280" x="1170" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="ext-idp" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=15;fontStyle=1;strokeWidth=3;" value="«external» Identity Provider&#xa;(Auth0 / Azure AD — OAuth 2.0 / OIDC&#xa;issues provider_id → users table)" vertex="1">
+          <mxGeometry height="80" width="280" x="1170" y="400" as="geometry" />
+        </mxCell>
+        <mxCell id="ext-payment" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=14;fontStyle=1;strokeWidth=3;" value="«external» Payment Gateway&lt;br&gt;(e.g. PayPal / PayFast — Sprint 2&lt;br&gt;Online + partial + shortfall)" vertex="1">
+          <mxGeometry height="80" width="280" x="1170" y="520" as="geometry" />
+        </mxCell>
+        <mxCell id="cicd-pkg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=16;fontStyle=1;strokeWidth=3;arcSize=3;verticalAlign=top;" value="«component» CI/CD Pipeline" vertex="1">
+          <mxGeometry height="380" width="280" x="1170" y="650" as="geometry" />
+        </mxCell>
+        <mxCell id="ci-github" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=13;strokeWidth=2;" value="«component»&#xa;GitHub&#xa;(Source control, PRs,&#xa;branch strategy)" vertex="1">
+          <mxGeometry height="70" width="240" x="1185" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="ci-azure" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=13;strokeWidth=2;" value="«component»&#xa;Azure Pipelines&#xa;(azure-pipelines.yml,&#xa;ci.yml — lint, test, build)" vertex="1">
+          <mxGeometry height="70" width="240" x="1185" y="790" as="geometry" />
+        </mxCell>
+        <mxCell id="ci-vitest" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=13;strokeWidth=2;" value="«component»&#xa;Vitest&#xa;(Unit + integration tests,&#xa;coverage ≥50% gate)" vertex="1">
+          <mxGeometry height="70" width="240" x="1185" y="880" as="geometry" />
+        </mxCell>
+        <mxCell id="ci-codecov" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=13;strokeWidth=2;" value="«component»&#xa;Codecov&#xa;(Coverage reporting,&#xa;PR gating, delta check)" vertex="1">
+          <mxGeometry height="50" width="240" x="1185" y="970" as="geometry" />
+        </mxCell>
+        <mxCell id="ci-vercel" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;strokeWidth=2;" value="«component»&#xa;Vercel&#xa;(Preview per PR + Production&#xa;on main — triggered by pipeline)" vertex="1">
+          <mxGeometry height="60" width="240" x="1185" y="1040" as="geometry" />
+        </mxCell>
+        <mxCell id="e-router-sprint1" edge="1" parent="1" source="comp-router" style="endArrow=open;endFill=0;strokeColor=#b85450;strokeWidth=2;fontSize=14;fontStyle=2;dashed=1;" target="sprint1-box" value="«guards»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-router-sprint2" edge="1" parent="1" source="comp-router" style="endArrow=open;endFill=0;strokeColor=#b85450;strokeWidth=2;fontSize=10;fontStyle=2;dashed=1;" target="sprint2-box" value="«guards»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-router-sprint34" edge="1" parent="1" source="comp-router" style="endArrow=open;endFill=0;strokeColor=#b85450;strokeWidth=2;fontSize=13;fontStyle=2;dashed=1;" target="sprint34-box" value="«guards»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-auth-shared" edge="1" parent="1" source="page-auth" style="endArrow=open;endFill=0;strokeColor=#d6b656;strokeWidth=2;fontSize=14;fontStyle=2;" target="comp-shared" value="«uses»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-browse-shared" edge="1" parent="1" source="page-browse" style="endArrow=open;endFill=0;strokeColor=#d6b656;strokeWidth=2;fontSize=14;fontStyle=2;" target="comp-shared" value="«uses»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-posting-shared" edge="1" parent="1" source="page-posting" style="endArrow=open;endFill=0;strokeColor=#d6b656;strokeWidth=2;fontSize=14;fontStyle=2;" target="comp-shared" value="«uses»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-auth-svc" edge="1" parent="1" source="page-auth" style="endArrow=block;endFill=1;strokeColor=#b85450;strokeWidth=2;fontSize=16;fontStyle=2;" target="svc-auth" value="«calls»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-browse-svc" edge="1" parent="1" source="page-browse" style="endArrow=block;endFill=1;strokeColor=#b85450;strokeWidth=2;fontSize=14;fontStyle=2;" target="svc-listing" value="«calls»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-posting-svc" edge="1" parent="1" source="page-posting" style="endArrow=block;endFill=1;strokeColor=#b85450;strokeWidth=2;fontSize=14;fontStyle=2;" target="svc-listing" value="«calls»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-posting-img" edge="1" parent="1" source="page-posting" style="endArrow=block;endFill=1;strokeColor=#b85450;strokeWidth=2;fontSize=14;fontStyle=2;" target="svc-image" value="«calls»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-msg-svc" edge="1" parent="1" source="page-messaging" style="endArrow=block;endFill=1;strokeColor=#b85450;strokeWidth=2;fontSize=10;fontStyle=2;" target="svc-message" value="«calls»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-pay-svc" edge="1" parent="1" source="page-payments" style="endArrow=block;endFill=1;strokeColor=#b85450;strokeWidth=2;fontSize=10;fontStyle=2;" target="svc-payment" value="«calls»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-rating-svc" edge="1" parent="1" source="page-ratings-write" style="endArrow=block;endFill=1;strokeColor=#b85450;strokeWidth=2;fontSize=10;fontStyle=2;" target="svc-rating" value="«calls»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-svcauth-client" edge="1" parent="1" source="svc-auth" style="endArrow=block;endFill=1;strokeColor=#9673a6;strokeWidth=2;fontSize=10;fontStyle=2;" target="supa-auth-client" value="«uses»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-svclisting-client" edge="1" parent="1" source="svc-listing" style="endArrow=block;endFill=1;strokeColor=#9673a6;strokeWidth=2;fontSize=10;fontStyle=2;" target="supa-db-client" value="«uses»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-svcimage-client" edge="1" parent="1" source="svc-image" style="endArrow=block;endFill=1;strokeColor=#d6b656;strokeWidth=2;fontSize=10;fontStyle=2;" target="supa-storage-client" value="«uses»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-svcmsg-client" edge="1" parent="1" source="svc-message" style="endArrow=block;endFill=1;strokeColor=#82b366;strokeWidth=2;fontSize=10;fontStyle=2;" target="supa-realtime-client" value="«subscribes»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-svcpay-client" edge="1" parent="1" source="svc-payment" style="endArrow=block;endFill=1;strokeColor=#9673a6;strokeWidth=2;fontSize=10;fontStyle=2;" target="supa-db-client" value="«uses»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-svcrating-client" edge="1" parent="1" source="svc-rating" style="endArrow=block;endFill=1;strokeColor=#9673a6;strokeWidth=2;fontSize=10;fontStyle=2;" target="supa-db-client" value="«uses»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-client-cloud" edge="1" parent="1" source="supa-client-pkg" style="endArrow=block;endFill=1;strokeColor=#9673a6;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=bottom;" target="ext-supabase" value="«HTTPS REST API»">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1130" y="970" />
+              <mxPoint x="1310" y="970" />
+              <mxPoint x="1310" y="320" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-auth-idp" edge="1" parent="1" source="svc-auth" style="endArrow=block;endFill=1;strokeColor=#b85450;strokeWidth=2;fontSize=15;fontStyle=2;dashed=1;" target="ext-idp" value="«OAuth 2.0 delegate»">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="125" y="860" />
+              <mxPoint x="125" y="440" />
+              <mxPoint x="1170" y="440" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-pay-gw" edge="1" parent="1" source="svc-payment" style="endArrow=block;endFill=1;strokeColor=#b85450;strokeWidth=2;fontSize=15;fontStyle=2;dashed=1;" target="ext-payment" value="«HTTPS Payment API»">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="825" y="860" />
+              <mxPoint x="825" y="560" />
+              <mxPoint x="1170" y="560" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-fe-github" edge="1" parent="1" source="frontend-pkg" style="endArrow=block;endFill=1;dashed=1;strokeColor=#666666;strokeWidth=2;fontSize=10;fontStyle=2;" target="ci-github" value="«git push / PR»">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1130" y="380" />
+              <mxPoint x="1310" y="380" />
+              <mxPoint x="1310" y="735" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-gh-az" edge="1" parent="1" source="ci-github" style="endArrow=block;endFill=1;strokeColor=#666666;strokeWidth=2;fontSize=10;fontStyle=2;" target="ci-azure" value="«webhook on push/PR»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-az-vt" edge="1" parent="1" source="ci-azure" style="endArrow=block;endFill=1;strokeColor=#666666;strokeWidth=2;fontSize=10;fontStyle=2;" target="ci-vitest" value="«runs tests»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-vt-cc" edge="1" parent="1" source="ci-vitest" style="endArrow=block;endFill=1;strokeColor=#666666;strokeWidth=2;fontSize=10;fontStyle=2;" target="ci-codecov" value="«reports coverage»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-az-vercel" edge="1" parent="1" source="ci-azure" style="endArrow=block;endFill=1;strokeColor=#666666;strokeWidth=2;fontSize=10;fontStyle=2;dashed=1;" target="ci-vercel" value="«if coverage gate passes,&#xa;pipeline deploys»">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1430" y="825" />
+              <mxPoint x="1430" y="1070" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="legend-box" parent="1" style="rounded=1;fillColor=#f9f9f9;strokeColor=#666;strokeWidth=2;fontSize=19;" value="" vertex="1">
+          <mxGeometry height="100" width="1100" x="30" y="1060" as="geometry" />
+        </mxCell>
+        <mxCell id="leg-title" parent="1" style="text;html=1;fillColor=none;strokeColor=none;align=center;fontStyle=1;fontSize=17;" value="Legend" vertex="1">
+          <mxGeometry height="25" width="1100" x="30" y="1065" as="geometry" />
+        </mxCell>
+        <mxCell id="leg1" parent="1" style="text;html=1;fillColor=#dae8fc;strokeColor=none;align=center;fontSize=14;rounded=1;" value="Sprint 1 pages" vertex="1">
+          <mxGeometry height="22" width="140" x="45" y="1095" as="geometry" />
+        </mxCell>
+        <mxCell id="leg2" parent="1" style="text;html=1;fillColor=#d5e8d4;strokeColor=none;align=center;fontSize=15;rounded=1;" value="Sprint 2 pages" vertex="1">
+          <mxGeometry height="22" width="140" x="200" y="1095" as="geometry" />
+        </mxCell>
+        <mxCell id="leg3" parent="1" style="text;html=1;fillColor=#e1d5e7;strokeColor=none;align=center;fontSize=14;rounded=1;" value="Sprint 3+4 pages" vertex="1">
+          <mxGeometry height="22" width="140" x="355" y="1095" as="geometry" />
+        </mxCell>
+        <mxCell id="leg4" parent="1" style="text;html=1;fillColor=#ffe6cc;strokeColor=none;align=center;fontSize=15;rounded=1;" value="Shared Components (PR required)" vertex="1">
+          <mxGeometry height="22" width="200" x="510" y="1095" as="geometry" />
+        </mxCell>
+        <mxCell id="leg5" parent="1" style="text;html=1;fillColor=#f8cecc;strokeColor=none;align=center;fontSize=14;rounded=1;" value="Services Layer" vertex="1">
+          <mxGeometry height="22" width="140" x="725" y="1095" as="geometry" />
+        </mxCell>
+        <mxCell id="leg6" parent="1" style="text;html=1;fillColor=#e1d5e7;strokeColor=none;align=center;fontSize=15;rounded=1;" value="Supabase Client (DB, Auth, Storage, RT)" vertex="1">
+          <mxGeometry height="22" width="235" x="880" y="1095" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

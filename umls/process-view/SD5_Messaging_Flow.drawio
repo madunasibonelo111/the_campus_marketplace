@@ -1,0 +1,142 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="SD5" name="SD5 - Messaging Flow">
+    <mxGraphModel dx="1450" dy="853" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1000" math="0" shadow="1">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;fontSize=20;fontStyle=1;align=center;fillColor=none;strokeColor=none;" value="SD5 – Messaging Flow (Send, Receive &amp; Mark as Read)" vertex="1">
+          <mxGeometry height="40" width="800" x="300" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="h1" parent="1" style="shape=mxgraph.uml.actor;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=20;" value="Sender" vertex="1">
+          <mxGeometry height="80" width="80" x="60" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="h2" parent="1" style="rounded=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=20;" value="Chat UI" vertex="1">
+          <mxGeometry height="50" width="120" x="220" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="h3" parent="1" style="rounded=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=21;" value="Message Service" vertex="1">
+          <mxGeometry height="50" width="200" x="430" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="h4" parent="1" style="rounded=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=20;" value="Database" vertex="1">
+          <mxGeometry height="50" width="120" x="650" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="h5" parent="1" style="shape=mxgraph.uml.actor;fillColor=#ffe6cc;strokeColor=#d79b00;fontStyle=1;fontSize=21;" value="Receiver" vertex="1">
+          <mxGeometry height="80" width="130" x="840" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="l1" edge="1" parent="1" style="endArrow=none;dashed=1;strokeColor=#6c8ebf;strokeWidth=6;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="100" y="160" as="sourcePoint" />
+            <mxPoint x="100" y="920" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l2" edge="1" parent="1" style="endArrow=none;dashed=1;strokeColor=#82b366;strokeWidth=6;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="280" y="150" as="sourcePoint" />
+            <mxPoint x="280" y="920" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l3" edge="1" parent="1" style="endArrow=none;dashed=1;strokeColor=#d6b656;strokeWidth=7;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="495" y="150" as="sourcePoint" />
+            <mxPoint x="495" y="920" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l4" edge="1" parent="1" style="endArrow=none;dashed=1;strokeColor=#9673a6;strokeWidth=6;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="710" y="150" as="sourcePoint" />
+            <mxPoint x="710" y="920" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l5" edge="1" parent="1" style="endArrow=none;dashed=1;strokeColor=#d79b00;strokeWidth=7;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="910" y="160" as="sourcePoint" />
+            <mxPoint x="910" y="920" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="s1" edge="1" parent="1" style="endArrow=block;endFill=1;strokeColor=#6c8ebf;strokeWidth=7;fontSize=18;verticalAlign=bottom;" value="1. typeMessage(transaction_id, message_text)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="100" y="210" as="sourcePoint" />
+            <mxPoint x="280" y="210" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="s2box" parent="1" style="rounded=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=16;" value="validate not empty" vertex="1">
+          <mxGeometry height="30" width="170" x="210" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="s3" edge="1" parent="1" style="endArrow=block;endFill=1;strokeColor=#d6b656;strokeWidth=9;fontSize=16;verticalAlign=bottom;" value="2. POST /api/messages { transaction_id, sender_id, receiver_id, message_text }">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="280" y="285" as="sourcePoint" />
+            <mxPoint x="495" y="285" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="s4box" parent="1" style="rounded=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=18;" value="verify sender is buyer or seller on transaction" vertex="1">
+          <mxGeometry height="40" width="380" x="340" y="305" as="geometry" />
+        </mxCell>
+        <mxCell id="s5" edge="1" parent="1" style="endArrow=block;endFill=1;strokeColor=#9673a6;strokeWidth=9;fontSize=17;verticalAlign=bottom;" value="3. INSERT INTO messages (transaction_id, sender_id, receiver_id, message_text, sent_at)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="495" y="370" as="sourcePoint" />
+            <mxPoint x="710" y="370" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="s5r" edge="1" parent="1" style="endArrow=open;endFill=0;dashed=1;strokeColor=#9673a6;strokeWidth=7;fontSize=18;verticalAlign=bottom;" value="message_id returned">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="710" y="400" as="sourcePoint" />
+            <mxPoint x="495" y="400" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="s6" edge="1" parent="1" style="endArrow=block;endFill=1;strokeColor=#d79b00;strokeWidth=7;fontSize=20;verticalAlign=bottom;" value="4. pushNotification(receiver_id, message_preview)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="495" y="450" as="sourcePoint" />
+            <mxPoint x="910" y="450" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="s7" edge="1" parent="1" style="endArrow=block;endFill=1;strokeColor=#d79b00;strokeWidth=7;fontSize=19;verticalAlign=bottom;" value="5. openChat(transaction_id)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="910" y="510" as="sourcePoint" />
+            <mxPoint x="280" y="510" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="s8" edge="1" parent="1" style="endArrow=block;endFill=1;strokeColor=#d6b656;strokeWidth=6;fontSize=20;verticalAlign=bottom;" value="6. GET /api/messages?transaction_id=X">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="280" y="550" as="sourcePoint" />
+            <mxPoint x="495" y="550" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="s9" edge="1" parent="1" style="endArrow=block;endFill=1;strokeColor=#9673a6;strokeWidth=9;fontSize=18;verticalAlign=bottom;" value="7. SELECT * FROM messages WHERE transaction_id = $1 ORDER BY sent_at ASC">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="495" y="590" as="sourcePoint" />
+            <mxPoint x="710" y="590" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="s9r" edge="1" parent="1" style="endArrow=open;endFill=0;dashed=1;strokeColor=#9673a6;strokeWidth=9;fontSize=21;verticalAlign=top;" value="messages[ ] returned">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="710" y="620" as="sourcePoint" />
+            <mxPoint x="495" y="620" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="s10" edge="1" parent="1" style="endArrow=open;endFill=0;dashed=1;strokeColor=#d6b656;strokeWidth=8;fontSize=17;verticalAlign=bottom;" value="8. 200 OK { messages: [ ] }">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="495" y="670" as="sourcePoint" />
+            <mxPoint x="280" y="670" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="s10b" edge="1" parent="1" style="endArrow=open;endFill=0;dashed=1;strokeColor=#82b366;strokeWidth=9;fontSize=19;" value="9. Render chat thread">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="280" y="710" as="sourcePoint" />
+            <mxPoint x="910" y="710" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="s11" edge="1" parent="1" style="endArrow=block;endFill=1;strokeColor=#d6b656;strokeWidth=9;fontSize=17;verticalAlign=bottom;" value="10. PATCH /api/messages/read { transaction_id, user_id }">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="280" y="760" as="sourcePoint" />
+            <mxPoint x="495" y="760" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="s11b" edge="1" parent="1" style="endArrow=block;endFill=1;strokeColor=#9673a6;strokeWidth=9;fontSize=16;verticalAlign=top;" value="11. UPDATE messages SET is_read=true WHERE receiver_id=$1 AND transaction_id=$2">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="495" y="800" as="sourcePoint" />
+            <mxPoint x="710" y="800" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -1,0 +1,37 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="overview" name="Actor Overview">
+    <mxGraphModel dx="838" dy="567" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="800" pageHeight="600" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;" value="Campus Marketplace – Actor Overview (Generalisation)" vertex="1">
+          <mxGeometry height="40" width="600" x="100" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="system" parent="1" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];shape=mxgraph.uml.systemBoundary;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=2;verticalAlign=top;fontSize=14;fontStyle=1;" value="&lt;b&gt;Campus Marketplace System&lt;/b&gt;" vertex="1">
+          <mxGeometry height="400" width="400" x="200" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="actor_student" parent="1" style="shape=mxgraph.uml2.actor;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;fontStyle=1;" value="Student" vertex="1">
+          <mxGeometry height="90" width="70" x="50" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="actor_buyer" parent="1" style="shape=mxgraph.uml2.actor;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=14;fontStyle=1;" value="Buyer" vertex="1">
+          <mxGeometry height="90" width="70" x="50" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="actor_seller" parent="1" style="shape=mxgraph.uml2.actor;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=14;fontStyle=1;" value="Seller" vertex="1">
+          <mxGeometry height="90" width="70" x="50" y="420" as="geometry" />
+        </mxCell>
+        <mxCell id="gen_buyer_student" edge="1" parent="1" source="actor_buyer" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=0;strokeColor=#000000;strokeWidth=1.5;fontSize=12;fontStyle=2;" target="actor_student" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="gen_seller_student" edge="1" parent="1" source="actor_seller" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=0;strokeColor=#000000;strokeWidth=1.5;fontSize=12;fontStyle=2;" target="actor_student" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="actor_gateway" parent="1" style="shape=mxgraph.uml2.actor;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;" value="Payment&#xa;Gateway" vertex="1">
+          <mxGeometry height="80" width="60" x="650" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="note" parent="1" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" value="&lt;b&gt;Note:&lt;/b&gt;&lt;br&gt;Buyer and Seller are specialised roles of Student.&lt;br&gt;See separate diagrams for detailed use cases per role." vertex="1">
+          <mxGeometry height="60" width="300" x="300" y="520" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
