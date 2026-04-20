@@ -1,0 +1,132 @@
+.create-listing-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden; 
+  background: #f5f7fb;
+}
+
+.form-scroll-container {
+  flex-grow: 1;
+  overflow-y: auto; 
+  padding: 20px;  
+  display: flex;
+  flex-direction: column; 
+  align-items: center; 
+}
+
+.form-card {
+  background: white; 
+  padding: 40px;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 600px; 
+  box-shadow: 0 10px 30px rgba(11, 31, 58, 0.1); 
+  border-top: 6px solid #D4AF37; 
+  margin: 20px auto;
+  height: fit-content; 
+  display: block;
+}
+
+.input-group {
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.input-group label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: #0b1f3a;
+  font-size: 15px;
+}
+
+.input-group input, 
+.input-group select, 
+.input-group textarea {
+  width: 100%;
+  padding: 14px;
+  border: 2px solid #f1f1f1;
+  border-radius: 12px;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+  transition: all 0.3s ease;
+  background-color: #fcfdfe; 
+}
+
+
+.input-group input:focus, 
+.input-group select:focus, 
+.input-group textarea:focus {
+  outline: none;
+  border-color: #D4AF37; 
+  background-color: #ffffff;
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.2);
+}
+
+.row {
+  display: flex;
+  gap: 20px;
+}
+
+.row .input-group {
+  flex: 1;
+}
+
+
+.suggestion {
+  background: linear-gradient(135deg, #f0f7ff 0%, #fffdf0 100%);
+  padding: 15px;
+  border-radius: 12px;
+  margin-top: 15px;
+  border: 1px solid #D4AF37;
+}
+
+.suggestion strong {
+  color: #D4AF37; 
+  font-size: 16px;
+}
+
+
+.btn-post {
+  width: 100%;
+  background: #3b82f6 !important; 
+  color: white !important;
+  border: none;
+  padding: 16px;
+  border-radius: 30px;
+  font-weight: bold;
+  font-size: 18px;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: all 0.2s ease;
+}
+
+.btn-post:hover:not(:disabled) {
+  background: #0b1f3a !important; 
+  transform: translateY(-2px);
+}
+
+.btn-post:disabled {
+  background: #ccc !important;
+  cursor: not-allowed;
+}
+
+.create-listing-page .bottomNav {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  background: white;
+  padding: 20px;
+  border-top: 1px solid #eee;
+  z-index: 1000;
+}
+
+
+input[type="file"] {
+  background: #f8f9fa;
+  border: 1px dashed #D4AF37;
+  padding: 10px;
+  cursor: pointer;
+}

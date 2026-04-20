@@ -10,10 +10,10 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
- test: {
+  test: {
     globals: true,
     environment: 'jsdom',
-    setupFiles: './src/setupTests.js',
+    setupFiles: ['./src/setupTests.js'],
     css: true,
     
     alias: {
@@ -21,7 +21,7 @@ export default defineConfig({
     },
     coverage: {
       provider: 'istanbul', 
-      reporter: ['text', 'html', 'lcov'], // 🟢 Added 'lcov' here for Codecov
+      reporter: ['text', 'html', 'lcov'], //  Added 'lcov' here for Codecov
       all: true,
       include: ['src/**/*.{js,jsx}'],
       exclude: [
@@ -32,7 +32,7 @@ export default defineConfig({
         '**/*.test.jsx'
       ],
       thresholds: {
-        lines: 20, 
+        lines: 20, //
       }
     },
   },

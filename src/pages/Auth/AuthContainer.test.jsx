@@ -41,7 +41,8 @@ describe('AuthContainer UI Logic', () => {
     renderStuff();
 
     // find the register button in the sliding panel
-    const registerBtn = screen.getByRole('button', { name: /Register/i });
+    const togglePanel = screen.getByText(/Hello, Welcome!/i).closest('.toggle-panel');
+    const registerBtn = within(togglePanel).getByRole('button', { name: /Register/i });
     
     act(() => {
       fireEvent.click(registerBtn);
@@ -55,22 +56,23 @@ describe('AuthContainer UI Logic', () => {
   it('can toggle back to login after you clicked register', () => {
     renderStuff();
 
-    const registerBtn = screen.getByRole('button', { name: /Register/i });
+    // 1. Get the left panel to click Register
+    let togglePanel = screen.getByText(/Hello, Welcome!/i).closest('.toggle-panel');
+    const registerBtn = within(togglePanel).getByRole('button', { name: /Register/i });
     
     act(() => {
       fireEvent.click(registerBtn);
     });
 
-
-
-    const togglePanel = screen.getByText(/Welcome Back!/i).closest('.toggle-panel');
+    // 2. Now get the right panel to click Login
+    togglePanel = screen.getByText(/Welcome Back!/i).closest('.toggle-panel');
     const loginToggleBtn = within(togglePanel).getByRole('button', { name: /Login/i });
 
     act(() => {
       fireEvent.click(loginToggleBtn);
     });
 
-    // active class should be gone now
+    // 3. Verify the 'active' class is removed
     const mainBox = screen.getByText(/Hello, Welcome!/i).closest('.container');
     expect(mainBox).not.toHaveClass('active');
   });
