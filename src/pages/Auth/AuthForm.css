@@ -83,9 +83,8 @@ form{
     right: 50%;
 }
 
-/* Fix the massive spacing on the password rules */
-.form-box.register div p {
-    margin: 2px 0;
+.form-box.register{
+    visibility: hidden;
 }
 
 .container.active .form-box.register{
@@ -94,7 +93,7 @@ form{
 
 .input-box{
     position: relative;
-    margin: 12px 0;
+    margin: 30px 0;
 }
 
 .input-box input{
