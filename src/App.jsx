@@ -14,10 +14,39 @@ import Messaging from "./pages/Messaging/Messaging";
 import PaymentForm from "./pages/Payments/PaymentForm";
 import TransactionHistory from "./pages/Profile/TransactionHistory";
 import "./App.css";
+import Reviews from './pages/Profile/Reviews'; 
 
 
 function ItemDetailView({ selectedItem, setSelectedItem, currentUser }) {
   const navigate = useNavigate();
+  const [avgRating, setAvgRating] = useState("No ratings");
+
+  // Fetch Seller Rating
+  useEffect(() => {
+    const fetchSellerRating = async () => {
+      if (!selectedItem?.user_id) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('ratings')
+          .select('score')
+          .eq('reviewee_id', selectedItem.user_id);
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          const total = data.reduce((sum, r) => sum + r.score, 0);
+          setAvgRating((total / data.length).toFixed(1));
+        } else {
+          setAvgRating("No ratings");
+        }
+      } catch (err) {
+        console.error("Error fetching rating:", err);
+        setAvgRating("No ratings");
+      }
+    };
+    fetchSellerRating();
+  }, [selectedItem]);
 
   const handleDeleteListing = async (listingId) => {
     if (!window.confirm("Are you sure you want to remove this listing?")) return;
@@ -34,6 +63,8 @@ function ItemDetailView({ selectedItem, setSelectedItem, currentUser }) {
     }
   };
 
+  if (!selectedItem) return null;
+
   return (
     <div className="detail-overlay">
       <div className="detail-card">
@@ -48,7 +79,6 @@ function ItemDetailView({ selectedItem, setSelectedItem, currentUser }) {
         </div>
 
         <div className="detail-grid">
-          
           <div className="detail-visuals">
             <div className="image-container-main">
               <img src={selectedItem.image} alt={selectedItem.title} />
@@ -75,12 +105,28 @@ function ItemDetailView({ selectedItem, setSelectedItem, currentUser }) {
 
               <div className="perks-grid">
                 <div className="perk-item">
-                  <div className="perk-icon">👤</div>
-                  <div className="perk-text">
-                    <small>Seller</small>
-                    <span>{selectedItem.profiles?.name || "Verified Student"}</span>
-                  </div>
+                <div className="perk-icon">👤</div>
+                <div className="perk-text">
+                  <small>Seller</small>
+                  <span 
+                    onClick={() => navigate(`/reviews/${selectedItem.user_id}`)}
+                    style={{ 
+                      cursor: 'pointer', 
+                      display: 'flex', 
+                      alignItems: 'center',
+                      color: '#1e3a8a', // Using your theme blue
+                      textDecoration: 'underline',
+                      textUnderlineOffset: '4px'
+                    }}
+                    title="View seller reviews"
+                  >
+                    {selectedItem.profiles?.name || "Verified Student"} 
+                    <b style={{ color: "#f39c12", marginLeft: "10px", textDecoration: 'none' }}>
+                      ⭐ {avgRating}
+                    </b>
+                  </span>
                 </div>
+              </div>
 
                 <div className="perk-item">
                   <div className="perk-icon">📍</div>
@@ -91,22 +137,10 @@ function ItemDetailView({ selectedItem, setSelectedItem, currentUser }) {
                 </div>
 
                 <div className="perk-item">
-                  <div className="perk-icon">🛡️</div>
-                  <div className="perk-text">
-                    <small>Safety</small>
-                    <span>Verified listing</span>
-                  </div>
-                </div>
-
-                <div className="perk-item">
                   <div className="perk-icon">📦</div>
                   <div className="perk-text">
                     <small>Deal Type</small>
-                    <span>
-                      {selectedItem.listing_type === 'either' 
-                        ? "Sale or Trade" 
-                        : selectedItem.listing_type}
-                    </span>
+                    <span>{selectedItem.listing_type}</span>
                   </div>
                 </div>
               </div>
@@ -129,7 +163,6 @@ function ItemDetailView({ selectedItem, setSelectedItem, currentUser }) {
     </div>
   );
 }
-
 
 function App() {
   const [selectedItem, setSelectedItem] = useState(null);
@@ -165,6 +198,7 @@ function App() {
         <Route path="/email-confirmed" element={<EmailConfirmed />} />
         <Route path="/payment" element={<PaymentForm />} />
         <Route path="/history" element={<TransactionHistory />} />
+        <Route path="/reviews/:sellerId" element={<Reviews />} />
         
         {/* Protected Browse Route */}
         <Route

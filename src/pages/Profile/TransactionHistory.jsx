@@ -31,49 +31,50 @@ export default function TransactionHistory() {
       console.log("Fetching transactions for user:", userId);
       
       // Fetch transactions where user is buyer or seller
-      const { data, error } = await supabase
-        .from('transactions')
-        .select(`
-          id,
-          listing_id,
-          buyer_id,
-          seller_id,
-          type,
-          status,
-          created_at,
-          updated_at,
-          offer_amount,
-          offer_status,
-          trade_item_description,
-          completed_at,
-          accepted_at,
-          listings:listing_id (
-            id,
-            title,
-            description,
-            price,
-            condition,
-            listing_type,
-            listing_images (
-              image_url,
-              display_order
-            )
-          ),
-          payments:payments (
-            id,
-            amount,
-            method,
-            status,
-            shortfall_amount,
-            reference,
-            paid_at,
-            created_at,
-            gateway_transaction_id,
-            payment_reference
-          )
-        `)
-        .or(`buyer_id.eq.${userId},seller_id.eq.${userId}`)
-        .order('created_at', { ascending: false });
+     
+  const { data, error } = await supabase
+    .from('transactions')
+    .select(`
+      id,
+      listing_id,
+      buyer_id,
+      seller_id,
+      type,
+      status,
+      created_at,
+      updated_at,
+      offer_amount,
+      offer_status,
+      trade_item_description,
+      completed_at,
+      accepted_at,
+    
+      seller:seller_id ( id, user_id, name ),
+      buyer:buyer_id ( id, user_id, name ),
+      listings:listing_id (
+        id,
+        title,
+        description,
+        price,
+        condition,
+        listing_type,
+        listing_images (
+          image_url,
+          display_order
+        )
+      ),
+      payments:payments (
+        id,
+        amount,
+        method,
+        status,
+        shortfall_amount,
+        paid_at,
+        created_at
+      )
+    `)
+    .or(`buyer_id.eq.${userId},seller_id.eq.${userId}`)
+    .order('created_at', { ascending: false });
       
       if (error) {
         console.error("Fetch error:", error);
@@ -85,6 +86,8 @@ export default function TransactionHistory() {
       const formatted = (data || []).map(t => {
         const isBuyer = t.buyer_id === userId;
         const listing = t.listings;
+
+        const otherPartyName = isBuyer ? t.seller?.name : t.buyer?.name;
         
         // Calculate total amount from listing price or offer amount
         const totalAmount = t.offer_amount || listing?.price || 0;
@@ -99,6 +102,9 @@ export default function TransactionHistory() {
         
         return {
           id: t.id,
+          otherPartyName: otherPartyName || "Campus User",
+         seller_user_id: t.seller?.user_id, 
+         buyer_id: t.buyer_id,
           type: isBuyer ? 'buy' : 'sell',
           listingType: t.type || 'purchase',
           item: listing?.title || 'Unknown Item',
@@ -206,7 +212,7 @@ export default function TransactionHistory() {
     navigate("/payment", {
       state: {
         transaction: {
-          id: transaction.transactionId,
+          id: transaction.id,
           amount: transaction.amount
         },
         totalAmount: transaction.remainingBalance,
@@ -258,7 +264,23 @@ export default function TransactionHistory() {
 
   return (
     <div className="history-page-container">
+
+      <div className="history-nav-header">
+        <button 
+          onClick={() => navigate('/basket')} 
+          className="back-btn-pill" 
+          style={{ 
+            
+            padding: '10px 24px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)' 
+          }}
+        >
+          ← Back to Shop
+        </button>
+      </div>
+
       <div className="history-container">
+        
         <div className="history-header">
           <h1 className="history-title">Transaction History</h1>
           <p className="history-subtitle">Track all your purchases, sales, trades, and partial payments</p>
@@ -438,6 +460,8 @@ export default function TransactionHistory() {
                     >
                       {getStatusLabel(transaction.status)}
                     </div>
+
+
                     {transaction.paymentStatus && (
                       <div 
                         className="payment-status"
@@ -451,6 +475,30 @@ export default function TransactionHistory() {
                         Partial Payment
                       </div>
                     )}
+                      {transaction.status === 'completed' && transaction.type === 'buy' && (
+                        <button 
+                          className="rate-btn-small" 
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            navigate(`/reviews/${transaction.seller_user_id}?tid=${transaction.id}`);
+                          }}
+                          style={{ 
+                            background: '#f39c12', 
+                            color: 'white', 
+                            border: 'none', 
+                            borderRadius: '4px', 
+                            padding: '6px 10px', 
+                            fontSize: '12px', 
+                            marginTop: '8px', 
+                            cursor: 'pointer',
+                            fontWeight: 'bold',
+                            width: 'fit-content'
+                          }}
+                        >
+                          ⭐ Rate Seller
+                        </button>
+                        )}
+
                   </div>
                 </div>
               ))}
@@ -464,13 +512,15 @@ export default function TransactionHistory() {
         <div className="modal-overlay" onClick={() => setSelectedTransaction(null)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <h2>Transaction Details</h2>
+
+
             
             <div className="detail-row">
-              <strong>Item:</strong> {selectedTransaction.item}
+              <strong>{selectedTransaction.type === 'buy' ? 'Seller' : 'Buyer'}:</strong> {selectedTransaction.otherPartyName}
             </div>
             
             <div className="detail-row">
-              <strong>Type:</strong> {getTypeLabel(selectedTransaction.type, selectedTransaction.listingType)}
+              <strong>Item:</strong> {selectedTransaction.item}
             </div>
             
             <div className="detail-row">
@@ -560,6 +610,18 @@ export default function TransactionHistory() {
             </div>
             
             <div className="modal-actions-buttons">
+
+              {selectedTransaction.status === 'completed' && selectedTransaction.type === 'buy' && (
+                <button 
+                  className="complete-payment-modal-btn" 
+                  style={{ backgroundColor: '#f39c12' }}
+                  onClick={() => navigate(`/reviews/${selectedTransaction.seller_user_id}?tid=${selectedTransaction.id}`)}
+                >
+                    ⭐ Rate Seller
+                </button>
+              )}
+
+
               {hasOutstandingShortfall(selectedTransaction) && (
                 <button 
                   className="complete-payment-modal-btn"

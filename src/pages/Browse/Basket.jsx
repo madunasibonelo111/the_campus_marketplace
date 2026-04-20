@@ -26,7 +26,7 @@ const fetchListings = async () => {
   try {
     const { data, error } = await supabase.from("listings").select(`
       id, title, price, description, condition, category_id, user_id, status, listing_type,
-      profiles ( full_name ), categories ( name ),
+      profiles ( name ), categories ( name ),
       listing_images ( image_url, display_order )
     `);
 
@@ -119,7 +119,7 @@ const fetchListings = async () => {
         throw userFetchError;
       }
       
-      // Create transaction - offer_status can be NULL after SQL change
+      
       const { data: transaction, error: transactionError } = await supabase
         .from('transactions')
         .insert({
@@ -243,7 +243,7 @@ const fetchListings = async () => {
             return (
               <div key={item.id} className="card">
                 <div style={{ position: 'relative' }}>
-                  <img src={item.image} onClick={() => !isSold && onViewListing(item)} alt="" />
+                  <img src={item.image} onClick={() => onViewListing(item)} alt="" />
                   {isSold && <div className="sold-overlay">SOLD</div>}
                 </div>
                 <h3>{item.title}</h3>

@@ -3,7 +3,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { describe, it, expect, vi } from 'vitest';
 import Messaging from './Messaging.jsx';
 
-// MOCK SUPABASE
+
 vi.mock('@/supabase/supabaseClient', () => {
   const mockUser = { id: 'amy-123' };
 
@@ -33,7 +33,7 @@ vi.mock('@/supabase/supabaseClient', () => {
     }
   ];
 
-  //  Flexible chain mock
+
   const chain = (data) => ({
     select: () => chain(data),
     eq: () => chain(data),
@@ -77,20 +77,20 @@ describe('Messaging Page', () => {
       );
     });
 
-    // ✅ Listing appears
+   
     const listing = await screen.findByText(/Mirror/i);
     expect(listing).toBeInTheDocument();
 
-    // ✅ Click listing
+   
     await act(async () => {
       fireEvent.click(listing);
     });
 
-    // ✅ Message appears
+   
     const message = await screen.findByText(/Is the mirror available/i);
     expect(message).toBeInTheDocument();
 
-    // ✅ Date grouping appears
+    
     const date = await screen.findByText(/Sunday/i);
     expect(date).toBeInTheDocument();
   });

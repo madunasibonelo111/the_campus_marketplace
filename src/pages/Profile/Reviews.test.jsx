@@ -1,95 +1,93 @@
 import { render, screen, act } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
 import Reviews from './Reviews.jsx';
 
-// mock alert (just in case)
 global.alert = vi.fn();
 
-// mock supabase
+
 vi.mock('@/supabase/supabaseClient', () => ({
   supabase: {
     from: vi.fn((table) => {
-
-      // 🔹 profiles mock
       if (table === 'profiles') {
         return {
           select: vi.fn(() =>
             Promise.resolve({
               data: [
-                { id: '1', name: 'Alice' },
-                { id: '2', name: 'Bob' },
+                { id: '1', user_id: 'user-1', name: 'Alice' }, // ✅ Added user_id
+                { id: '2', user_id: 'user-2', name: 'Bob' },
               ],
               error: null,
             })
           ),
         };
       }
-
-      // 🔹 ratings mock
       if (table === 'ratings') {
         return {
           select: vi.fn(() =>
             Promise.resolve({
               data: [
-                { reviewee_id: '1', score: 5, comment: 'Great seller!' },
-                { reviewee_id: '1', score: 4, comment: 'Smooth deal' },
+                { reviewee_id: 'user-1', score: 5, comment: 'Great seller!' },
+                { reviewee_id: 'user-1', score: 4, comment: 'Smooth deal' },
               ],
               error: null,
             })
           ),
         };
       }
-
-      return {
-        select: vi.fn(() => Promise.resolve({ data: [], error: null })),
-      };
+      return { select: vi.fn(() => Promise.resolve({ data: [], error: null })) };
     }),
+    auth: {
+      getUser: vi.fn(() => Promise.resolve({ data: { user: { id: 'test-user' } } }))
+    }
   },
 }));
 
 describe('Reviews Page', () => {
 
-  it('renders page title', async () => {
+  it('renders modern page title', async () => {
     await act(async () => {
-      render(<Reviews />);
+      render(
+        <MemoryRouter>
+          <Reviews />
+        </MemoryRouter>
+      );
     });
-
-    expect(screen.getByText(/Seller Reviews/i)).toBeInTheDocument();
+    
+    expect(screen.getByText(/What Our/i)).toBeInTheDocument();
+    expect(screen.getByText(/Students/i)).toBeInTheDocument();
   });
 
   it('renders all users from profiles', async () => {
     await act(async () => {
-      render(<Reviews />);
+      render(<MemoryRouter><Reviews /></MemoryRouter>);
     });
-
     expect(await screen.findByText('Alice')).toBeInTheDocument();
     expect(await screen.findByText('Bob')).toBeInTheDocument();
   });
 
   it('shows average rating for users with reviews', async () => {
     await act(async () => {
-      render(<Reviews />);
+      render(<MemoryRouter><Reviews /></MemoryRouter>);
     });
-
-    // Alice has 5 and 4 → avg = 4.5
-    expect(await screen.findByText(/⭐ 4.5 \(2\)/i)).toBeInTheDocument();
+    
+    expect(await screen.findByText('4.5')).toBeInTheDocument();
+    expect(await screen.findByText(/2 reviews/i)).toBeInTheDocument();
   });
 
   it('shows latest comment', async () => {
     await act(async () => {
-      render(<Reviews />);
+      render(<MemoryRouter><Reviews /></MemoryRouter>);
     });
-
-    expect(await screen.findByText(/Smooth deal/i)).toBeInTheDocument();
+    
+    expect(await screen.findByText(/"Smooth deal"/i)).toBeInTheDocument();
   });
 
-  it('shows "No reviews yet" for users without ratings', async () => {
+  it('shows default text for users without ratings', async () => {
     await act(async () => {
-      render(<Reviews />);
+      render(<MemoryRouter><Reviews /></MemoryRouter>);
     });
-
-    // Bob has no ratings
-    expect(await screen.findByText(/No reviews yet/i)).toBeInTheDocument();
+    
+    expect(await screen.findByText(/No specific feedback/i)).toBeInTheDocument();
   });
-
 });

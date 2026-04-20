@@ -103,7 +103,7 @@ export default function Messaging() {
     setConversation(convo);
     await loadMessages(convo.id);
 
-    // ✅ UPDATED AUTO MESSAGE (WITH ITEM NAME)
+   
     const isTradeRequest = searchParams.get("trade");
 
     if (isTradeRequest && !autoMessageSent) {

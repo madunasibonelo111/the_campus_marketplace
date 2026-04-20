@@ -1,30 +1,28 @@
 .history-page-container {
+
+  padding: 40px 20px !important; 
+  display: flex;
+  flex-direction: column;
+  position: relative; 
+  background-color: #f4f7fe;
   min-height: 100vh;
-  background: #f5f7fa;
-  padding: 40px 20px;
+
+  margin-top: 60px; 
 }
 
-.history-container {
-  max-width: 1200px;
-  margin: 0 auto;
+.history-nav-header {
+  position: absolute;
+  top: 20px; 
+  left: 20px;
+  z-index: 1000; 
 }
 
 .history-header {
   text-align: center;
-  margin-bottom: 40px;
+  margin-top: 40px; 
+  margin-bottom: 50px;
+  width: 100%;
 }
-
-.history-title {
-  font-size: 36px;
-  color: #333;
-  margin-bottom: 10px;
-}
-
-.history-subtitle {
-  color: #666;
-  font-size: 14px;
-}
-
 .history-stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
