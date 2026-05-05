@@ -6,7 +6,7 @@ Built as part of the 2026 Software Design Project at the University of the Witwa
 Developed using **Agile Scrum methodology** to provide a secure, localized commerce hub for students.
 
 ## 🚀 Live Deployment
-* **Production App URL:** [https://campus-market-live-d4afewc6edeya9gn.uaenorth-01.azurewebsites.net/]
+* **Production App URL:** [campus-market-live-d4afewc6edeya9gn.uaenorth-01.azurewebsites.net]
 * **GitHub Repository:** [https://github.com/madunasibonelo111/the_campus_marketplace]
 
 ## 📖 About the Project
