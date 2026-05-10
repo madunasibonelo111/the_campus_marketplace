@@ -1,161 +1,361 @@
-import React, { useEffect, useState } from "react";
-import { useParams, useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/supabase/supabaseClient";
-import "./Reviews.css";
 
-export default function Reviews() {
+export default function SellerReviewsPage() {
+  const { sellerId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { sellerId: urlSellerId } = useParams();
-  const [profiles, setProfiles] = useState([]);
+
+  // Check if we are here to leave a review
+  const queryParams = new URLSearchParams(location.search);
+  const isRatingAction = queryParams.get("action") === "rate";
+
+  // Data State
+  const [reviews, setReviews] = useState([]);
+  const [sellerName, setSellerName] = useState("");
   const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  // Review Form State
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
+    const initPage = async () => {
       setLoading(true);
-      
-      const { data: profilesData } = await supabase
-        .from("profiles")
-        .select("id, user_id, name");
 
-      const { data: ratingsData } = await supabase
-        .from("ratings")
-        .select("reviewee_id, score, comment");
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-      if (!profilesData) return;
+      setCurrentUser(user);
 
-      const ratingsMap = {};
-      (ratingsData || []).forEach(r => {
-        if (!ratingsMap[r.reviewee_id]) {
-          ratingsMap[r.reviewee_id] = [];
-        }
-        ratingsMap[r.reviewee_id].push(r);
-      });
+      await fetchSellerAndReviews();
 
-      const merged = profilesData.map(profile => {
-        const userRatings = ratingsMap[profile.user_id] || [];
-        const scores = userRatings.map(r => r.score);
-        const avgRating = scores.length
-          ? (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1)
-          : null;
-
-        return {
-          ...profile,
-          avgRating,
-          reviewCount: scores.length,
-          latestComment: userRatings[userRatings.length - 1]?.comment || null
-        };
-      });
-
-      setProfiles(merged);
-    } catch (err) {
-      console.error("Error fetching ratings:", err);
-    } finally {
       setLoading(false);
-    } 
-  };
+    };
 
-  const submitRating = async (clickedId) => {
-    const { data: { user } } = await supabase.auth.getUser();
+    initPage();
+  }, [sellerId]);
 
-    if (!user) {
-      alert("You must be logged in to leave a review.");
-      return;
-    }
-
-    const targetId = urlSellerId || clickedId;
-
-    if (user.id === targetId) {
-      alert("You cannot rate your own listing! Please test with a transaction from a different seller.");
-      return;
-    }
-
-    const scoreInput = prompt("Enter rating (1-5):");
-    const comment = prompt("Enter a comment:");
-    
-    const queryParams = new URLSearchParams(location.search);
-    const transactionId = queryParams.get('tid')?.toString();
-
-    const score = parseInt(scoreInput);
-    if (isNaN(score) || score < 1 || score > 5) {
-      alert("Please enter a valid rating between 1 and 5.");
-      return;
-    }
-
-    if (!targetId || !transactionId || !user.id) {
-      alert("Error: Missing transaction or user data. Please try again from the History page.");
-      return;
-    }
-
+  const fetchSellerAndReviews = async () => {
     try {
-      const { error } = await supabase
-        .from('ratings')
-        .insert({
-          reviewee_id: targetId,
-          reviewer_id: user.id,
-          score: score,
-          comment: comment,
-          transaction_id: transactionId
-        });
+      // Fetch seller profile
+      const { data: sellerProfile, error: sellerError } = await supabase
+        .from("profiles")
+        .select("name")
+        .eq("id", sellerId)
+        .single();
+
+      if (sellerError) throw sellerError;
+
+      if (sellerProfile) {
+        setSellerName(sellerProfile.name);
+      }
+
+      // Fetch ratings
+      const { data, error } = await supabase
+        .from("ratings")
+        .select("*")
+        .eq("reviewee_id", sellerId)
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
-      
-      alert("Rating submitted!");
-      fetchData(); 
-    } catch (error) {
-      alert("Error: " + error.message);
+
+      setReviews(data || []);
+    } catch (err) {
+      console.error("Error fetching reviews:", err.message);
     }
   };
 
-  if (loading) return <div className="reviews-loading">Loading testimonials...</div>;
+  const handleSubmitReview = async () => {
+    if (!rating) {
+      alert("Please select a star rating");
+      return;
+    }
+
+    if (!currentUser) {
+      navigate("/auth");
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      // Prevent duplicate review
+      const { data: existingReview } = await supabase
+        .from("ratings")
+        .select("id")
+        .eq("reviewer_id", currentUser.id)
+        .eq("reviewee_id", sellerId)
+        .maybeSingle();
+
+      if (existingReview) {
+        alert("You have already reviewed this seller.");
+        navigate(`/reviews/${sellerId}`);
+        return;
+      }
+
+      // Insert rating
+      const { error } = await supabase.from("ratings").insert([
+        {
+          reviewer_id: currentUser.id,
+          reviewee_id: sellerId,
+          score: rating,
+          comment: comment.trim(),
+        },
+      ]);
+
+      if (error) throw error;
+
+      alert("Review submitted!");
+
+      // Reset form
+      setRating(0);
+      setComment("");
+
+      // Refresh reviews instantly
+      await fetchSellerAndReviews();
+
+      // Return to normal view mode
+      navigate(`/reviews/${sellerId}`);
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Average Rating
+  const averageRating =
+    reviews.length > 0
+      ? (
+          reviews.reduce(
+            (sum, r) => sum + Number(r.score || 0),
+            0
+          ) / reviews.length
+        ).toFixed(1)
+      : "0.0";
+
+  if (loading) {
+    return (
+      <div style={{ padding: "40px" }}>
+        <h2>Loading...</h2>
+      </div>
+    );
+  }
 
   return (
-    <div className="reviews-page">
-      <div className="reviews-header-section">
-        
-        <button onClick={() => navigate('/basket')} className="back-to-shop-btn">
-          ← Back to Shop
-        </button>
-        <p className="testimonials-label">TESTIMONIALS</p>
-        <h1 className="reviews-main-title">What Our <span>Students</span> Have to Say</h1>
-      </div>
+    <div
+      style={{
+        maxWidth: "800px",
+        margin: "40px auto",
+        padding: "20px",
+      }}
+    >
+      <button onClick={() => navigate(-1)} style={styles.backBtn}>
+        ← Back
+      </button>
 
-      <div className="reviews-grid">
-        {profiles.map(profile => (
-          <div 
-            key={profile.id} 
-            className="review-card-modern"
-            onClick={() => submitRating(profile.user_id)}
-          >
-            <div className="card-stars">
-              {"⭐".repeat(Math.round(profile.avgRating || 0)) || "⭐"}
-              <span className="avg-num">{profile.avgRating || "0.0"}</span>
+      {/* Seller Header */}
+      <div style={styles.card}>
+        <h1>{sellerName || "Seller"} Reviews</h1>
+
+        <div style={styles.statsRow}>
+          <div style={styles.avgScore}>{averageRating}★</div>
+
+          <div>
+            <div style={{ fontWeight: "bold" }}>
+              {reviews.length} Total Reviews
             </div>
 
-            <h3 className="review-title">
-              {profile.avgRating >= 4 ? "Highly Recommended!" : "Campus Seller"}
-            </h3>
-
-            <p className="review-text-body">
-              {profile.latestComment ? `"${profile.latestComment}"` : "No specific feedback left for this student yet."}
-            </p>
-
-            <div className="reviewer-info">
-              <div className="reviewer-avatar">
-                {profile.name?.charAt(0) || "S"}
-              </div>
-              <div className="reviewer-details">
-                <span className="reviewer-name">{profile.name || "Verified Student"}</span>
-                <span className="reviewer-status">Satisfied Peer • {profile.reviewCount} reviews</span>
-              </div>
+            <div style={{ color: "#666" }}>
+              Verified marketplace feedback
             </div>
           </div>
-        ))}
+        </div>
+
+        {/* Leave Review Button */}
+        {!isRatingAction && currentUser && (
+          <button
+            style={styles.leaveReviewBtn}
+            onClick={() =>
+              navigate(`/reviews/${sellerId}?action=rate`)
+            }
+          >
+            Leave a Review
+          </button>
+        )}
+      </div>
+
+      {/* Review Form */}
+      {isRatingAction && (
+        <div
+          style={{
+            ...styles.card,
+            border: "2px solid #f39c12",
+          }}
+        >
+          <h3>Leave a Review</h3>
+
+          <div style={{ marginBottom: "15px" }}>
+            {[1, 2, 3, 4, 5].map((star) => (
+              <span
+                key={star}
+                onClick={() => setRating(star)}
+                style={{
+                  ...styles.star,
+                  color: star <= rating ? "#f39c12" : "#ccc",
+                }}
+              >
+                ★
+              </span>
+            ))}
+          </div>
+
+          <textarea
+            style={styles.textarea}
+            placeholder="Describe your experience..."
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            rows={4}
+          />
+
+          <button
+            onClick={handleSubmitReview}
+            disabled={submitting}
+            style={{
+              ...styles.submitBtn,
+              background: submitting ? "#ccc" : "#f39c12",
+            }}
+          >
+            {submitting ? "Submitting..." : "Post Review"}
+          </button>
+        </div>
+      )}
+
+      {/* Reviews List */}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "16px",
+        }}
+      >
+        {reviews.length === 0 ? (
+          <div style={{ ...styles.card, textAlign: "center" }}>
+            No reviews yet.
+          </div>
+        ) : (
+          reviews.map((r) => (
+            <div key={r.id} style={styles.card}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                }}
+              >
+                <div
+                  style={{
+                    color: "#f39c12",
+                    fontSize: "20px",
+                  }}
+                >
+                  {"★".repeat(r.score)}
+                </div>
+
+                <div
+                  style={{
+                    color: "#888",
+                    fontSize: "12px",
+                  }}
+                >
+                  {new Date(r.created_at).toLocaleDateString()}
+                </div>
+              </div>
+
+              <p
+                style={{
+                  marginTop: "10px",
+                  lineHeight: "1.5",
+                }}
+              >
+                {r.comment || "No comment provided."}
+              </p>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
 }
+
+const styles = {
+  card: {
+    background: "white",
+    padding: "20px",
+    borderRadius: "12px",
+    border: "1px solid #ddd",
+    marginBottom: "20px",
+  },
+
+  backBtn: {
+    marginBottom: "20px",
+    border: "none",
+    background: "#eee",
+    padding: "8px 16px",
+    borderRadius: "6px",
+    cursor: "pointer",
+  },
+
+  avgScore: {
+    fontSize: "42px",
+    fontWeight: "bold",
+    color: "#f39c12",
+  },
+
+  statsRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: "20px",
+    marginTop: "10px",
+  },
+
+  leaveReviewBtn: {
+    marginTop: "20px",
+    padding: "10px 18px",
+    border: "none",
+    borderRadius: "8px",
+    background: "#f39c12",
+    color: "white",
+    fontWeight: "bold",
+    cursor: "pointer",
+  },
+
+  star: {
+    fontSize: "32px",
+    cursor: "pointer",
+    marginRight: "5px",
+  },
+
+  textarea: {
+    width: "100%",
+    padding: "10px",
+    borderRadius: "8px",
+    border: "1px solid #ccc",
+    boxSizing: "border-box",
+  },
+
+  submitBtn: {
+    marginTop: "15px",
+    width: "100%",
+    padding: "12px",
+    color: "white",
+    border: "none",
+    borderRadius: "8px",
+    cursor: "pointer",
+    fontWeight: "bold",
+  },
+};

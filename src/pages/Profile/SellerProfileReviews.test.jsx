@@ -1,4 +1,3 @@
-// src/pages/Profile/Reviews.test.jsx
 
 import React from "react";
 import {
@@ -22,25 +21,23 @@ import {
   Route,
 } from "react-router-dom";
 
-// ---------------- MOCKS ----------------
-
-// IMPORTANT:
-// define ALL mocks INSIDE vi.hoisted()
-// to avoid "Cannot access before initialization"
+// ---------------- HOISTED MOCKS ----------------
 
 const {
   mockNavigate,
   mockGetUser,
-  mockSingle,
-  mockOrder,
-} = vi.hoisted(() => {
-  return {
-    mockNavigate: vi.fn(),
-    mockGetUser: vi.fn(),
-    mockSingle: vi.fn(),
-    mockOrder: vi.fn(),
-  };
-});
+  mockProfilesSingle,
+  mockRatingsOrder,
+  mockProfilesIn,
+} = vi.hoisted(() => ({
+  mockNavigate: vi.fn(),
+  mockGetUser: vi.fn(),
+  mockProfilesSingle: vi.fn(),
+  mockRatingsOrder: vi.fn(),
+  mockProfilesIn: vi.fn(),
+}));
+
+// ---------------- SUPABASE MOCK ----------------
 
 vi.mock("@/supabase/supabaseClient", () => ({
   supabase: {
@@ -49,23 +46,39 @@ vi.mock("@/supabase/supabaseClient", () => ({
     },
 
     from: vi.fn((table) => {
+      // profiles table
       if (table === "profiles") {
         return {
-          select: () => ({
-            eq: () => ({
-              single: mockSingle,
-            }),
+          select: vi.fn((query) => {
+            // seller profile fetch
+            if (query === "name") {
+              return {
+                eq: vi.fn(() => ({
+                  single: mockProfilesSingle,
+                })),
+              };
+            }
+
+            // reviewer profiles fetch
+            if (query === "id, name") {
+              return {
+                in: mockProfilesIn,
+              };
+            }
+
+            return {};
           }),
         };
       }
 
+      // ratings table
       if (table === "ratings") {
         return {
-          select: () => ({
-            eq: () => ({
-              order: mockOrder,
-            }),
-          }),
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              order: mockRatingsOrder,
+            })),
+          })),
         };
       }
 
@@ -73,6 +86,8 @@ vi.mock("@/supabase/supabaseClient", () => ({
     }),
   },
 }));
+
+// ---------------- ROUTER MOCK ----------------
 
 vi.mock("react-router-dom", async () => {
   const actual = await vi.importActual(
@@ -86,28 +101,28 @@ vi.mock("react-router-dom", async () => {
 });
 
 // import AFTER mocks
-import SellerReviewsPage from "./SellerProfileReviews";
+import SellerProfileReviews from "./SellerProfileReviews";
 
 // ---------------- RENDER HELPER ----------------
 
-const renderComponent = (
+function renderComponent(
   initialRoute = "/reviews/seller-1"
-) => {
+) {
   return render(
     <MemoryRouter initialEntries={[initialRoute]}>
       <Routes>
         <Route
           path="/reviews/:sellerId"
-          element={<SellerReviewsPage />}
+          element={<SellerProfileReviews />}
         />
       </Routes>
     </MemoryRouter>
   );
-};
+}
 
 // ---------------- TESTS ----------------
 
-describe("SellerReviewsPage", () => {
+describe("SellerProfileReviews", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
@@ -119,20 +134,31 @@ describe("SellerReviewsPage", () => {
       },
     });
 
-    mockSingle.mockResolvedValue({
+    mockProfilesSingle.mockResolvedValue({
       data: {
         name: "John Seller",
       },
       error: null,
     });
 
-    mockOrder.mockResolvedValue({
+    mockRatingsOrder.mockResolvedValue({
       data: [
         {
           id: 1,
+          reviewer_id: "reviewer-1",
           score: 5,
           comment: "Amazing seller!",
           created_at: "2026-01-01",
+        },
+      ],
+      error: null,
+    });
+
+    mockProfilesIn.mockResolvedValue({
+      data: [
+        {
+          id: "reviewer-1",
+          name: "Mike",
         },
       ],
       error: null,
@@ -143,7 +169,7 @@ describe("SellerReviewsPage", () => {
     renderComponent();
 
     expect(
-      screen.getByText(/loading/i)
+      screen.getByText(/loading reviews/i)
     ).toBeInTheDocument();
 
     await screen.findByText(
@@ -151,7 +177,7 @@ describe("SellerReviewsPage", () => {
     );
   });
 
-  test("renders seller name", async () => {
+  test("renders seller reviews heading", async () => {
     renderComponent();
 
     expect(
@@ -165,7 +191,7 @@ describe("SellerReviewsPage", () => {
     renderComponent();
 
     expect(
-      await screen.findByText(/5\.0/i)
+      await screen.findByText(/5\.0★/i)
     ).toBeInTheDocument();
   });
 
@@ -179,7 +205,15 @@ describe("SellerReviewsPage", () => {
     ).toBeInTheDocument();
   });
 
-  test("renders review stars", async () => {
+  test("renders reviewer name", async () => {
+    renderComponent();
+
+    expect(
+      await screen.findByText(/by: mike/i)
+    ).toBeInTheDocument();
+  });
+
+  test("renders stars correctly", async () => {
     renderComponent();
 
     expect(
@@ -188,7 +222,7 @@ describe("SellerReviewsPage", () => {
   });
 
   test("shows no reviews message", async () => {
-    mockOrder.mockResolvedValue({
+    mockRatingsOrder.mockResolvedValue({
       data: [],
       error: null,
     });
@@ -211,5 +245,18 @@ describe("SellerReviewsPage", () => {
       });
 
     expect(backButton).toBeInTheDocument();
+  });
+
+  test("navigates back when back button clicked", async () => {
+    renderComponent();
+
+    const backButton =
+      await screen.findByRole("button", {
+        name: /back/i,
+      });
+
+    backButton.click();
+
+    expect(mockNavigate).toHaveBeenCalledWith(-1);
   });
 });
