@@ -1,7 +1,7 @@
 import { render, screen, act, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
-import SellerReviewsPage from "./SellerReviewsPage.jsx";
+import SellerReviewsPage from "./SellerProfileReviews.jsx";
 
 global.alert = vi.fn();
 
