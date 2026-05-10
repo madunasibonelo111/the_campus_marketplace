@@ -10,56 +10,94 @@ export default function Login({ switchToRegister }) {
 
   const navigate = useNavigate();
 
-  // ✅ LOGIN (EMAIL VERIFICATION ENFORCED)
-const handleLogin = async () => {
-  if (loading) return;
+  // Function to get user role from profiles table
+  const getUserRole = async (userId) => {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", userId)
+        .single();
 
-  if (!email || !password) {
-    alert("Please fill in all fields");
-    return;
-  }
+      if (error) {
+        console.error("Error fetching user role:", error);
+        return "student"; // Default to student if role not found
+      }
 
-  setLoading(true);
+      return data?.role || "student";
+    } catch (err) {
+      console.error("Error:", err);
+      return "student";
+    }
+  };
 
-  try {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+  // ✅ LOGIN WITH ROLE-BASED REDIRECTION
+  const handleLogin = async () => {
+    if (loading) return;
 
-    if (error) {
-      alert(error.message);
+    if (!email || !password) {
+      alert("Please fill in all fields");
       return;
     }
 
-    // 🔥 IMPORTANT FIX: session-based verification
-    const session = data.session;
-    const user = data.user;
+    setLoading(true);
 
-    if (!session || !user?.email_confirmed_at) {
-      alert("Please verify your email before logging in.");
-      await supabase.auth.signOut();
-      return;
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        alert(error.message);
+        return;
+      }
+
+      // 🔥 IMPORTANT FIX: session-based verification
+      const session = data.session;
+      const user = data.user;
+
+      if (!session || !user?.email_confirmed_at) {
+        alert("Please verify your email before logging in.");
+        await supabase.auth.signOut();
+        return;
+      }
+
+      // Get user role from profiles table
+      const userRole = await getUserRole(user.id);
+
+      // ✅ Save user info with role
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          id: user.id,
+          email: user.email,
+          role: userRole,
+        })
+      );
+
+      alert("✅ Login successful!");
+
+      // 🚀 ROLE-BASED REDIRECTION
+      switch (userRole) {
+        case "staff":
+          window.location.assign("/staff");
+          break;
+        case "admin":
+          window.location.assign("/admin-dashboard");
+          break;
+        case "student":
+        default:
+          window.location.assign("/basket");
+          break;
+      }
+    } catch (error) {
+      alert("An error occurred during login");
+      console.error("Login error:", error);
+    } finally {
+      setLoading(false);
     }
-
-    // ✅ OPTIONAL: only save if verified
-    localStorage.setItem(
-      "user",
-      JSON.stringify({
-        id: user.id,
-        email: user.email,
-      })
-    );
-
-    alert("✅ Login successful!");
-    window.location.assign("/basket");
-
-  } catch (error) {
-    alert("An error occurred during login");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   return (
     <div className="form-box login">

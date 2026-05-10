@@ -10,12 +10,10 @@ import { useState, useEffect } from "react";
 
 import { supabase } from "@/supabase/supabaseClient";
 
-// AUTH
 import ForgotPassword from "./components/Auth/ForgotPassword";
 import ResetPassword from "./components/Auth/ResetPassword";
 import EmailConfirmed from "./components/Auth/EmailConfirmed";
 
-// PAGES
 import Home from "./pages/Home/Home";
 import AuthContainer from "./pages/Auth/AuthContainer";
 import Basket from "./pages/Browse/Basket";
@@ -55,57 +53,47 @@ function ItemDetailView({
   const [avgRating, setAvgRating] =
     useState("No ratings");
 
+  // Fetch Seller Rating
   useEffect(() => {
-    const fetchSellerRating =
-      async () => {
-        if (!selectedItem?.user_id)
-          return;
+    const fetchSellerRating = async () => {
+      if (!selectedItem?.user_id) return;
 
-        try {
-          const { data, error } =
-            await supabase
-              .from("ratings")
-              .select("score")
-              .eq(
-                "reviewee_id",
-                selectedItem.user_id
-              );
-
-          if (error) throw error;
-
-          if (
-            data &&
-            data.length > 0
-          ) {
-            const total =
-              data.reduce(
-                (sum, r) =>
-                  sum +
-                  Number(r.score),
-                0
-              );
-
-            setAvgRating(
-              (
-                total / data.length
-              ).toFixed(1)
+      try {
+        const { data, error } =
+          await supabase
+            .from("ratings")
+            .select("score")
+            .eq(
+              "reviewee_id",
+              selectedItem.user_id
             );
-          } else {
-            setAvgRating(
-              "No ratings"
-            );
-          }
-        } catch (err) {
-          console.error(
-            "Error fetching rating:",
-            err
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          const total = data.reduce(
+            (sum, r) =>
+              sum + Number(r.score),
+            0
           );
 
           setAvgRating(
-            "No ratings"
+            (
+              total / data.length
+            ).toFixed(1)
           );
+        } else {
+          setAvgRating("No ratings");
         }
-      };
+      } catch (err) {
+        console.error(
+          "Error fetching rating:",
+          err
+        );
+
+        setAvgRating("No ratings");
+      }
+    };
 
     fetchSellerRating();
   }, [selectedItem]);
@@ -116,9 +104,8 @@ function ItemDetailView({
         !window.confirm(
           "Are you sure you want to remove this listing?"
         )
-      ) {
+      )
         return;
-      }
 
       try {
         const { error } =
@@ -135,15 +122,11 @@ function ItemDetailView({
 
         window.location.reload();
       } catch (err) {
-        alert(
-          "Error: " +
-            err.message
-        );
+        alert("Error: " + err.message);
       }
     };
 
-  if (!selectedItem)
-    return null;
+  if (!selectedItem) return null;
 
   return (
     <div className="detail-overlay">
@@ -161,14 +144,11 @@ function ItemDetailView({
 
           <div className="category-chip">
             {selectedItem.categories
-              ?.name ||
-              "Campus Item"}
+              ?.name || "Campus Item"}
           </div>
         </div>
 
         <div className="detail-grid">
-
-          {/* IMAGE */}
           <div className="detail-visuals">
             <div className="image-container-main">
               <img
@@ -183,7 +163,6 @@ function ItemDetailView({
             </div>
           </div>
 
-          {/* INFO */}
           <div className="detail-specs">
             <div className="specs-top">
               <h1 className="item-title-hero">
@@ -195,15 +174,12 @@ function ItemDetailView({
                 "trade"
                   ? "🤝 Trade Only"
                   : `R${parseFloat(
-                      selectedItem.price ||
-                        0
+                      selectedItem.price || 0
                     ).toFixed(2)}`}
               </div>
             </div>
 
             <div className="specs-body">
-
-              {/* DESCRIPTION */}
               <div className="description-well">
                 <p>
                   {selectedItem.description ||
@@ -211,19 +187,14 @@ function ItemDetailView({
                 </p>
               </div>
 
-              {/* PERKS */}
               <div className="perks-grid">
-
-                {/* SELLER */}
                 <div className="perk-item">
                   <div className="perk-icon">
                     👤
                   </div>
 
                   <div className="perk-text">
-                    <small>
-                      Seller
-                    </small>
+                    <small>Seller</small>
 
                     <span
                       onClick={() =>
@@ -232,30 +203,22 @@ function ItemDetailView({
                         )
                       }
                       style={{
-                        cursor:
-                          "pointer",
-                        display:
-                          "flex",
-                        alignItems:
-                          "center",
-                        color:
-                          "#f39c12",
-                        fontWeight:
-                          "bold",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        color: "#f39c12",
+                        fontWeight: "bold",
                       }}
                       title="View seller reviews"
                     >
-                      {selectedItem
-                        .profiles
+                      {selectedItem.profiles
                         ?.name ||
                         "Verified Student"}
 
                       <b
                         style={{
-                          color:
-                            "#f39c12",
-                          marginLeft:
-                            "10px",
+                          color: "#f39c12",
+                          marginLeft: "10px",
                         }}
                       >
                         ⭐ {avgRating}
@@ -264,7 +227,6 @@ function ItemDetailView({
                   </div>
                 </div>
 
-                {/* LOCATION */}
                 <div className="perk-item">
                   <div className="perk-icon">
                     📍
@@ -276,62 +238,35 @@ function ItemDetailView({
                     </small>
 
                     <span>
-                      On-Campus
-                      (Safe Zone)
+                      On-Campus (Safe Zone)
                     </span>
                   </div>
                 </div>
 
-                {/* SAFETY */}
-                <div className="perk-item">
-                  <div className="perk-icon">
-                    🛡️
-                  </div>
-
-                  <div className="perk-text">
-                    <small>
-                      Safety
-                    </small>
-
-                    <span>
-                      Verified
-                      listing
-                    </span>
-                  </div>
-                </div>
-
-                {/* DEAL TYPE */}
                 <div className="perk-item">
                   <div className="perk-icon">
                     📦
                   </div>
 
                   <div className="perk-text">
-                    <small>
-                      Deal Type
-                    </small>
+                    <small>Deal Type</small>
 
                     <span>
-                      {selectedItem.listing_type ===
-                      "either"
-                        ? "Sale or Trade"
-                        : selectedItem.listing_type}
+                      {
+                        selectedItem.listing_type
+                      }
                     </span>
                   </div>
                 </div>
-
               </div>
             </div>
 
-            {/* FOOTER BUTTON */}
             <div className="specs-footer">
               {currentUser?.id &&
               String(
                 selectedItem.user_id
               ) ===
-                String(
-                  currentUser.id
-                ) ? (
+                String(currentUser.id) ? (
                 <button
                   className="btn-action-delete"
                   onClick={() =>
@@ -340,8 +275,7 @@ function ItemDetailView({
                     )
                   }
                 >
-                  🗑️ Remove My
-                  Listing
+                  🗑️ Remove My Listing
                 </button>
               ) : (
                 <button
@@ -353,14 +287,11 @@ function ItemDetailView({
                   }
                 >
                   💬 Contact{" "}
-                  {selectedItem
-                    .profiles
-                    ?.name ||
-                    "Seller"}
+                  {selectedItem.profiles
+                    ?.name || "Seller"}
                 </button>
               )}
             </div>
-
           </div>
         </div>
       </div>
@@ -369,45 +300,33 @@ function ItemDetailView({
 }
 
 function App() {
-  const [
-    selectedItem,
-    setSelectedItem,
-  ] = useState(null);
+  const [selectedItem, setSelectedItem] =
+    useState(null);
 
-  const [
-    currentUser,
-    setCurrentUser,
-  ] = useState(null);
+  const [currentUser, setCurrentUser] =
+    useState(null);
 
   const [loading, setLoading] =
     useState(true);
 
   useEffect(() => {
-    const getSession =
-      async () => {
-        const {
-          data: { user },
-        } =
-          await supabase.auth.getUser();
+    const getSession = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-        setCurrentUser(user);
+      setCurrentUser(user);
 
-        setLoading(false);
-      };
+      setLoading(false);
+    };
 
     getSession();
 
-    const {
-      data: authListener,
-    } =
+    const { data: authListener } =
       supabase.auth.onAuthStateChange(
-        (
-          _event,
-          session
-        ) => {
+        (_event, session) => {
           setCurrentUser(
-            session?.user ??
-              null
+            session?.user ?? null
           );
 
           setLoading(false);
@@ -592,16 +511,10 @@ function App() {
                 />
               ) : (
                 <Basket
-                  onViewListing={(
-                    item
-                  ) =>
-                    setSelectedItem(
-                      item
-                    )
+                  onViewListing={(item) =>
+                    setSelectedItem(item)
                   }
-                  currentUser={
-                    currentUser
-                  }
+                  currentUser={currentUser}
                 />
               )
             ) : (
