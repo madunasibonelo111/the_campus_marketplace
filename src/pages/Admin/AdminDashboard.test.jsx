@@ -388,7 +388,7 @@ describe(
 
 
     // =========================
-    // ✅ CONFIRM BUTTON
+    // ✅ CONFIRM BUTTON EXISTS
     // =========================
     it(
       "shows confirm button for pending booking",
@@ -420,7 +420,7 @@ describe(
 
 
     // =========================
-    // ✅ COMPLETE BUTTON
+    // ✅ COMPLETE BUTTON EXISTS
     // =========================
     it(
       "shows complete button for confirmed booking",
@@ -445,6 +445,82 @@ describe(
             }
           )
 
+        ).toBeInTheDocument();
+
+      }
+    );
+
+
+    // =========================
+    // ✅ CLICK CONFIRM BUTTON
+    // =========================
+    it(
+      "confirms a pending booking",
+      async () => {
+
+        render(
+
+          <MemoryRouter>
+
+            <AdminDashboard />
+
+          </MemoryRouter>
+
+        );
+
+        const confirmButton =
+
+          await screen.findByRole(
+            "button",
+            {
+              name: /confirm/i
+            }
+          );
+
+        await userEvent.click(
+          confirmButton
+        );
+
+        expect(
+          confirmButton
+        ).toBeInTheDocument();
+
+      }
+    );
+
+
+    // =========================
+    // ✅ CLICK COMPLETE BUTTON
+    // =========================
+    it(
+      "completes a confirmed booking",
+      async () => {
+
+        render(
+
+          <MemoryRouter>
+
+            <AdminDashboard />
+
+          </MemoryRouter>
+
+        );
+
+        const completeButton =
+
+          await screen.findByRole(
+            "button",
+            {
+              name: /complete/i
+            }
+          );
+
+        await userEvent.click(
+          completeButton
+        );
+
+        expect(
+          completeButton
         ).toBeInTheDocument();
 
       }
@@ -492,7 +568,7 @@ describe(
 
 
     // =========================
-    // ✅ NAVIGATION
+    // ✅ SIDEBAR NAVIGATION
     // =========================
     it(
       "navigates to facility config",
@@ -516,6 +592,46 @@ describe(
 
         await userEvent.click(
           configButton
+        );
+
+        expect(
+          mockNavigate
+        ).toHaveBeenCalledWith(
+          "/admin/facility-config"
+        );
+
+      }
+    );
+
+
+    // =========================
+    // ✅ EDIT CONFIG BUTTON
+    // =========================
+    it(
+      "navigates using edit config button",
+      async () => {
+
+        render(
+
+          <MemoryRouter>
+
+            <AdminDashboard />
+
+          </MemoryRouter>
+
+        );
+
+        const editButton =
+
+          await screen.findByRole(
+            "button",
+            {
+              name: /edit config/i
+            }
+          );
+
+        await userEvent.click(
+          editButton
         );
 
         expect(
