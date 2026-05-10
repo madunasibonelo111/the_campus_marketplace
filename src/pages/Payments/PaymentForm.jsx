@@ -61,11 +61,6 @@ export default function PaymentForm() {
       setPaymentAmount(listing.price);
       setCurrentTransaction(transaction);
     }
-
-    else if (location.state?.transaction) {
-    setCurrentTransaction(location.state.transaction);
-    setPaymentAmount(location.state.totalAmount || 0);
-    }
   }, [navigate, location.state]);
 
   const fetchSavedCards = async (userId) => {
