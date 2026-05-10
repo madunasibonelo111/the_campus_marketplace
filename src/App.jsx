@@ -58,6 +58,9 @@ function ItemDetailView({
   useEffect(() => {
     const fetchSellerRating =
       async () => {
+        if (!selectedItem?.user_id)
+          return;
+
         try {
           const { data, error } =
             await supabase
@@ -84,8 +87,7 @@ function ItemDetailView({
 
             setAvgRating(
               (
-                total /
-                data.length
+                total / data.length
               ).toFixed(1)
             );
           } else {
@@ -105,11 +107,7 @@ function ItemDetailView({
         }
       };
 
-    if (
-      selectedItem?.user_id
-    ) {
-      fetchSellerRating();
-    }
+    fetchSellerRating();
   }, [selectedItem]);
 
   const handleDeleteListing =
@@ -127,20 +125,13 @@ function ItemDetailView({
           await supabase
             .from("listings")
             .delete()
-            .eq(
-              "id",
-              listingId
-            );
+            .eq("id", listingId);
 
         if (error) throw error;
 
-        alert(
-          "Listing removed."
-        );
+        alert("Listing removed.");
 
-        setSelectedItem(
-          null
-        );
+        setSelectedItem(null);
 
         window.location.reload();
       } catch (err) {
@@ -160,9 +151,7 @@ function ItemDetailView({
         <div className="detail-header-nav">
           <button
             onClick={() =>
-              setSelectedItem(
-                null
-              )
+              setSelectedItem(null)
             }
             className="back-btn-pill"
           >
@@ -171,8 +160,7 @@ function ItemDetailView({
           </button>
 
           <div className="category-chip">
-            {selectedItem
-              .categories
+            {selectedItem.categories
               ?.name ||
               "Campus Item"}
           </div>
@@ -184,12 +172,8 @@ function ItemDetailView({
           <div className="detail-visuals">
             <div className="image-container-main">
               <img
-                src={
-                  selectedItem.image
-                }
-                alt={
-                  selectedItem.title
-                }
+                src={selectedItem.image}
+                alt={selectedItem.title}
               />
 
               <div className="status-tag">
@@ -203,9 +187,7 @@ function ItemDetailView({
           <div className="detail-specs">
             <div className="specs-top">
               <h1 className="item-title-hero">
-                {
-                  selectedItem.title
-                }
+                {selectedItem.title}
               </h1>
 
               <div className="price-badge-hero">
@@ -276,10 +258,7 @@ function ItemDetailView({
                             "10px",
                         }}
                       >
-                        ⭐{" "}
-                        {
-                          avgRating
-                        }
+                        ⭐ {avgRating}
                       </b>
                     </span>
                   </div>
@@ -439,8 +418,7 @@ function App() {
       authListener.subscription.unsubscribe();
   }, []);
 
-  if (loading)
-    return null;
+  if (loading) return null;
 
   return (
     <BrowserRouter>
@@ -455,9 +433,7 @@ function App() {
 
         <Route
           path="/auth"
-          element={
-            <AuthContainer />
-          }
+          element={<AuthContainer />}
         />
 
         <Route
@@ -513,7 +489,7 @@ function App() {
           }
         />
 
-        {/* REVIEW SUBMISSION */}
+        {/* REVIEWS */}
 
         <Route
           path="/reviews/:sellerId"
@@ -528,8 +504,6 @@ function App() {
             )
           }
         />
-
-        {/* SELLER REVIEWS */}
 
         <Route
           path="/seller/:sellerId/reviews"
@@ -582,7 +556,7 @@ function App() {
           }
         />
 
-        {/* DROP OFF BOOKING */}
+        {/* BOOKINGS */}
 
         <Route
           path="/booking/dropoff"
