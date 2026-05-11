@@ -1,525 +1,154 @@
--- ============================================================
--- Campus Marketplace – FINAL CORRECTED SCHEMA
--- PostgreSQL / Supabase Compatible
--- Sprint 1 + Sprint 2 Ready
--- ============================================================
-
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";
-CREATE EXTENSION IF NOT EXISTS pg_trgm;
-
--- ============================================================
--- ENUMS
--- ============================================================
-
-CREATE TYPE user_role AS ENUM ('student', 'staff', 'admin');
-
-CREATE TYPE verified_status AS ENUM
-('unverified', 'verified', 'suspended');
-
-CREATE TYPE condition_type AS ENUM
-('new', 'like_new', 'good', 'fair', 'poor');
-
-CREATE TYPE listing_type AS ENUM
-('sale', 'trade', 'either');
-
-CREATE TYPE listing_status AS ENUM
-('active', 'sold', 'traded', 'removed');
-
-CREATE TYPE transaction_type AS ENUM
-('purchase', 'trade');
-
-CREATE TYPE transaction_status AS ENUM
-('pending', 'accepted', 'completed', 'cancelled');
-
-CREATE TYPE payment_method AS ENUM
-('online', 'cash', 'partial');
-
-CREATE TYPE payment_status AS ENUM
-('pending', 'completed', 'failed', 'refunded');
-
-CREATE TYPE trade_offer_status AS ENUM
-('pending', 'accepted', 'rejected', 'countered');
-
--- ============================================================
--- TABLES – CORE
--- ============================================================
-
-CREATE TABLE categories (
-
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-
-    name VARCHAR(100)
-        NOT NULL
-        UNIQUE,
-
-    created_at TIMESTAMPTZ
-        NOT NULL DEFAULT NOW()
-
+-- Profiles (Public user data)
+CREATE TABLE profiles (
+    id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
+    name TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    role TEXT CHECK (role IN ('student', 'staff', 'admin')) DEFAULT 'student',
+    gender TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- ============================================================
-
-CREATE TABLE users (
-
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-
-    name VARCHAR(255)
-        NOT NULL,
-
-    email VARCHAR(255)
-        NOT NULL
-        UNIQUE,
-
-    role user_role
-        NOT NULL DEFAULT 'student',
-
-    verified_status verified_status
-        NOT NULL DEFAULT 'unverified',
-
-    verified_at TIMESTAMPTZ NULL,
-
-    provider_id VARCHAR(255)
-        UNIQUE,
-
-    created_at TIMESTAMPTZ
-        NOT NULL DEFAULT NOW(),
-
-    updated_at TIMESTAMPTZ
-        NOT NULL DEFAULT NOW()
-
-);
-
--- ============================================================
-
-CREATE TABLE listings (
-
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-
-    user_id UUID NOT NULL,
-
-    category_id UUID NOT NULL,
-
-    title VARCHAR(255)
-        NOT NULL,
-
-    description TEXT
-        NOT NULL,
-
-    condition condition_type
-        NOT NULL,
-
-    price NUMERIC(10,2)
-        CHECK (price IS NULL OR price >= 0),
-
-    listing_type listing_type
-        NOT NULL,
-
-    status listing_status
-        NOT NULL DEFAULT 'active',
-
-    created_at TIMESTAMPTZ
-        NOT NULL DEFAULT NOW(),
-
-    updated_at TIMESTAMPTZ
-        NOT NULL DEFAULT NOW(),
-
-    FOREIGN KEY (user_id)
-        REFERENCES users(id)
-        ON DELETE CASCADE,
-
-    FOREIGN KEY (category_id)
-        REFERENCES categories(id)
-
-);
-
--- ============================================================
-
-CREATE TABLE listing_images (
-
-    id UUID PRIMARY KEY
-        DEFAULT gen_random_uuid(),
-
-    listing_id UUID NOT NULL,
-
-    image_url VARCHAR(500)
-        NOT NULL,
-
-    display_order INT
-        NOT NULL DEFAULT 0,
-
-    uploaded_at TIMESTAMPTZ
-        NOT NULL DEFAULT NOW(),
-
-    FOREIGN KEY (listing_id)
-        REFERENCES listings(id)
-        ON DELETE CASCADE,
-
-    UNIQUE (listing_id, display_order),
-
-    UNIQUE (listing_id, image_url)
-
-);
-
--- Cover image constraint
-
-CREATE UNIQUE INDEX unique_cover_image
-ON listing_images(listing_id)
-WHERE display_order = 0;
-
--- ============================================================
-
-CREATE TABLE transactions (
-
-    id UUID PRIMARY KEY
-        DEFAULT gen_random_uuid(),
-
-    listing_id UUID NOT NULL,
-
-    buyer_id UUID NOT NULL,
-
-    seller_id UUID NOT NULL,
-
-    type transaction_type
-        NOT NULL,
-
-    status transaction_status
-        NOT NULL DEFAULT 'pending',
-
-    offer_amount NUMERIC(10,2)
-        CHECK (offer_amount >= 0),
-
-    offer_status trade_offer_status
-        DEFAULT 'pending',
-
-    trade_item_description TEXT,
-
-    created_at TIMESTAMPTZ
-        DEFAULT NOW(),
-
-    updated_at TIMESTAMPTZ
-        DEFAULT NOW(),
-
-    accepted_at TIMESTAMPTZ,
-
-    completed_at TIMESTAMPTZ,
-
-    FOREIGN KEY (listing_id)
-        REFERENCES listings(id)
-        ON DELETE CASCADE,
-
-    FOREIGN KEY (buyer_id)
-        REFERENCES users(id),
-
-    FOREIGN KEY (seller_id)
-        REFERENCES users(id),
-
-    CHECK (buyer_id <> seller_id)
-
-);
-
--- ============================================================
-
-CREATE TABLE conversations (
-
-    id UUID PRIMARY KEY
-        DEFAULT gen_random_uuid(),
-
-    listing_id UUID NOT NULL,
-
-    buyer_id UUID NOT NULL,
-
-    seller_id UUID NOT NULL,
-
-    created_at TIMESTAMPTZ
-        DEFAULT NOW(),
-
-    updated_at TIMESTAMPTZ
-        DEFAULT NOW(),
-
-    FOREIGN KEY (listing_id)
-        REFERENCES listings(id)
-        ON DELETE CASCADE,
-
-    FOREIGN KEY (buyer_id)
-        REFERENCES users(id)
-        ON DELETE CASCADE,
-
-    FOREIGN KEY (seller_id)
-        REFERENCES users(id)
-        ON DELETE CASCADE,
-
-    UNIQUE (listing_id, buyer_id, seller_id),
-
-    CHECK (buyer_id <> seller_id)
-
-);
-
--- ============================================================
-
-CREATE TABLE messages (
-
-    id UUID PRIMARY KEY
-        DEFAULT gen_random_uuid(),
-
-    conversation_id UUID NOT NULL,
-
-    sender_id UUID NOT NULL,
-
-    body TEXT
-        NOT NULL
-        CHECK (length(body) > 0),
-
-    is_read BOOLEAN
-        DEFAULT FALSE,
-
-    created_at TIMESTAMPTZ
-        DEFAULT NOW(),
-
-    FOREIGN KEY (conversation_id)
-        REFERENCES conversations(id)
-        ON DELETE CASCADE,
-
-    FOREIGN KEY (sender_id)
-        REFERENCES users(id)
-        ON DELETE CASCADE
-
-);
-
--- ============================================================
-
-CREATE TABLE payments (
-
-    id UUID PRIMARY KEY
-        DEFAULT gen_random_uuid(),
-
-    transaction_id UUID NOT NULL,
-
-    payer_id UUID NOT NULL,
-
-    amount NUMERIC(10,2)
-        NOT NULL
-        CHECK (amount > 0),
-
-    method payment_method
-        NOT NULL,
-
-    status payment_status
-        DEFAULT 'pending',
-
-    shortfall_amount NUMERIC(10,2)
-        CHECK (shortfall_amount >= 0),
-
-    reference VARCHAR(255),
-
-    paid_at TIMESTAMPTZ,
-
-    created_at TIMESTAMPTZ
-        DEFAULT NOW(),
-
-    updated_at TIMESTAMPTZ
-        DEFAULT NOW(),
-
-    FOREIGN KEY (transaction_id)
-        REFERENCES transactions(id)
-        ON DELETE CASCADE,
-
-    FOREIGN KEY (payer_id)
-        REFERENCES users(id)
-        ON DELETE CASCADE,
-
-    CHECK (
-        method != 'partial'
-        OR shortfall_amount IS NOT NULL
-    )
-
-);
-
--- ============================================================
-
+-- Saved Cards (For the PaymentForm)
 CREATE TABLE saved_cards (
-
-    id UUID PRIMARY KEY
-        DEFAULT gen_random_uuid(),
-
-    user_id UUID NOT NULL,
-
-    gateway_token TEXT NOT NULL,
-
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+    card_holder_name TEXT NOT NULL,
     last4 VARCHAR(4) NOT NULL,
-
-    card_brand VARCHAR(20) NOT NULL,
-
-    expiry_month SMALLINT,
-
-    expiry_year SMALLINT,
-
+    card_brand TEXT,
+    expiry_month INTEGER,
+    expiry_year INTEGER,
     is_default BOOLEAN DEFAULT FALSE,
-
-    created_at TIMESTAMPTZ
-        DEFAULT NOW(),
-
-    FOREIGN KEY (user_id)
-        REFERENCES users(id)
-        ON DELETE CASCADE
-
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- ============================================================
+-- Categories
+CREATE TABLE categories (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name TEXT UNIQUE NOT NULL,
+    description TEXT
+);
 
+-- Listings
+CREATE TABLE listings (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+    category_id UUID REFERENCES categories(id) ON DELETE SET NULL,
+    title TEXT NOT NULL,
+    description TEXT,
+    condition TEXT CHECK (condition IN ('new', 'like_new', 'good', 'fair', 'poor')),
+    listing_type TEXT CHECK (listing_type IN ('sale', 'trade', 'either')),
+    price DECIMAL(10,2), -- Nullable for pure trades
+    status TEXT CHECK (status IN ('active', 'sold', 'hidden')) DEFAULT 'active',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Listing Images
+CREATE TABLE listing_images (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    listing_id UUID REFERENCES listings(id) ON DELETE CASCADE,
+    image_url TEXT NOT NULL,
+    display_order INTEGER DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+-- Conversations
+CREATE TABLE conversations (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    listing_id UUID REFERENCES listings(id) ON DELETE CASCADE,
+    buyer_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+    seller_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(listing_id, buyer_id) -- Prevents duplicate chat rooms for the same item/buyer
+);
+
+-- Messages
+CREATE TABLE messages (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    conversation_id UUID REFERENCES conversations(id) ON DELETE CASCADE,
+    sender_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+    body TEXT,
+    image_url TEXT, -- For future sprint image uploads
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+-- Transactions
+CREATE TABLE transactions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    listing_id UUID REFERENCES listings(id) ON DELETE SET NULL,
+    
+    -- Explicitly named Foreign Keys
+    buyer_id UUID CONSTRAINT fk_buyer REFERENCES profiles(id),
+    seller_id UUID CONSTRAINT fk_seller REFERENCES profiles(id),
+    
+    type TEXT CHECK (type IN ('purchase', 'trade')),
+    status TEXT CHECK (status IN ('pending', 'pending_payment', 'partial_payment', 'completed', 'cancelled', 'accepted', 'rejected')),
+    
+    offer_amount DECIMAL(10,2),
+    offer_status TEXT,
+    trade_item_description TEXT,
+    
+    total_amount DECIMAL(10,2) NOT NULL DEFAULT 0,
+    amount_paid DECIMAL(10,2) NOT NULL DEFAULT 0,
+    remaining_balance DECIMAL(10,2) NOT NULL DEFAULT 0,
+    partial_payment_amount DECIMAL(10,2),
+    
+    accepted_at TIMESTAMP WITH TIME ZONE,
+    completed_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Payments
+CREATE TABLE payments (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    transaction_id UUID REFERENCES transactions(id) ON DELETE CASCADE,
+    payer_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+    
+    amount DECIMAL(10,2) NOT NULL,
+    method TEXT CHECK (method IN ('card', 'paypal', 'online', 'cash')),
+    status TEXT CHECK (status IN ('pending', 'completed', 'partial', 'failed', 'refunded')),
+    
+    shortfall_amount DECIMAL(10,2),
+    gateway_transaction_id TEXT,
+    payment_reference TEXT,
+    
+    paid_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+-- Facility Bookings (For drop-offs, collections, and shortfall payments)
+CREATE TABLE facility_bookings (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    transaction_id UUID REFERENCES transactions(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+    
+    booking_type TEXT CHECK (booking_type IN ('drop_off', 'collection', 'shortfall_payment')),
+    amount_due DECIMAL(10,2) DEFAULT 0, -- Used if they need to pay a cash shortfall
+    booking_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    status TEXT CHECK (status IN ('pending', 'confirmed', 'completed', 'missed')) DEFAULT 'pending',
+    
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Ratings
 CREATE TABLE ratings (
-
-    id UUID PRIMARY KEY
-        DEFAULT gen_random_uuid(),
-
-    transaction_id UUID
-        NOT NULL UNIQUE,
-
-    reviewer_id UUID
-        NOT NULL,
-
-    reviewee_id UUID
-        NOT NULL,
-
-    score SMALLINT
-        CHECK (score BETWEEN 1 AND 5),
-
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    transaction_id UUID REFERENCES transactions(id) ON DELETE CASCADE,
+    reviewer_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+    reviewee_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+    
+    score INTEGER CHECK (score >= 1 AND score <= 5) NOT NULL,
     comment TEXT,
-
-    created_at TIMESTAMPTZ
-        DEFAULT NOW(),
-
-    FOREIGN KEY (transaction_id)
-        REFERENCES transactions(id)
-        ON DELETE CASCADE,
-
-    FOREIGN KEY (reviewer_id)
-        REFERENCES users(id),
-
-    FOREIGN KEY (reviewee_id)
-        REFERENCES users(id),
-
-    CHECK (reviewer_id <> reviewee_id)
-
+    
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- ============================================================
-
-CREATE TABLE trade_offers (
-
-    id UUID PRIMARY KEY
-        DEFAULT gen_random_uuid(),
-
-    listing_id UUID NOT NULL,
-
-    offered_item_id UUID NOT NULL,
-
-    buyer_id UUID NOT NULL,
-
-    seller_id UUID NOT NULL,
-
-    status trade_offer_status
-        DEFAULT 'pending',
-
-    created_at TIMESTAMPTZ
-        DEFAULT NOW(),
-
-    FOREIGN KEY (listing_id)
-        REFERENCES listings(id)
-        ON DELETE CASCADE,
-
-    FOREIGN KEY (offered_item_id)
-        REFERENCES listings(id)
-        ON DELETE CASCADE,
-
-    FOREIGN KEY (buyer_id)
-        REFERENCES users(id),
-
-    FOREIGN KEY (seller_id)
-        REFERENCES users(id),
-
-    CHECK (buyer_id <> seller_id),
-
-    CHECK (listing_id <> offered_item_id)
-
+-- Notifications
+CREATE TABLE notifications (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+    type TEXT,
+    title TEXT NOT NULL,
+    message TEXT NOT NULL,
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
-
--- ============================================================
--- INDEXES
--- ============================================================
-
-CREATE INDEX idx_users_email
-ON users(email);
-
-CREATE INDEX idx_listings_user
-ON listings(user_id);
-
-CREATE INDEX idx_listings_category
-ON listings(category_id);
-
-CREATE INDEX idx_listings_status
-ON listings(status);
-
-CREATE INDEX idx_listings_price
-ON listings(price);
-
-CREATE INDEX idx_listing_title_search
-ON listings
-USING gin (title gin_trgm_ops);
-
-CREATE INDEX idx_messages_conversation
-ON messages(conversation_id);
-
-CREATE INDEX idx_messages_unread
-ON messages(conversation_id, is_read);
-
-CREATE INDEX idx_conversations_buyer
-ON conversations(buyer_id);
-
-CREATE INDEX idx_conversations_seller
-ON conversations(seller_id);
-
-CREATE INDEX idx_payments_transaction
-ON payments(transaction_id);
-
-CREATE INDEX idx_trade_offers_listing
-ON trade_offers(listing_id);
-
-CREATE INDEX idx_ratings_reviewee
-ON ratings(reviewee_id);
-
--- ============================================================
--- TRIGGERS
--- ============================================================
-
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
-BEGIN
-  NEW.updated_at = NOW();
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trg_users_updated
-BEFORE UPDATE ON users
-FOR EACH ROW
-EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER trg_listings_updated
-BEFORE UPDATE ON listings
-FOR EACH ROW
-EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER trg_transactions_updated
-BEFORE UPDATE ON transactions
-FOR EACH ROW
-EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER trg_conversations_updated
-BEFORE UPDATE ON conversations
-FOR EACH ROW
-EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER trg_payments_updated
-BEFORE UPDATE ON payments
-FOR EACH ROW
-EXECUTE FUNCTION update_updated_at_column();

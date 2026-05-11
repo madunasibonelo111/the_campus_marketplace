@@ -1,0 +1,240 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="final_sprint3" name="Campus Marketplace - Sprint 3">
+    <mxGraphModel dx="2292" dy="525" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1000" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=20;fontStyle=1;fontColor=light-dark(#000000,#FF3399);" value="Campus Marketplace – System Use Case Diagram&amp;nbsp;" vertex="1">
+          <mxGeometry height="40" width="700" x="350" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="boundary" parent="1" style="shape=mxgraph.uml.systemBoundary;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=4;verticalAlign=top;fontSize=14;fontStyle=1;" value="&lt;b&gt;&lt;font style=&quot;font-size: 20px; color: light-dark(rgb(0, 0, 0), rgb(255, 51, 153));&quot;&gt;Campus Marketplace System&lt;/font&gt;&lt;/b&gt;" vertex="1">
+          <mxGeometry height="910" width="1080" x="200" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="actor_student" parent="1" style="shape=mxgraph.uml2.actor;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=16;fontStyle=1;" value="Student" vertex="1">
+          <mxGeometry height="90" width="70" x="50" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="actor_staff" parent="1" style="shape=mxgraph.uml2.actor;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=16;fontStyle=1;" value="Staff&lt;br&gt;Member" vertex="1">
+          <mxGeometry height="90" width="70" x="50" y="460" as="geometry" />
+        </mxCell>
+        <mxCell id="actor_admin" parent="1" style="shape=mxgraph.uml2.actor;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=17;fontStyle=1;" value="Admin" vertex="1">
+          <mxGeometry height="90" width="70" x="50" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="actor_api" parent="1" style="shape=mxgraph.uml2.actor;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=16;fontStyle=1;" value="External&lt;br&gt;Pricing API" vertex="1">
+          <mxGeometry height="90" width="70" x="1260" y="560" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_register" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=21;strokeWidth=5;" value="Register" vertex="1">
+          <mxGeometry height="60" width="160" x="330" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_login" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=24;strokeWidth=5;" value="Login" vertex="1">
+          <mxGeometry height="60" width="160" x="540" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_create_listing" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=18;strokeWidth=5;" value="Create Listing" vertex="1">
+          <mxGeometry height="60" width="160" x="750" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_browse" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=18;strokeWidth=5;" value="Browse Listings" vertex="1">
+          <mxGeometry height="60" width="160" x="960" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="Yl8kG8AeUGzKf3y5TXkG-4" edge="1" parent="1" source="uc_search" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="uc_browse" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_search" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=16;strokeWidth=5;" value="Search &amp;amp; Filter Items" vertex="1">
+          <mxGeometry height="60" width="160" x="1100" y="210" as="geometry" />
+        </mxCell>
+        <mxCell id="inc_browse_search" edge="1" parent="1" source="uc_browse" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;endArrow=open;endFill=0;fontSize=16;fontStyle=2;strokeWidth=5;labelBackgroundColor=light-dark(#000000,#FF3399);" target="uc_search" value="«include»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_purchase" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d6b656;fontSize=17;strokeWidth=5;" value="Initiate Purchase&lt;br&gt;/ Trade Offer" vertex="1">
+          <mxGeometry height="60" width="160" x="330" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_chat" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d6b656;fontSize=17;strokeWidth=5;" value="Chat with Users" vertex="1">
+          <mxGeometry height="60" width="160" x="540" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_view_ratings" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d6b656;fontSize=17;strokeWidth=5;" value="View Seller Ratings" vertex="1">
+          <mxGeometry height="60" width="160" x="750" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_payment" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d6b656;fontSize=16;strokeWidth=5;" value="Make Online Payment" vertex="1">
+          <mxGeometry height="60" width="160" x="330" y="350" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_trans_history" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d6b656;fontSize=17;strokeWidth=5;" value="View Transaction&lt;br&gt;History" vertex="1">
+          <mxGeometry height="60" width="160" x="540" y="350" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_book_slot" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#333333;strokeWidth=5;fontSize=17;fontStyle=1;" value="Book Drop-off Slot" vertex="1">
+          <mxGeometry height="70" width="180" x="330" y="460" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_select_time" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#333333;fontSize=17;strokeWidth=5;" value="Select Time Slot" vertex="1">
+          <mxGeometry height="60" width="160" x="580" y="520" as="geometry" />
+        </mxCell>
+        <mxCell id="inc_book_view" edge="1" parent="1" source="uc_book_slot" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;endArrow=open;endFill=0;fontSize=18;fontStyle=2;labelBackgroundColor=light-dark(#000000,#FF3399);strokeWidth=6;" target="uc_view_slots" value="«include»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="inc_book_select" edge="1" parent="1" source="uc_book_slot" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;endArrow=open;endFill=0;fontSize=17;fontStyle=2;strokeWidth=5;labelBackgroundColor=light-dark(#000000,#FF3399);" target="uc_select_time" value="«include»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_manage_dropoff" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=16;strokeWidth=5;" value="Manage Drop-off&lt;br&gt;&amp;amp; Collection" vertex="1">
+          <mxGeometry height="60" width="180" x="330" y="590" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_confirm_receipt" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=17;strokeWidth=5;" value="Confirm Item Receipt" vertex="1">
+          <mxGeometry height="60" width="180" x="560" y="590" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_release_item" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=17;strokeWidth=5;" value="Release Item to Buyer" vertex="1">
+          <mxGeometry height="60" width="180" x="930" y="715" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_update_status" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=16;strokeWidth=5;" value="Update Transaction&lt;br&gt;Status" vertex="1">
+          <mxGeometry height="60" width="180" x="600" y="715" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_cancel_slot" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=16;strokeWidth=5;" value="Cancel / Reassign Slot" vertex="1">
+          <mxGeometry height="60" width="180" x="330" y="715" as="geometry" />
+        </mxCell>
+        <mxCell id="inc_confirm_update" edge="1" parent="1" source="uc_confirm_receipt" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;endArrow=open;endFill=0;fontSize=15;fontStyle=2;strokeWidth=4;labelBackgroundColor=light-dark(#000000,#FF3399);" target="uc_update_status" value="«include»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="inc_release_update" edge="1" parent="1" source="uc_release_item" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;endArrow=open;endFill=0;fontSize=11;fontStyle=2;labelBackgroundColor=light-dark(#000000,#FF3399);strokeWidth=4;" target="uc_update_status" value="«include»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ext_cancel" edge="1" parent="1" source="uc_cancel_slot" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;endArrow=open;endFill=0;fontSize=16;fontStyle=2;labelBackgroundColor=light-dark(#000000,#FF3399);strokeWidth=5;" target="uc_manage_dropoff" value="«extend»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_config_hours" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=16;strokeWidth=5;" value="Configure Facility Hours" vertex="1">
+          <mxGeometry height="60" width="180" x="350" y="865" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_set_capacity" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=16;strokeWidth=5;" value="Set Facility Capacity" vertex="1">
+          <mxGeometry height="60" width="180" x="570" y="865" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_usage_report" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=17;strokeWidth=5;" value="View Facility Usage Report" vertex="1">
+          <mxGeometry height="60" width="180" x="800" y="862" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_manage_roles" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;" value="Manage User Roles" vertex="1">
+          <mxGeometry height="60" width="180" x="1030" y="862" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_suggest_price" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=17;strokeWidth=5;" value="Suggest Item Price&lt;br&gt;Using SA Data" vertex="1">
+          <mxGeometry height="60" width="180" x="1020" y="460" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_fetch_price" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=16;strokeWidth=5;" value="Fetch SA Market&lt;br&gt;Price Data" vertex="1">
+          <mxGeometry height="60" width="180" x="1020" y="580" as="geometry" />
+        </mxCell>
+        <mxCell id="inc_price_fetch" edge="1" parent="1" source="uc_suggest_price" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;endArrow=open;endFill=0;fontSize=17;fontStyle=2;strokeWidth=3;labelBackgroundColor=light-dark(#000000,#FF3399);" target="uc_fetch_price" value="«include»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_leave_rating" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#333333;fontSize=16;strokeWidth=5;" value="Leave Rating After&lt;br&gt;Transaction" vertex="1">
+          <mxGeometry height="60" width="180" x="1020" y="350" as="geometry" />
+        </mxCell>
+        <mxCell id="ext_rating_history" edge="1" parent="1" source="uc_leave_rating" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;endArrow=open;endFill=0;fontSize=18;fontStyle=2;strokeWidth=5;labelBackgroundColor=light-dark(#000000,#FF3399);" target="uc_trans_history" value="«extend»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="assoc_student_register" edge="1" parent="1" source="actor_student" style="endArrow=none;html=1;strokeColor=#6c8ebf;" target="uc_register">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="assoc_student_login" edge="1" parent="1" source="actor_student" style="endArrow=none;html=1;strokeColor=#6c8ebf;" target="uc_login">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="assoc_student_create" edge="1" parent="1" source="actor_student" style="endArrow=none;html=1;strokeColor=#6c8ebf;" target="uc_create_listing">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="assoc_student_browse" edge="1" parent="1" source="actor_student" style="endArrow=none;html=1;strokeColor=#6c8ebf;" target="uc_browse">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="assoc_student_purchase" edge="1" parent="1" source="actor_student" style="endArrow=none;html=1;strokeColor=#6c8ebf;" target="uc_purchase">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="assoc_student_chat" edge="1" parent="1" source="actor_student" style="endArrow=none;html=1;strokeColor=#6c8ebf;" target="uc_chat">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="assoc_student_view_ratings" edge="1" parent="1" source="actor_student" style="endArrow=none;html=1;strokeColor=#6c8ebf;" target="uc_view_ratings">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="assoc_student_payment" edge="1" parent="1" source="actor_student" style="endArrow=none;html=1;strokeColor=#6c8ebf;" target="uc_payment">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="assoc_student_history" edge="1" parent="1" source="actor_student" style="endArrow=none;html=1;strokeColor=#6c8ebf;" target="uc_trans_history">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="assoc_student_book" edge="1" parent="1" source="actor_student" style="endArrow=none;html=1;strokeColor=#6c8ebf;strokeWidth=2;" target="uc_book_slot">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="assoc_student_leave_rating" edge="1" parent="1" source="actor_student" style="endArrow=none;html=1;strokeColor=#6c8ebf;" target="uc_leave_rating">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="assoc_student_suggest" edge="1" parent="1" source="uc_view_slots" style="endArrow=none;html=1;strokeColor=#6c8ebf;" target="uc_suggest_price">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="assoc_staff_manage" edge="1" parent="1" source="actor_staff" style="endArrow=none;html=1;strokeColor=#b85450;" target="uc_manage_dropoff">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="assoc_staff_confirm" edge="1" parent="1" source="actor_staff" style="endArrow=none;html=1;strokeColor=#b85450;" target="uc_confirm_receipt">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="assoc_staff_release" edge="1" parent="1" source="actor_staff" style="endArrow=none;html=1;strokeColor=#b85450;textShadow=1;" target="uc_release_item">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Yl8kG8AeUGzKf3y5TXkG-3" connectable="0" parent="assoc_staff_release" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Tet" vertex="1">
+          <mxGeometry relative="1" x="0.6696" y="-2" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="assoc_staff_cancel" edge="1" parent="1" source="actor_staff" style="endArrow=none;html=1;strokeColor=#b85450;" target="uc_cancel_slot">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="assoc_admin_hours" edge="1" parent="1" source="actor_admin" style="endArrow=none;html=1;strokeColor=#9673a6;" target="uc_config_hours">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="assoc_admin_capacity" edge="1" parent="1" source="actor_admin" style="endArrow=none;html=1;strokeColor=#9673a6;" target="uc_set_capacity">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="assoc_admin_report" edge="1" parent="1" source="actor_admin" style="endArrow=none;html=1;strokeColor=#9673a6;" target="uc_usage_report">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="assoc_admin_roles" edge="1" parent="1" source="actor_admin" style="endArrow=none;html=1;strokeColor=#9673a6;" target="uc_manage_roles">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="assoc_api_fetch" edge="1" parent="1" source="actor_api" style="endArrow=none;html=1;strokeColor=#82b366;strokeWidth=5;" target="uc_fetch_price">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="gen_staff_student" edge="1" parent="1" source="actor_staff" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=0;strokeColor=#000000;strokeWidth=1.5;fontSize=11;fontStyle=2;" target="actor_student" value="«generalisation»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="gen_admin_student" edge="1" parent="1" source="actor_admin" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=0;strokeColor=#000000;strokeWidth=1.5;fontSize=11;fontStyle=2;" target="actor_student" value="«generalisation»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="note_precondition" parent="1" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;strokeWidth=5;" value="{precondition: transaction status = &#39;completed&#39;}" vertex="1">
+          <mxGeometry height="50" width="160" x="1030" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="note_link" edge="1" parent="1" source="note_precondition" style="edgeStyle=none;html=1;dashed=1;endArrow=none;strokeColor=#d6b656;" target="uc_leave_rating">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="legend" parent="1" style="rounded=1;fillColor=#f5f5f5;strokeColor=#666666;" value="" vertex="1">
+          <mxGeometry height="60" width="1360" x="-70" y="940" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontStyle=1;fontSize=26;verticalAlign=middle;" value="Legend" vertex="1">
+          <mxGeometry height="60" width="230" x="-60" y="940" as="geometry" />
+        </mxCell>
+        <mxCell id="leg_s1" parent="1" style="ellipse;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=17;" value="Sprint 1 (Blue)" vertex="1">
+          <mxGeometry height="38" width="170" x="230" y="950" as="geometry" />
+        </mxCell>
+        <mxCell id="leg_s2" parent="1" style="ellipse;fillColor=#ffe6cc;strokeColor=#d6b656;fontSize=16;" value="Sprint 2 (Yellow)" vertex="1">
+          <mxGeometry height="38" width="170" x="430" y="950" as="geometry" />
+        </mxCell>
+        <mxCell id="leg_s3" parent="1" style="ellipse;fillColor=#f5f5f5;strokeColor=#333333;fontSize=16;" value="Sprint 3 (Grey)" vertex="1">
+          <mxGeometry height="40" width="160" x="630" y="950" as="geometry" />
+        </mxCell>
+        <mxCell id="leg_staff" parent="1" style="ellipse;fillColor=#f8cecc;strokeColor=#b85450;fontSize=16;" value="Staff (Pink)" vertex="1">
+          <mxGeometry height="38" width="150" x="820" y="952" as="geometry" />
+        </mxCell>
+        <mxCell id="leg_admin" parent="1" style="ellipse;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=15;" value="Admin (Purple)" vertex="1">
+          <mxGeometry height="40" width="160" x="980" y="950" as="geometry" />
+        </mxCell>
+        <mxCell id="leg_api" parent="1" style="ellipse;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=16;" value="API (Green)" vertex="1">
+          <mxGeometry height="40" width="130" x="1160" y="950" as="geometry" />
+        </mxCell>
+        <mxCell id="Yl8kG8AeUGzKf3y5TXkG-5" edge="1" parent="1" source="actor_student" style="endArrow=none;html=1;strokeColor=#6c8ebf;" target="uc_view_slots" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="120" y="466" as="sourcePoint" />
+            <mxPoint x="1020" y="488" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uc_view_slots" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#333333;fontSize=16;strokeWidth=5;" value="View Available Slots" vertex="1">
+          <mxGeometry height="60" width="160" x="810" y="460" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
