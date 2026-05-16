@@ -11,7 +11,7 @@ DECLARE
     result JSON;
 BEGIN
     -- 1. Calculate Total Transaction Volume (Only completed/accepted trades)
-    SELECT COALESCE(SUM(offer_amount), 0) INTO total_tx_volume 
+    SELECT COALESCE(SUM(total_amount), 0) INTO total_tx_volume 
     FROM transactions 
     WHERE status IN ('accepted', 'completed');
 
