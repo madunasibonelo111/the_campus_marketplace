@@ -1,24 +1,43 @@
-/* DropoffBooking.css */
-.dropoff-booking {
+.dropoff-page-wrapper {
+  display: block;
+  width: 100%;
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 40px 20px;
+  background-color: #f4f7fe !important; /* Matches app's global background color */
+  overflow-y: auto;
+  position: relative;
+  box-sizing: border-box;
 }
 
+
+.dropoff-booking {
+  display: block !important;
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto !important;
+  padding: 120px 20px 60px !important; 
+  box-sizing: border-box;
+}
 .booking-container {
+  width: 100%;
   max-width: 1000px;
   margin: 0 auto;
   background: white;
   border-radius: 24px;
+  
+
+  display: block !important; 
   overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
 }
+
 
 .booking-header {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 30px;
   color: white;
   text-align: center;
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
 }
 
 .booking-header h1 {
@@ -258,10 +277,13 @@
 .booking-confirmation {
   min-height: 100vh;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 40px 20px;
+  padding: 100px 20px 40px; 
   display: flex;
-  align-items: center;
   justify-content: center;
+  
+  
+  align-items: flex-start; 
+  box-sizing: border-box;
 }
 
 .confirmation-card {

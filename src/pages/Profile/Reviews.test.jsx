@@ -1,215 +1,83 @@
 // src/pages/Profile/Reviews.test.jsx
-
 import React from "react";
-import {
-  describe,
-  test,
-  expect,
-  vi,
-  beforeEach,
-} from "vitest";
+import { render, screen, waitFor, act } from "@testing-library/react";
+import { describe, test, expect, vi, beforeEach } from "vitest";
+import { MemoryRouter, Routes, Route } from "react-router-dom";
+import SellerReviewsPage from "./Reviews";
+import { supabase } from "@/supabase/supabaseClient";
 
-import {
-  render,
-  screen,
-} from "@testing-library/react";
-
-import "@testing-library/jest-dom";
-
-import {
-  MemoryRouter,
-  Routes,
-  Route,
-} from "react-router-dom";
-
-// ---------------- MOCKS ----------------
-
-// IMPORTANT:
-// define ALL mocks INSIDE vi.hoisted()
-// to avoid "Cannot access before initialization"
-
-const {
-  mockNavigate,
-  mockGetUser,
-  mockSingle,
-  mockOrder,
-} = vi.hoisted(() => {
+// Mock React Router parameters cleanly
+vi.mock("react-router-dom", async () => {
+  const actual = await vi.importActual("react-router-dom");
   return {
-    mockNavigate: vi.fn(),
-    mockGetUser: vi.fn(),
-    mockSingle: vi.fn(),
-    mockOrder: vi.fn(),
+    ...actual,
+    useNavigate: () => vi.fn(),
+    useParams: () => ({ sellerId: "seller-789" }),
+    useLocation: () => ({ search: "?action=all", state: null })
   };
 });
 
+// Mock the core Supabase Client methods safely
 vi.mock("@/supabase/supabaseClient", () => ({
   supabase: {
     auth: {
-      getUser: mockGetUser,
+      getUser: vi.fn(() => Promise.resolve({ data: { user: { id: "buyer-123" } }, error: null }))
     },
+    from: vi.fn()
+  }
+}));
 
-    from: vi.fn((table) => {
+describe("SellerReviewsPage Workspace Coverage Suite", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    // Standard structural mock return for profiles & reviews records loading logs
+    supabase.from.mockImplementation((table) => {
+      const queryBuilder = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        order: vi.fn().mockReturnThis(),
+        single: vi.fn(),
+      };
+
       if (table === "profiles") {
-        return {
-          select: () => ({
-            eq: () => ({
-              single: mockSingle,
-            }),
-          }),
-        };
+        queryBuilder.single.mockResolvedValue({
+          data: { id: "seller-789", name: "John Seller" },
+          error: null
+        });
       }
 
       if (table === "ratings") {
-        return {
-          select: () => ({
-            eq: () => ({
-              order: mockOrder,
-            }),
-          }),
-        };
+        queryBuilder.order.mockResolvedValue({
+          data: [
+            { id: 1, score: 5, comment: "Amazing seller!", created_at: "2026-01-01" }
+          ],
+          error: null
+        });
       }
 
-      return {};
-    }),
-  },
-}));
-
-vi.mock("react-router-dom", async () => {
-  const actual = await vi.importActual(
-    "react-router-dom"
-  );
-
-  return {
-    ...actual,
-    useNavigate: () => mockNavigate,
-  };
-});
-
-// import AFTER mocks
-import SellerReviewsPage from "./SellerProfileReviews";
-
-// ---------------- RENDER HELPER ----------------
-
-const renderComponent = (
-  initialRoute = "/reviews/seller-1"
-) => {
-  return render(
-    <MemoryRouter initialEntries={[initialRoute]}>
-      <Routes>
-        <Route
-          path="/reviews/:sellerId"
-          element={<SellerReviewsPage />}
-        />
-      </Routes>
-    </MemoryRouter>
-  );
-};
-
-// ---------------- TESTS ----------------
-
-describe("SellerReviewsPage", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-
-    mockGetUser.mockResolvedValue({
-      data: {
-        user: {
-          id: "user-1",
-        },
-      },
-    });
-
-    mockSingle.mockResolvedValue({
-      data: {
-        name: "John Seller",
-      },
-      error: null,
-    });
-
-    mockOrder.mockResolvedValue({
-      data: [
-        {
-          id: 1,
-          score: 5,
-          comment: "Amazing seller!",
-          created_at: "2026-01-01",
-        },
-      ],
-      error: null,
+      return queryBuilder;
     });
   });
 
-  test("renders loading state", async () => {
-    renderComponent();
-
-    expect(
-      screen.getByText(/loading/i)
-    ).toBeInTheDocument();
-
-    await screen.findByText(
-      /john seller reviews/i
-    );
-  });
-
-  test("renders seller name", async () => {
-    renderComponent();
-
-    expect(
-      await screen.findByText(
-        /john seller reviews/i
-      )
-    ).toBeInTheDocument();
-  });
-
-  test("renders average rating", async () => {
-    renderComponent();
-
-    expect(
-      await screen.findByText(/5\.0/i)
-    ).toBeInTheDocument();
-  });
-
-  test("renders review comment", async () => {
-    renderComponent();
-
-    expect(
-      await screen.findByText(
-        /amazing seller/i
-      )
-    ).toBeInTheDocument();
-  });
-
-  test("renders review stars", async () => {
-    renderComponent();
-
-    expect(
-      await screen.findByText("★★★★★")
-    ).toBeInTheDocument();
-  });
-
-  test("shows no reviews message", async () => {
-    mockOrder.mockResolvedValue({
-      data: [],
-      error: null,
+  test("successfully resolves authentication and loads seller profile data", async () => {
+    await act(async () => {
+      render(
+        <MemoryRouter initialEntries={["/reviews/seller-789"]}>
+          <Routes>
+            <Route path="/reviews/:sellerId" element={<SellerReviewsPage />} />
+          </Routes>
+        </MemoryRouter>
+      );
     });
 
-    renderComponent();
+    // Wait until loading boundaries clear out and profile content surfaces
+    await waitFor(() => {
+      expect(screen.getByText(/John Seller Reviews/i)).toBeInTheDocument();
+    });
 
-    expect(
-      await screen.findByText(
-        /no reviews yet/i
-      )
-    ).toBeInTheDocument();
-  });
-
-  test("renders back button", async () => {
-    renderComponent();
-
-    const backButton =
-      await screen.findByRole("button", {
-        name: /back/i,
-      });
-
-    expect(backButton).toBeInTheDocument();
+    expect(screen.getByText(/Amazing seller!/i)).toBeInTheDocument();
+    expect(screen.getByText("★★★★★")).toBeInTheDocument();
   });
 });

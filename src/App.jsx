@@ -36,6 +36,7 @@ import DropoffManagement from "./pages/Staff/DropoffManagement";
 
 // BOOKINGS
 import DropoffBooking from "./pages/Booking/DropoffBooking";
+import CollectionBooking from "./pages/Booking/CollectionBooking";
 
 // ADMIN
 import AdminDashboard from "./pages/Admin/AdminDashboard";
@@ -476,21 +477,29 @@ function App() {
         />
 
         {/* BOOKINGS */}
-
         <Route
           path="/booking/dropoff"
           element={
             currentUser ? (
               <DropoffBooking />
             ) : (
-              <Navigate
-                to="/auth"
-                replace
-              />
+              <Navigate to="/auth" replace />
             )
           }
         />
 
+        
+        <Route
+          path="/booking/collection"
+          element={
+            currentUser ? (
+              <CollectionBooking />
+            ) : (
+              <Navigate to="/auth" replace />
+            )
+          }
+        />
+        
         {/* BASKET */}
 
         <Route

@@ -1,0 +1,231 @@
+
+.collection-page-wrapper {
+  min-height: 100vh;
+  background: #f0f4f8;
+  padding: 40px 20px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.collection-booking-panel {
+  background: #ffffff;
+  width: 100%;
+  max-width: 900px;
+  border-radius: 24px;
+  box-shadow: 0 12px 40px rgba(0, 123, 255, 0.08);
+  padding: 40px;
+}
+
+.panel-header h1 {
+  font-size: 28px;
+  color: #007bff;
+  margin: 0 0 10px 0;
+  font-weight: 700;
+}
+
+.panel-header p {
+  color: #5a6e85;
+  font-size: 15px;
+  margin: 0 0 30px 0;
+  line-height: 1.5;
+}
+
+.item-summary-box {
+  background: #f8fafd;
+  border-left: 5px solid #007bff;
+  padding: 20px;
+  border-radius: 0 16px 16px 0;
+  margin-bottom: 35px;
+}
+
+.item-summary-box h3 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  color: #334e68;
+}
+
+.box-details-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px 24px;
+  font-size: 15px;
+}
+
+.box-details-grid span {
+  color: #627d98;
+}
+
+.green-balance {
+  color: #249e3e;
+}
+
+.slots-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.explorer-slot-card {
+  background: #ffffff;
+  border: 2px solid #e4eaf2;
+  border-radius: 16px;
+  padding: 18px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.explorer-slot-card:hover {
+  transform: translateY(-3px);
+  border-color: #b3d7ff;
+  box-shadow: 0 6px 16px rgba(0, 123, 255, 0.05);
+}
+
+.explorer-slot-card.active-selection {
+  border-color: #007bff;
+  background: #f4f8ff;
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.1);
+}
+
+.explorer-day {
+  font-weight: 600;
+  color: #102a43;
+  font-size: 15px;
+}
+
+.explorer-date {
+  font-size: 13px;
+  color: #627d98;
+  margin: 4px 0 10px 0;
+}
+
+.explorer-time {
+  font-size: 14px;
+  font-weight: 700;
+  color: #007bff;
+  background: #e6f2ff;
+  padding: 6px 10px;
+  border-radius: 8px;
+  display: inline-block;
+  margin-bottom: 8px;
+}
+
+.explorer-spots {
+  font-size: 12px;
+  color: #486581;
+}
+
+.panel-action-footer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 40px;
+  border-top: 1px solid #e4eaf2;
+  padding-top: 24px;
+}
+
+.btn-cancel-action {
+  background: #f0f4f8;
+  color: #486581;
+  border: none;
+  padding: 12px 28px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-cancel-action:hover {
+  background: #d9e2ec;
+}
+
+.btn-confirm-action {
+  background: #007bff;
+  color: #ffffff;
+  border: none;
+  padding: 12px 32px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-confirm-action:hover:not(:disabled) {
+  background: #0056b3;
+}
+
+.btn-confirm-action:disabled {
+  background: #bac7d5;
+  cursor: not-allowed;
+}
+
+/* Confirmation Success Layout */
+.booking-confirmation-view {
+  background: white;
+  padding: 45px;
+  border-radius: 24px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+  text-align: center;
+  max-width: 550px;
+  width: 100%;
+}
+
+.success-badge-icon {
+  font-size: 50px;
+  width: 90px;
+  height: 90px;
+  background: #e6f2ff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 24px auto;
+}
+
+.booking-meta-details {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 16px;
+  margin: 28px 0;
+  text-align: left;
+}
+
+.meta-detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #edf2f7;
+  font-size: 14px;
+}
+
+.meta-detail-row:last-child {
+  border-bottom: none;
+}
+
+.btn-return-history {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 14px 28px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+}
+
+.animated-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #007bff;
+  border-radius: 50%;
+  animation: spinnerRotate 0.8s linear infinite;
+  margin: 0 auto 16px auto;
+}
+
+@keyframes spinnerRotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

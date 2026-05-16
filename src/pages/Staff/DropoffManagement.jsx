@@ -79,22 +79,48 @@ const DropoffManagement = () => {
 
   const handleUpdateStatus = async (bookingId, status, condition, notes) => {
     try {
-      const { error } = await supabase
+      // Finalize the booking slot state
+      const { error: bookingError } = await supabase
         .from('facility_bookings')
-        .update({ status: status })
+        .update({ status: status }) // status becomes 'completed'
         .eq('id', bookingId);
 
-      if (error) throw error;
+      if (bookingError) throw bookingError;
+
+      if (status === 'completed') {
+        //  Log the item verification snapshot into handoffs tracking table
+        await supabase
+          .from('facility_handoffs')
+          .insert({
+            booking_id: bookingId,
+            item_condition_notes: condition,
+            staff_notes: notes,
+            created_at: new Date().toISOString()
+          });
+
+        
+        if (selectedDropoff?.transaction_id) {
+          const { error: txError } = await supabase
+            .from('transactions')
+            .update({ 
+              status: 'item_in_custody', 
+              updated_at: new Date().toISOString() 
+            })
+            .eq('id', selectedDropoff.transaction_id);
+
+          if (txError) throw txError;
+        }
+      }
       
-      alert('Drop-off confirmed successfully!');
+      alert('✅ Drop-off confirmed successfully! Item is now in Safe-Zone custody.');
       setShowModal(false);
       fetchDropoffs();
     } catch (error) {
       console.error('Error updating dropoff:', error);
-      alert('Failed to confirm drop-off');
+      alert('Failed to confirm drop-off: ' + error.message);
     }
   };
-
+  
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>

@@ -33,17 +33,15 @@ const CollectionManagement = () => {
             buyer:buyer_id (
               name
             )
-          ),
-          facility_handoffs (
-            item_condition_notes
           )
         `)
         .eq('booking_type', 'collection')
+        .eq('status', 'pending')
         .order('booking_date', { ascending: true });
 
       if (error) throw error;
 
-      const formattedCollections = data.map(booking => ({
+      const formattedCollections = (data || []).map(booking => ({
         id: booking.id,
         transaction_id: booking.transaction_id,
         item_name: booking.transactions?.listings?.title || 'Unknown Item',
@@ -52,25 +50,13 @@ const CollectionManagement = () => {
         amount: booking.transactions?.total_amount || 0,
         booking_time: booking.booking_date,
         status: booking.status,
-        condition: booking.facility_handoffs?.[0]?.item_condition_notes || 'Not yet received'
+        condition: 'Verified Custody'
       }));
 
       setCollections(formattedCollections);
     } catch (error) {
-      console.error('Error fetching collections:', error);
-      setCollections([
-        {
-          id: '1',
-          transaction_id: 'TXN-002',
-          item_name: 'Mountain Bike',
-          seller_name: 'Mike Johnson',
-          buyer_name: 'Sarah Williams',
-          amount: 599.99,
-          booking_time: new Date().toISOString(),
-          status: 'pending',
-          condition: 'Good condition'
-        }
-      ]);
+      console.error('Error fetching collections live loop:', error);
+      setCollections([]);
     } finally {
       setLoading(false);
     }
@@ -83,19 +69,34 @@ const CollectionManagement = () => {
 
   const handleUpdateStatus = async (bookingId, status) => {
     try {
-      const { error } = await supabase
+      // Move collection booking slot state to completed
+      const { error: bookingError } = await supabase
         .from('facility_bookings')
-        .update({ status: status })
+        .update({ status: status }) // status becomes 'completed'
         .eq('id', bookingId);
 
-      if (error) throw error;
+      if (bookingError) throw bookingError;
+
+      //  Finalize parent transaction as completed to clear from open lists
+      if (selectedCollection?.transaction_id) {
+        const { error: txError } = await supabase
+          .from('transactions')
+          .update({ 
+            status: 'completed', 
+            completed_at: new Date().toISOString(),
+            updated_at: new Date().toISOString() 
+          })
+          .eq('id', selectedCollection.transaction_id);
+
+        if (txError) throw txError;
+      }
       
-      alert('Collection confirmed successfully!');
+      alert('✅ Collection finalized! Item safely released to buyer and transaction completed.');
       setShowModal(false);
       fetchCollections();
     } catch (error) {
       console.error('Error updating collection:', error);
-      alert('Failed to confirm collection');
+      alert('Failed to confirm collection: ' + error.message);
     }
   };
 
