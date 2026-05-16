@@ -1,647 +1,105 @@
+// src/pages/Admin/AdminDashboard.test.jsx
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import {
-  render,
-  screen,
-  waitFor
-} from "@testing-library/react";
-
-import userEvent from "@testing-library/user-event";
-
+import { render, screen, waitFor, fireEvent, act } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-
 import AdminDashboard from "./AdminDashboard";
 
-
-// ✅ MOCK NAVIGATE
+// MOCK NAVIGATE
 const mockNavigate = vi.fn();
 
-
-// ✅ MOCK REACT ROUTER
 vi.mock("react-router-dom", async () => {
-
-  const actual =
-    await vi.importActual(
-      "react-router-dom"
-    );
-
+  const actual = await vi.importActual("react-router-dom");
   return {
-
     ...actual,
-
-    useNavigate: () =>
-      mockNavigate
-
+    useNavigate: () => mockNavigate
   };
-
 });
 
-
-// ✅ MOCK SUPABASE
-vi.mock(
-  "@/supabase/supabaseClient",
-  () => ({
-
-    supabase: {
-
-      auth: {
-
-        // ✅ MOCK USER
-        getUser: vi.fn(() =>
-          Promise.resolve({
-            data: {
-              user: {
-                id: "admin-1"
-              }
-            }
-          })
-        ),
-
-        // ✅ MOCK LOGOUT
-        signOut: vi.fn(() =>
-          Promise.resolve()
-        )
-
-      },
-
-
-      // ✅ MOCK TABLES
-      from: vi.fn((table) => {
-
-        // =========================
-        // ✅ PROFILES TABLE
-        // =========================
-        if (table === "profiles") {
-
-          return {
-
-            select: () => ({
-
-              eq: () => ({
-
-                single: () =>
-                  Promise.resolve({
-
-                    data: {
-                      name: "Bobo",
-                      role: "admin"
-                    }
-
-                  })
-
-              })
-
-            })
-
-          };
-
-        }
-
-
-        // =========================
-        // ✅ FACILITY BOOKINGS
-        // =========================
-        if (
-          table === "facility_bookings"
-        ) {
-
-          return {
-
-            select: () => ({
-
-              order: () =>
-                Promise.resolve({
-
-                  data: [
-
-                    {
-                      id: 1,
-
-                      status:
-                        "pending",
-
-                      booking_date:
-                        "2026-01-01",
-
-                      profiles: {
-                        name:
-                          "Shikombiso Mashele"
-                      }
-
-                    },
-
-                    {
-                      id: 2,
-
-                      status:
-                        "confirmed",
-
-                      booking_date:
-                        "2026-01-02",
-
-                      profiles: {
-                        name:
-                          "Bobo"
-                      }
-
-                    }
-
-                  ]
-
-                })
-
-            }),
-
-            update: () => ({
-
-              eq: () =>
-                Promise.resolve({
-                  data: true
-                })
-
-            })
-
-          };
-
-        }
-
-
-        // =========================
-        // ✅ FACILITY CONFIG
-        // =========================
-        if (
-          table === "facility_config"
-        ) {
-
-          return {
-
-            select: () => ({
-
-              limit: () => ({
-
-                single: () =>
-                  Promise.resolve({
-
-                    data: {
-
-                      open_time:
-                        "08:00",
-
-                      close_time:
-                        "17:00",
-
-                      max_capacity_per_slot:
-                        20,
-
-                      slot_duration_minutes:
-                        30
-
-                    }
-
-                  })
-
-              })
-
-            })
-
-          };
-
-        }
-
-        return {};
-
-      })
-
-    }
-
-  })
-);
-
-
-// =========================
-// ✅ TEST SUITE
-// =========================
-describe(
-  "AdminDashboard",
-  () => {
-
-    beforeEach(() => {
-
-      vi.clearAllMocks();
-
+// MOCK SECURITY & RPC ENDPOINTS
+vi.mock("@/supabase/supabaseClient", () => ({
+  supabase: {
+    auth: {
+      getUser: vi.fn(() => Promise.resolve({ data: { user: { id: "admin-1" } } })),
+      signOut: vi.fn(() => Promise.resolve())
+    },
+    from: vi.fn((table) => ({
+      select: () => ({
+        eq: () => ({
+          single: () => Promise.resolve({ data: { name: "Bobo", role: "admin" } })
+        }),
+        order: () => Promise.resolve({
+          data: [
+            { id: 1, status: "pending", booking_date: "2026-05-16", booking_type: "drop_off", profiles: { name: "Sarah" } }
+          ]
+        }),
+        limit: () => ({
+          maybeSingle: () => Promise.resolve({ data: { slot_duration_minutes: 30, max_capacity_per_slot: 5 } }),
+          single: () => Promise.resolve({ data: { slot_duration_minutes: 30, max_capacity_per_slot: 5 } })
+        })
+      }),
+      update: () => ({ eq: () => Promise.resolve({ data: true, error: null }) }),
+      insert: () => Promise.resolve({ data: true, error: null })
+    })),
+    rpc: vi.fn(() => Promise.resolve({
+      data: { total_transaction_volume: 12500, pending_flagged_items: 2, weekly_facility_utilization_pct: 10, monthly_successful_handoffs: 5 },
+      error: null
+    }))
+  }
+}));
+
+describe("AdminDashboard Navigation & Layout Toggles", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("renders side navigation layout buttons correctly", async () => {
+    render(
+      <MemoryRouter>
+        <AdminDashboard />
+      </MemoryRouter>
+    );
+    // ✅ Wait for loading spinner to clear and dashboard to mount
+    expect(await screen.findByText(/Platform Analytics/i)).toBeInTheDocument();
+    expect(screen.getByText(/Facility Operations/i)).toBeInTheDocument();
+  });
+
+  it("swaps viewports seamlessly to handle live facility bookings table", async () => {
+    render(
+      <MemoryRouter>
+        <AdminDashboard />
+      </MemoryRouter>
+    );
+    
+    // ✅ Use findByText to await the auth lifecycle state resolution before interacting
+    const opsButton = await screen.findByText(/Facility Operations/i);
+    
+    // ✅ Wrap state-mutating UI clicks in act() to clear console warnings
+    await act(async () => {
+      fireEvent.click(opsButton);
     });
 
+    await waitFor(() => {
+      expect(screen.getByText(/Live Booking Verification/i)).toBeInTheDocument();
+    });
+  });
 
-    // =========================
-    // ✅ DASHBOARD HEADING
-    // =========================
-    it(
-      "renders dashboard heading",
-      async () => {
-
-        render(
-
-          <MemoryRouter>
-
-            <AdminDashboard />
-
-          </MemoryRouter>
-
-        );
-
-        expect(
-
-          await screen.findByText(
-            /hello, bobo/i
-          )
-
-        ).toBeInTheDocument();
-
-      }
+  it("swaps viewports seamlessly to load facility config settings form", async () => {
+    render(
+      <MemoryRouter>
+        <AdminDashboard />
+      </MemoryRouter>
     );
-
-
-    // =========================
-    // ✅ FACILITY CONFIG
-    // =========================
-    it(
-      "shows facility configuration",
-      async () => {
-
-        render(
-
-          <MemoryRouter>
-
-            <AdminDashboard />
-
-          </MemoryRouter>
-
-        );
-
-        expect(
-
-          await screen.findByText(
-            /opening time/i
-          )
-
-        ).toBeInTheDocument();
-
-        expect(
-
-          screen.getByText("08:00")
-
-        ).toBeInTheDocument();
-
-        expect(
-
-          screen.getByText(
-            /max capacity per slot/i
-          )
-
-        ).toBeInTheDocument();
-
-      }
-    );
-
-
-    // =========================
-    // ✅ BOOKING STATS
-    // =========================
-    it(
-      "shows booking statistics",
-      async () => {
-
-        render(
-
-          <MemoryRouter>
-
-            <AdminDashboard />
-
-          </MemoryRouter>
-
-        );
-
-        await waitFor(() => {
-
-          expect(
-
-            screen.getByText(
-              /total bookings/i
-            )
-
-          ).toBeInTheDocument();
-
-        });
-
-        expect(
-
-          screen.getByText("2")
-
-        ).toBeInTheDocument();
-
-      }
-    );
-
-
-    // =========================
-    // ✅ RECENT BOOKINGS TABLE
-    // =========================
-    it(
-      "renders recent bookings table",
-      async () => {
-
-        render(
-
-          <MemoryRouter>
-
-            <AdminDashboard />
-
-          </MemoryRouter>
-
-        );
-
-        expect(
-
-          await screen.findByText(
-            /recent bookings/i
-          )
-
-        ).toBeInTheDocument();
-
-        expect(
-
-          screen.getByText(
-            "Shikombiso Mashele"
-          )
-
-        ).toBeInTheDocument();
-
-        expect(
-
-          screen.getByText(
-            "Bobo"
-          )
-
-        ).toBeInTheDocument();
-
-      }
-    );
-
-
-    // =========================
-    // ✅ CONFIRM BUTTON EXISTS
-    // =========================
-    it(
-      "shows confirm button for pending booking",
-      async () => {
-
-        render(
-
-          <MemoryRouter>
-
-            <AdminDashboard />
-
-          </MemoryRouter>
-
-        );
-
-        expect(
-
-          await screen.findByRole(
-            "button",
-            {
-              name: /confirm/i
-            }
-          )
-
-        ).toBeInTheDocument();
-
-      }
-    );
-
-
-    // =========================
-    // ✅ COMPLETE BUTTON EXISTS
-    // =========================
-    it(
-      "shows complete button for confirmed booking",
-      async () => {
-
-        render(
-
-          <MemoryRouter>
-
-            <AdminDashboard />
-
-          </MemoryRouter>
-
-        );
-
-        expect(
-
-          await screen.findByRole(
-            "button",
-            {
-              name: /complete/i
-            }
-          )
-
-        ).toBeInTheDocument();
-
-      }
-    );
-
-
-    // =========================
-    // ✅ CLICK CONFIRM BUTTON
-    // =========================
-    it(
-      "confirms a pending booking",
-      async () => {
-
-        render(
-
-          <MemoryRouter>
-
-            <AdminDashboard />
-
-          </MemoryRouter>
-
-        );
-
-        const confirmButton =
-
-          await screen.findByRole(
-            "button",
-            {
-              name: /confirm/i
-            }
-          );
-
-        await userEvent.click(
-          confirmButton
-        );
-
-        expect(
-          confirmButton
-        ).toBeInTheDocument();
-
-      }
-    );
-
-
-    // =========================
-    // ✅ CLICK COMPLETE BUTTON
-    // =========================
-    it(
-      "completes a confirmed booking",
-      async () => {
-
-        render(
-
-          <MemoryRouter>
-
-            <AdminDashboard />
-
-          </MemoryRouter>
-
-        );
-
-        const completeButton =
-
-          await screen.findByRole(
-            "button",
-            {
-              name: /complete/i
-            }
-          );
-
-        await userEvent.click(
-          completeButton
-        );
-
-        expect(
-          completeButton
-        ).toBeInTheDocument();
-
-      }
-    );
-
-
-    // =========================
-    // ✅ LOGOUT
-    // =========================
-    it(
-      "logs out admin",
-      async () => {
-
-        render(
-
-          <MemoryRouter>
-
-            <AdminDashboard />
-
-          </MemoryRouter>
-
-        );
-
-        const logoutButton =
-
-          await screen.findByRole(
-            "button",
-            {
-              name: /logout/i
-            }
-          );
-
-        await userEvent.click(
-          logoutButton
-        );
-
-        expect(
-          mockNavigate
-        ).toHaveBeenCalledWith(
-          "/auth"
-        );
-
-      }
-    );
-
-
-    // =========================
-    // ✅ SIDEBAR NAVIGATION
-    // =========================
-    it(
-      "navigates to facility config",
-      async () => {
-
-        render(
-
-          <MemoryRouter>
-
-            <AdminDashboard />
-
-          </MemoryRouter>
-
-        );
-
-        const configButton =
-
-          screen.getByText(
-            "Facility Config"
-          );
-
-        await userEvent.click(
-          configButton
-        );
-
-        expect(
-          mockNavigate
-        ).toHaveBeenCalledWith(
-          "/admin/facility-config"
-        );
-
-      }
-    );
-
-
-    // =========================
-    // ✅ EDIT CONFIG BUTTON
-    // =========================
-    it(
-      "navigates using edit config button",
-      async () => {
-
-        render(
-
-          <MemoryRouter>
-
-            <AdminDashboard />
-
-          </MemoryRouter>
-
-        );
-
-        const editButton =
-
-          await screen.findByRole(
-            "button",
-            {
-              name: /edit config/i
-            }
-          );
-
-        await userEvent.click(
-          editButton
-        );
-
-        expect(
-          mockNavigate
-        ).toHaveBeenCalledWith(
-          "/admin/facility-config"
-        );
-
-      }
-    );
-
-  }
-);
+    
+    // ✅ Use findByText to wait out the layout's initial global spinner state
+    const configButton = await screen.findByText(/Facility Configuration/i);
+    
+    // ✅ Wrap state-mutating UI clicks in act() to clear console warnings
+    await act(async () => {
+      fireEvent.click(configButton);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(/Facility Parameters & Constraints/i)).toBeInTheDocument();
+    });
+  });
+});

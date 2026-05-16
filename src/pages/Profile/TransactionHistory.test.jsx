@@ -1,7 +1,8 @@
-
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
+import TransactionHistory from './TransactionHistory';
+import { supabase } from '@/supabase/supabaseClient';
 
 const mockNavigate = vi.fn();
 
@@ -16,16 +17,13 @@ vi.mock('react-router-dom', async () => {
 vi.mock('@/supabase/supabaseClient', () => ({
   supabase: {
     auth: {
-      getUser: vi.fn(),
+      getSession: vi.fn(), // 🚀 Fixes authentication loop routing blocks
     },
     from: vi.fn(),
   },
 }));
 
-import TransactionHistory from './TransactionHistory';
-import { supabase } from '@/supabase/supabaseClient';
-
-describe('TransactionHistory Component', () => {
+describe('TransactionHistory Component Unit Tests', () => {
   const mockUser = { id: 'user-123', email: 'test@example.com' };
 
   beforeEach(() => {
@@ -42,7 +40,7 @@ describe('TransactionHistory Component', () => {
   };
 
   test('renders loading state initially', () => {
-    supabase.auth.getUser.mockResolvedValue({ data: { user: mockUser } });
+    supabase.auth.getSession.mockResolvedValue({ data: { session: { user: mockUser } }, error: null });
     
     const pendingPromise = new Promise(() => {});
     const mockOrder = vi.fn().mockReturnValue(pendingPromise);
@@ -52,12 +50,11 @@ describe('TransactionHistory Component', () => {
     supabase.from.mockReturnValue({ select: mockSelect });
     
     renderComponent();
-    
     expect(screen.getByText('Loading transaction history...')).toBeInTheDocument();
   });
 
   test('renders transaction history after loading', async () => {
-    supabase.auth.getUser.mockResolvedValue({ data: { user: mockUser } });
+    supabase.auth.getSession.mockResolvedValue({ data: { session: { user: mockUser } }, error: null });
     
     const mockTransactions = {
       data: [
@@ -69,11 +66,7 @@ describe('TransactionHistory Component', () => {
           status: 'completed',
           created_at: '2024-01-15T10:00:00Z',
           offer_amount: 150.00,
-          listings: {
-            title: 'Textbook',
-            price: 150.00,
-            listing_type: 'sale'
-          },
+          listings: { title: 'Textbook', price: 150.00, listing_type: 'sale' },
           payments: [{ id: 'pay-1', amount: 150.00, method: 'card', status: 'completed' }]
         }
       ],
@@ -96,7 +89,7 @@ describe('TransactionHistory Component', () => {
   });
 
   test('shows empty state when no transactions', async () => {
-    supabase.auth.getUser.mockResolvedValue({ data: { user: mockUser } });
+    supabase.auth.getSession.mockResolvedValue({ data: { session: { user: mockUser } }, error: null });
     
     const mockOrder = vi.fn().mockResolvedValue({ data: [], error: null });
     const mockOr = vi.fn().mockReturnValue({ order: mockOrder });
@@ -114,7 +107,7 @@ describe('TransactionHistory Component', () => {
   });
 
   test('redirects to auth when no user', async () => {
-    supabase.auth.getUser.mockResolvedValue({ data: { user: null } });
+    supabase.auth.getSession.mockResolvedValue({ data: { session: null }, error: null });
     
     await act(async () => {
       renderComponent();
@@ -126,7 +119,7 @@ describe('TransactionHistory Component', () => {
   });
 
   test('displays partial payment badge', async () => {
-    supabase.auth.getUser.mockResolvedValue({ data: { user: mockUser } });
+    supabase.auth.getSession.mockResolvedValue({ data: { session: { user: mockUser } }, error: null });
     
     const mockTransactions = {
       data: [
@@ -162,7 +155,7 @@ describe('TransactionHistory Component', () => {
   });
 
   test('filters to show only purchases', async () => {
-    supabase.auth.getUser.mockResolvedValue({ data: { user: mockUser } });
+    supabase.auth.getSession.mockResolvedValue({ data: { session: { user: mockUser } }, error: null });
     
     const mockTransactions = {
       data: [
@@ -199,7 +192,7 @@ describe('TransactionHistory Component', () => {
   });
 
   test('opens transaction details modal', async () => {
-    supabase.auth.getUser.mockResolvedValue({ data: { user: mockUser } });
+    supabase.auth.getSession.mockResolvedValue({ data: { session: { user: mockUser } }, error: null });
     
     const mockTransactions = {
       data: [
@@ -241,7 +234,7 @@ describe('TransactionHistory Component', () => {
   });
 
   test('handles error when fetching fails', async () => {
-    supabase.auth.getUser.mockResolvedValue({ data: { user: mockUser } });
+    supabase.auth.getSession.mockResolvedValue({ data: { session: { user: mockUser } }, error: null });
     
     const mockOrder = vi.fn().mockResolvedValue({ data: null, error: new Error('Database error') });
     const mockOr = vi.fn().mockReturnValue({ order: mockOrder });
