@@ -70,64 +70,47 @@ export default function SellerReviewsPage() {
     }
   };
 
-  const handleSubmitReview = async () => {
-    if (!rating) {
-      alert("Please select a star rating");
-      return;
-    }
-
-    if (!currentUser) {
-      navigate("/auth");
+  
+  const handleSubmitReview = async (e) => {
+    e.preventDefault();
+    if (rating === 0) {
+      alert("Please select a rating score!");
       return;
     }
 
     setSubmitting(true);
-
     try {
-      // Prevent duplicate review
-      const { data: existingReview } = await supabase
+      // Safely capture the transaction ID context parameter passed from the navigation link
+      const txId = location.state?.transactionId;
+
+      const { error } = await supabase
         .from("ratings")
-        .select("id")
-        .eq("reviewer_id", currentUser.id)
-        .eq("reviewee_id", sellerId)
-        .maybeSingle();
-
-      if (existingReview) {
-        alert("You have already reviewed this seller.");
-        navigate(`/reviews/${sellerId}`);
-        return;
-      }
-
-      // Insert rating
-      const { error } = await supabase.from("ratings").insert([
-        {
+        .insert({
           reviewer_id: currentUser.id,
           reviewee_id: sellerId,
-          score: rating,
+          score: Number(rating),
           comment: comment.trim(),
-        },
-      ]);
+          // 🔗 PASS THE TRANSACTION ID TO THE DATABASE ENTRY HERE!
+          transaction_id: txId, 
+          created_at: new Date().toISOString(),
+        });
 
       if (error) throw error;
 
-      alert("Review submitted!");
-
-      // Reset form
+      alert("🎉 Review submitted successfully! Thank you.");
       setRating(0);
       setComment("");
-
-      // Refresh reviews instantly
-      await fetchSellerAndReviews();
-
-      // Return to normal view mode
-      navigate(`/reviews/${sellerId}`);
+      
+      // Bounces user back to history immediately after reviewing
+      navigate("/history");
     } catch (err) {
-      alert(err.message);
+      console.error("Error submitting review profile loop:", err);
+      alert("Failed to submit review: " + err.message);
     } finally {
       setSubmitting(false);
     }
   };
-
+  
   // Average Rating
   const averageRating =
     reviews.length > 0

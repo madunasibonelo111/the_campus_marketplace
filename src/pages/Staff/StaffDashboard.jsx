@@ -88,7 +88,8 @@ const StaffDashboard = () => {
           setPendingReceipts(formattedDropoffs);
         }
 
-        // Load collection appointments
+      
+        
         const { data: collections, error: collectionError } = await supabase
           .from('facility_bookings')
           .select(`
@@ -99,6 +100,7 @@ const StaffDashboard = () => {
             transactions:transaction_id (
               id,
               total_amount,
+              status,
               listings:listing_id (
                 title
               ),
@@ -108,16 +110,13 @@ const StaffDashboard = () => {
               buyer:buyer_id (
                 name
               )
-            ),
-            facility_handoffs (
-              item_condition_notes
             )
           `)
           .eq('booking_type', 'collection')
           .eq('status', 'pending')
           .order('booking_date', { ascending: true });
 
-        if (!collectionError && collections && collections.length > 0) {
+        if (!collectionError && collections) {
           const formattedCollections = collections.map(booking => ({
             id: booking.id,
             transaction_id: booking.transaction_id,
@@ -127,38 +126,16 @@ const StaffDashboard = () => {
             amount: booking.transactions?.total_amount || 0,
             booking_time: booking.booking_date,
             booking_id: booking.id,
-            condition: booking.facility_handoffs?.[0]?.item_condition_notes || 'Not yet received',
             status: booking.status
           }));
           setPendingReleases(formattedCollections);
         }
 
       } catch (error) {
-        console.error('Error loading data:', error);
-        // Fallback mock data for demo/error state
-        setPendingReceipts([
-          {
-            id: '1',
-            transaction_id: 'TXN-001',
-            item_name: 'Vintage Leather Boots',
-            seller_name: 'John Doe',
-            buyer_name: 'Jane Smith',
-            amount: 249.99,
-            booking_time: new Date().toISOString(),
-          }
-        ]);
-        setPendingReleases([
-          {
-            id: '2',
-            transaction_id: 'TXN-002',
-            item_name: 'Mountain Bike',
-            seller_name: 'Mike Johnson',
-            buyer_name: 'Sarah Williams',
-            amount: 599.99,
-            booking_time: new Date().toISOString(),
-            condition: 'Good condition'
-          }
-        ]);
+        console.error('Error loading data securely:', error);
+       
+        setPendingReceipts([]);
+        setPendingReleases([]);
       } finally {
         setLoading(false);
       }
@@ -177,26 +154,54 @@ const StaffDashboard = () => {
     setShowReleaseModal(true);
   };
 
-  const handleUpdateBookingStatus = async (bookingId, status) => {
-    try {
-      const { error } = await supabase
-        .from('facility_bookings')
-        .update({ status: status })
-        .eq('id', bookingId);
+  const handleUpdateBookingStatus = async (bookingId, status, transactionId, type) => {
+  try {
+    // Update the booking status in the facility_bookings table
+    const { error: bookingError } = await supabase
+      .from('facility_bookings')
+      .update({ status: status }) // status is usually 'confirmed' or 'completed'
+      .eq('id', bookingId);
 
-      if (error) throw error;
-      
-      if (status === 'completed') {
-        setPendingReceipts(prev => prev.filter(b => b.booking_id !== bookingId));
-        setPendingReleases(prev => prev.filter(b => b.booking_id !== bookingId));
+    if (bookingError) throw bookingError;
+
+    
+    let newTransactionStatus = '';
+    
+    if (status === 'completed') {
+      // If it was a drop-off, the item is now in safe-zone custody 
+      if (type === 'drop_off') {
+        newTransactionStatus = 'item_in_custody'; 
+      } 
+      // If it was a collection, the entire deal is finished 
+      else if (type === 'collection') {
+        newTransactionStatus = 'completed';
       }
-      
-      alert(`Booking ${status === 'confirmed' ? 'confirmed' : 'marked as ' + status} successfully!`);
-    } catch (error) {
-      console.error('Error updating booking:', error);
-      alert('Failed to update booking status');
+
+      if (newTransactionStatus) {
+        const { error: txError } = await supabase
+          .from('transactions')
+          .update({ 
+            status: newTransactionStatus,
+            updated_at: new Date().toISOString() 
+          })
+          .eq('id', transactionId);
+
+        if (txError) throw txError;
+      }
     }
-  };
+
+    // Refresh local states instantly inside handleUpdateBookingStatus
+    alert(`Success: Staff has verified the ${type.replace('_', ' ')}.`);
+    
+
+    setPendingReceipts(prev => prev.filter(b => b.id !== bookingId));
+    setPendingReleases(prev => prev.filter(b => b.id !== bookingId));
+
+  } catch (error) {
+    console.error('Error in staff verification flow:', error);
+    alert('Failed to update status. Please check database connectivity.');
+  }
+};
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -481,12 +486,18 @@ const StaffDashboard = () => {
               <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Notes</label>
               <textarea id="notesText" rows="3" style={{ width: '100%', padding: '12px', border: '1px solid #ddd', borderRadius: '8px' }}></textarea>
             </div>
+            
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
               <button onClick={() => setShowReceiptModal(false)} style={{ padding: '10px 20px', background: '#f8f9fa', border: '1px solid #ddd', borderRadius: '8px', cursor: 'pointer' }}>Cancel</button>
               <button onClick={() => { 
-                handleUpdateBookingStatus(selectedTransaction.booking_id, 'completed');
+        
+                handleUpdateBookingStatus(
+                  selectedTransaction.booking_id, 
+                  'completed', 
+                  selectedTransaction.transaction_id, 
+                  'drop_off'
+                );
                 setShowReceiptModal(false);
-                setPendingReceipts(prev => prev.filter(t => t.id !== selectedTransaction.id));
               }} style={{ background: '#28a745', color: 'white', padding: '10px 20px', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>
                 Confirm Drop-off
               </button>
@@ -526,12 +537,18 @@ const StaffDashboard = () => {
                 <span>The item condition matches the recorded notes</span>
               </label>
             </div>
+            
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
               <button onClick={() => setShowReleaseModal(false)} style={{ padding: '10px 20px', background: '#f8f9fa', border: '1px solid #ddd', borderRadius: '8px', cursor: 'pointer' }}>Cancel</button>
               <button onClick={() => { 
-                handleUpdateBookingStatus(selectedTransaction.booking_id, 'completed');
+                // ✅ FIX: Pass all 4 parameters (booking_id, status, transaction_id, and type)
+                handleUpdateBookingStatus(
+                  selectedTransaction.booking_id, 
+                  'completed', 
+                  selectedTransaction.transaction_id, 
+                  'collection'
+                );
                 setShowReleaseModal(false);
-                setPendingReleases(prev => prev.filter(t => t.id !== selectedTransaction.id));
               }} style={{ background: '#007bff', color: 'white', padding: '10px 20px', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>
                 Confirm Collection
               </button>

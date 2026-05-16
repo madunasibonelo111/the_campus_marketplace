@@ -51,6 +51,14 @@ export default function PaymentForm() {
     
     getUser();
     
+    // Catch and initialize standalone parent transactions passed from the history view!
+    if (location.state?.transaction) {
+      setCurrentTransaction(location.state.transaction);
+      if (location.state.totalAmount) {
+        setPaymentAmount(location.state.totalAmount);
+      }
+    }
+    
     if (location.state?.basket) {
       const { basket, totalAmount, transaction } = location.state;
       setBasketItems(basket);
@@ -233,10 +241,14 @@ export default function PaymentForm() {
     }
   };
 
-  const processPayment = async () => {
+const processPayment = async () => {
     try {
+      
+      const totalAgreedPrice = currentTransaction?.total_amount || currentTransaction?.offer_amount || originalAmount;
+      const totalPreviouslyPaid = currentTransaction?.amount_paid || (totalAgreedPrice - originalAmount) || 0;
+      
       const cashShortfall = originalAmount - finalAmount;
-      const paymentStatus = cashShortfall === 0 ? 'completed' : 'partial';
+      const paymentStatus = cashShortfall <= 0.10 ? 'completed' : 'partial';
       const paymentMethodValue = paymentMethod === 'card' ? 'card' : paymentMethod === 'paypal' ? 'paypal' : 'online';
       
       const gatewayResult = await simulatePaymentGateway(paymentMethodValue, finalAmount, cardDetails);
@@ -261,19 +273,29 @@ export default function PaymentForm() {
       
       if (paymentError) throw paymentError;
       
-      const currentAmountPaid = (currentTransaction?.amount_paid || 0) + finalAmount;
-      const newRemainingBalance = (currentTransaction?.total_amount || originalAmount) - currentAmountPaid;
-      const transactionStatus = newRemainingBalance <= 0 ? 'completed' : paymentStatus === 'partial' ? 'partial_payment' : 'pending_payment';
+      // Calculate accurate incremental accumulators safely
+      const currentAmountPaid = totalPreviouslyPaid + finalAmount;
+      const newRemainingBalance = Math.max(0, totalAgreedPrice - currentAmountPaid);
       
+      //  Explicitly mark as completed if balance drops below our 10 cent floating-point math boundary
+      const transactionStatus = newRemainingBalance <= 0.10 ? 'completed' : 'partial_payment';
+      
+      console.log("Synchronizing Transaction State Engine Payload:", {
+        id: currentTransaction?.id,
+        status: transactionStatus,
+        amount_paid: currentAmountPaid,
+        remaining_balance: newRemainingBalance
+      });
+
       await supabase
         .from('transactions')
         .update({ 
           status: transactionStatus,
           amount_paid: currentAmountPaid,
           remaining_balance: newRemainingBalance,
-          partial_payment_amount: paymentStatus === 'partial' ? finalAmount : null,
+          partial_payment_amount: transactionStatus === 'partial_payment' ? finalAmount : null,
           updated_at: new Date().toISOString(),
-          ...(newRemainingBalance <= 0 && { completed_at: new Date().toISOString() })
+          ...(transactionStatus === 'completed' && { completed_at: new Date().toISOString() })
         })
         .eq('id', currentTransaction?.id);
       
@@ -281,7 +303,7 @@ export default function PaymentForm() {
         await createFacilityBooking(newRemainingBalance);
       }
       
-      if (newRemainingBalance <= 0) {
+      if (newRemainingBalance <= 0.10) {
         await updateListingStatus();
       }
       
@@ -291,13 +313,13 @@ export default function PaymentForm() {
       
       await sendPaymentConfirmation({ 
         success: true, 
-        hasShortfall: cashShortfall > 0 && newRemainingBalance > 0, 
+        hasShortfall: newRemainingBalance > 0.10, 
         shortfallAmount: newRemainingBalance
       });
       
       return { 
         success: true, 
-        hasShortfall: cashShortfall > 0 && newRemainingBalance > 0, 
+        hasShortfall: newRemainingBalance > 0.10, 
         shortfallAmount: newRemainingBalance,
         payment
       };
