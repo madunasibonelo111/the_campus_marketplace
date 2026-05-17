@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from "@/supabase/supabaseClient";
+import "./DropoffManagement.css";
 
 const DropoffManagement = () => {
   const navigate = useNavigate();
@@ -9,6 +10,12 @@ const DropoffManagement = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [selectedDropoff, setSelectedDropoff] = useState(null);
+  
+  // Verification Checklist State
+  const [verifyId, setVerifyId] = useState(false);
+  const [verifyCondition, setVerifyCondition] = useState(false);
+  const [condition, setCondition] = useState("Perfect - Like new");
+  const [notes, setNotes] = useState("");
 
   useEffect(() => {
     fetchDropoffs();
@@ -16,6 +23,7 @@ const DropoffManagement = () => {
 
   const fetchDropoffs = async () => {
     try {
+      setLoading(true);
       const { data, error } = await supabase
         .from('facility_bookings')
         .select(`
@@ -36,189 +44,183 @@ const DropoffManagement = () => {
           )
         `)
         .eq('booking_type', 'drop_off')
+        .eq('status', 'pending')
         .order('booking_date', { ascending: true });
 
       if (error) throw error;
 
-      const formattedDropoffs = data.map(booking => ({
+      const formattedDropoffs = (data || []).map(booking => ({
         id: booking.id,
         transaction_id: booking.transaction_id,
-        item_name: booking.transactions?.listings?.title || 'Unknown Item',
-        seller_name: booking.transactions?.seller?.name || 'Unknown Seller',
-        buyer_name: booking.transactions?.buyer?.name || 'Unknown Buyer',
+        item_name: booking.transactions?.listings?.title || "Marketplace Item",
+        seller_name: booking.transactions?.seller?.name || "Campus Seller",
+        buyer_name: booking.transactions?.buyer?.name || "Campus Buyer",
         amount: booking.transactions?.total_amount || 0,
-        booking_time: booking.booking_date,
-        status: booking.status
+        date: booking.booking_date
       }));
 
       setDropoffs(formattedDropoffs);
-    } catch (error) {
-      console.error('Error fetching dropoffs:', error);
-      // Mock data
-      setDropoffs([
-        {
-          id: '1',
-          transaction_id: 'TXN-001',
-          item_name: 'Vintage Leather Boots',
-          seller_name: 'John Doe',
-          buyer_name: 'Jane Smith',
-          amount: 249.99,
-          booking_time: new Date().toISOString(),
-          status: 'pending'
-        }
-      ]);
+    } catch (err) {
+      console.error("Error fetching dropoffs:", err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleConfirmDropoff = async (dropoff) => {
+  const handleOpenInspection = (dropoff) => {
     setSelectedDropoff(dropoff);
+    setVerifyId(false);
+    setVerifyCondition(false);
+    setCondition("Perfect - Like new");
+    setNotes("");
     setShowModal(true);
   };
 
-  const handleUpdateStatus = async (bookingId, status, condition, notes) => {
+  const handleUpdateStatus = async (bookingId, newStatus) => {
+    if (!verifyId || !verifyCondition) {
+      alert("⚠️ Verification Pending: Please confirm all mandatory checklist items before completing intake.");
+      return;
+    }
+
     try {
-      // Finalize the booking slot state
       const { error: bookingError } = await supabase
         .from('facility_bookings')
-        .update({ status: status }) // status becomes 'completed'
+        .update({ status: newStatus })
         .eq('id', bookingId);
 
       if (bookingError) throw bookingError;
 
-      if (status === 'completed') {
-        //  Log the item verification snapshot into handoffs tracking table
-        await supabase
-          .from('facility_handoffs')
-          .insert({
-            booking_id: bookingId,
-            item_condition_notes: condition,
-            staff_notes: notes,
-            created_at: new Date().toISOString()
-          });
+      if (selectedDropoff?.transaction_id && newStatus === 'completed') {
+        const { error: txError } = await supabase
+          .from('transactions')
+          .update({ 
+            status: 'item_in_custody', 
+            updated_at: new Date().toISOString() 
+          })
+          .eq('id', selectedDropoff.transaction_id);
 
-        
-        if (selectedDropoff?.transaction_id) {
-          const { error: txError } = await supabase
-            .from('transactions')
-            .update({ 
-              status: 'item_in_custody', 
-              updated_at: new Date().toISOString() 
-            })
-            .eq('id', selectedDropoff.transaction_id);
-
-          if (txError) throw txError;
-        }
+        if (txError) throw txError;
       }
+
       
-      alert('✅ Drop-off confirmed successfully! Item is now in Safe-Zone custody.');
       setShowModal(false);
       fetchDropoffs();
-    } catch (error) {
-      console.error('Error updating dropoff:', error);
-      alert('Failed to confirm drop-off: ' + error.message);
+    } catch (err) {
+      console.error("Vault entry failure:", err);
+      alert("Failed to process transaction: " + err.message);
     }
   };
-  
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <div>Loading drop-offs...</div>
-      </div>
-    );
-  }
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px' }}>
-      <div style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-        <button 
-          onClick={() => navigate('/staff')}
-          style={{ padding: '10px 20px', background: '#667eea', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
-        >
-          ← Back to Dashboard
-        </button>
-        <h1 style={{ margin: 0 }}>Drop-off Management</h1>
+    <div className="dropoff-mgmt-page">
+      <div className="mgmt-header-action-bar">
+        <button onClick={() => navigate('/staff')} className="mgmt-back-btn">← Back to Staff Desk</button>
+        <h1>Drop-off Intake Desk</h1>
       </div>
 
-      <div style={{ background: 'white', borderRadius: '20px', padding: '28px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
-        <h2>Manage Drop-off Appointments</h2>
-        <p style={{ color: '#666', marginBottom: '24px' }}>Schedule, confirm, and track item drop-offs from sellers</p>
-        
-        {dropoffs.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '40px', color: '#999' }}>
-            <div style={{ fontSize: '48px', marginBottom: '16px' }}>📦</div>
-            <p>No drop-off appointments</p>
+      <div className="mgmt-scroll-content">
+        <div className="mgmt-panel-card">
+          <div className="panel-headline-group">
+            <h2>Pending Safe-Zone Deliveries</h2>
+            <p className="subtitle">Audit physical condition assets before indexing items into facility vaults.</p>
           </div>
-        ) : (
-          dropoffs.map(dropoff => (
-            <div key={dropoff.id} style={{ border: '1px solid #e0e0e0', borderRadius: '12px', padding: '20px', marginBottom: '16px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '16px' }}>
-                <h3 style={{ margin: 0 }}>{dropoff.item_name}</h3>
-                <span style={{ 
-                  background: dropoff.status === 'pending' ? '#fff3cd' : '#d4edda',
-                  color: dropoff.status === 'pending' ? '#856404' : '#155724',
-                  padding: '4px 12px', 
-                  borderRadius: '20px', 
-                  fontSize: '12px',
-                  fontWeight: '600'
-                }}>
-                  {dropoff.status.toUpperCase()}
-                </span>
-              </div>
-              <div style={{ marginBottom: '16px' }}>
-                <p><strong>Seller:</strong> {dropoff.seller_name}</p>
-                <p><strong>Buyer:</strong> {dropoff.buyer_name}</p>
-                <p><strong>Amount:</strong> <span style={{ color: '#28a745', fontWeight: 'bold' }}>R{dropoff.amount.toFixed(2)}</span></p>
-                <p><strong>Scheduled:</strong> {new Date(dropoff.booking_time).toLocaleString()}</p>
-              </div>
-              {dropoff.status === 'pending' && (
-                <button 
-                  onClick={() => handleConfirmDropoff(dropoff)}
-                  style={{ background: '#28a745', color: 'white', padding: '10px 20px', border: 'none', borderRadius: '8px', cursor: 'pointer', width: '100%' }}
-                >
-                  Confirm Drop-off
-                </button>
-              )}
+
+          {loading ? (
+            <div className="mgmt-loading-container">
+              <div className="mgmt-spinner"></div>
+              <p>Accessing facility ledger indexes...</p>
             </div>
-          ))
-        )}
+          ) : dropoffs.length === 0 ? (
+            <div className="mgmt-empty-state">
+              <span className="empty-icon">📥</span>
+              <h3>Intake Queue Clear</h3>
+              <p>No scheduled seller arrivals are currently awaiting processing.</p>
+            </div>
+          ) : (
+            <div className="queue-list-container">
+              {dropoffs.map((d) => (
+                <div key={d.id} className="queue-item-strip dropoff-theme">
+                  <div className="strip-left-decor"></div>
+                  <div className="strip-main-content">
+                    <div className="strip-top">
+                      <h3>Intake: {d.item_name}</h3>
+                      <span className="queue-pill pending">Awaiting Delivery</span>
+                    </div>
+                    <div className="strip-meta-grid">
+                      <p>Seller: <strong>{d.seller_name}</strong></p>
+                      <p>Buyer: <strong>{d.buyer_name}</strong></p>
+                      <p>Escrow Vault Value: <strong className="gold-text">R{d.amount.toFixed(2)}</strong></p>
+                      <p>Scheduled Slot: <strong>{new Date(d.date).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</strong></p>
+                    </div>
+                    <button className="open-gate-btn dropoff" onClick={() => handleOpenInspection(d)}>
+                      🔎 Inspect & Accept Package
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Modal */}
       {showModal && selectedDropoff && (
-        <div style={{ 
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', 
-          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
-        }}>
-          <div style={{ background: 'white', borderRadius: '20px', padding: '32px', maxWidth: '500px', width: '90%' }}>
-            <h2>Confirm Drop-off</h2>
-            <div style={{ background: '#f8f9fa', padding: '20px', borderRadius: '12px', margin: '20px 0' }}>
-              <p><strong>Item:</strong> {selectedDropoff.item_name}</p>
-              <p><strong>Seller:</strong> {selectedDropoff.seller_name}</p>
-              <p><strong>Time:</strong> {new Date(selectedDropoff.booking_time).toLocaleString()}</p>
+        <div className="modal-overlay">
+          <div className="modal-content-box dropoff-accent">
+            <div className="modal-header-banner">
+              <h2>Intake Inspection Audit</h2>
+              <p>Verify matching parameters before checking packages into secure vault holdings.</p>
             </div>
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Item Condition *</label>
-              <select id="conditionSelect" style={{ width: '100%', padding: '12px', border: '1px solid #ddd', borderRadius: '8px' }}>
-                <option>Perfect - Like new</option>
-                <option>Good - Minor wear</option>
-                <option>Fair - Visible wear</option>
-                <option>Poor - Damaged</option>
-              </select>
+            
+            <div className="modal-body-form">
+              <div className="checklist-card-section">
+                <h4>Mandatory Security Verification</h4>
+                <label className="checkbox-form-row">
+                  <input type="checkbox" checked={verifyId} onChange={(e) => setVerifyId(e.target.checked)} />
+                  <div className="checkbox-custom-text">
+                    <strong>Verify Student Credentials</strong>
+                    <span>I confirm that I have verified the seller's physical Student ID.</span>
+                  </div>
+                </label>
+                
+                <label className="checkbox-form-row">
+                  <input type="checkbox" checked={verifyCondition} onChange={(e) => setVerifyCondition(e.target.checked)} />
+                  <div className="checkbox-custom-text">
+                    <strong>Physical Item Matching Check</strong>
+                    <span>I confirm the item matches the image parameters listed on the marketplace.</span>
+                  </div>
+                </label>
+              </div>
+
+              <div className="form-input-group">
+                <label>Physical Condition Grading</label>
+                <select value={condition} onChange={(e) => setCondition(e.target.value)}>
+                  <option>Perfect - Like new</option>
+                  <option>Good - Minor signs of use</option>
+                  <option>Fair - Visible wear</option>
+                  <option>Poor - Damaged asset</option>
+                </select>
+              </div>
+
+              <div className="form-input-group">
+                <label>Staff Desk Audit Notes</label>
+                <textarea 
+                  value={notes} 
+                  onChange={(e) => setNotes(e.target.value)} 
+                  rows="3" 
+                  placeholder="Log packaging, cosmetic anomalies or serialization numbers..."
+                />
+              </div>
             </div>
-            <div style={{ marginBottom: '24px' }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Notes</label>
-              <textarea id="notesText" rows="3" style={{ width: '100%', padding: '12px', border: '1px solid #ddd', borderRadius: '8px' }}></textarea>
-            </div>
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-              <button onClick={() => setShowModal(false)} style={{ padding: '10px 20px', background: '#f8f9fa', border: '1px solid #ddd', borderRadius: '8px', cursor: 'pointer' }}>Cancel</button>
-              <button onClick={() => {
-                const condition = document.getElementById('conditionSelect').value;
-                const notes = document.getElementById('notesText').value;
-                handleUpdateStatus(selectedDropoff.id, 'completed', condition, notes);
-              }} style={{ background: '#28a745', color: 'white', padding: '10px 20px', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>
-                Confirm Drop-off
+
+            <div className="modal-action-footer-buttons">
+              <button type="button" className="btn-modal-close" onClick={() => setShowModal(false)}>Cancel</button>
+              <button 
+                type="button" 
+                className="btn-modal-submit dropoff"
+                disabled={!verifyId || !verifyCondition}
+                onClick={() => handleUpdateStatus(selectedDropoff.id, 'completed')}
+              >
+                🔒 Authorize Vault Intake
               </button>
             </div>
           </div>
