@@ -1,10 +1,13 @@
 // src/pages/Admin/AdminDashboard.test.jsx
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor, fireEvent, act } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
+import React from "react";
 import AdminDashboard from "./AdminDashboard";
+import { supabase } from "@/supabase/supabaseClient";
 
-// MOCK NAVIGATE
+// Mock Navigate Link Actions
 const mockNavigate = vi.fn();
 
 vi.mock("react-router-dom", async () => {
@@ -15,41 +18,57 @@ vi.mock("react-router-dom", async () => {
   };
 });
 
-// MOCK SECURITY & RPC ENDPOINTS
-vi.mock("@/supabase/supabaseClient", () => ({
-  supabase: {
-    auth: {
-      getUser: vi.fn(() => Promise.resolve({ data: { user: { id: "admin-1" } } })),
-      signOut: vi.fn(() => Promise.resolve())
-    },
-    from: vi.fn((table) => ({
-      select: () => ({
-        eq: () => ({
-          single: () => Promise.resolve({ data: { name: "Bobo", role: "admin" } })
-        }),
-        order: () => Promise.resolve({
-          data: [
-            { id: 1, status: "pending", booking_date: "2026-05-16", booking_type: "drop_off", profiles: { name: "Sarah" } }
-          ]
-        }),
-        limit: () => ({
-          maybeSingle: () => Promise.resolve({ data: { slot_duration_minutes: 30, max_capacity_per_slot: 5 } }),
-          single: () => Promise.resolve({ data: { slot_duration_minutes: 30, max_capacity_per_slot: 5 } })
-        })
-      }),
-      update: () => ({ eq: () => Promise.resolve({ data: true, error: null }) }),
-      insert: () => Promise.resolve({ data: true, error: null })
-    })),
-    rpc: vi.fn(() => Promise.resolve({
-      data: { total_transaction_volume: 12500, pending_flagged_items: 2, weekly_facility_utilization_pct: 10, monthly_successful_handoffs: 5 },
-      error: null
-    }))
-  }
-}));
+// High-Fidelity Mock for Supabase Security Gateways & Collections
+vi.mock("@/supabase/supabaseClient", () => {
+  let mockBookingsData = [
+    { id: "b-1", status: "pending", booking_date: "2026-05-16T10:00:00.000Z", booking_type: "drop_off", profiles: { name: "Sarah" } },
+    { id: "b-2", status: "confirmed", booking_date: "2026-05-17T12:00:00.000Z", booking_type: "collection", profiles: { name: "John" } }
+  ];
 
-describe("AdminDashboard Navigation & Layout Toggles", () => {
+  return {
+    supabase: {
+      auth: {
+        getUser: vi.fn(() => Promise.resolve({ data: { user: { id: "admin-1" } } })),
+        signOut: vi.fn(() => Promise.resolve())
+      },
+      from: vi.fn((table) => {
+        const chain = {
+          select: vi.fn().mockImplementation(() => chain),
+          eq: vi.fn().mockImplementation(() => chain),
+          order: vi.fn().mockImplementation(() => {
+            return Promise.resolve({ data: mockBookingsData, error: null });
+          }),
+          limit: vi.fn().mockImplementation(() => chain),
+          maybeSingle: vi.fn().mockImplementation(() => {
+            if (table === "profiles") return Promise.resolve({ data: { name: "Bobo", role: "admin" } });
+            if (table === "facility_config") return Promise.resolve({ data: { id: "cfg-123", slot_duration_minutes: 30, max_capacity_per_slot: 5, open_time: "09:00", close_time: "17:00" } });
+            return Promise.resolve({ data: null, error: null });
+          }),
+          single: vi.fn().mockImplementation(() => {
+            if (table === "profiles") return Promise.resolve({ data: { name: "Bobo", role: "admin" } });
+            return Promise.resolve({ data: null, error: null });
+          }),
+          update: vi.fn().mockImplementation(() => {
+            return {
+              eq: vi.fn().mockImplementation(() => Promise.resolve({ data: true, error: null }))
+            };
+          }),
+          insert: vi.fn().mockResolvedValue({ data: true, error: null })
+        };
+        return chain;
+      }),
+      rpc: vi.fn(() => Promise.resolve({
+        data: { total_transaction_volume: 12500, pending_flagged_items: 2, weekly_facility_utilization_pct: 10, monthly_successful_handoffs: 5 },
+        error: null
+      }))
+    }
+  };
+});
+
+describe("AdminDashboard Navigation, Mutation Handlers & Boundaries", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.spyOn(window, "alert").mockImplementation(() => {});
   });
 
   it("renders side navigation layout buttons correctly", async () => {
@@ -58,48 +77,160 @@ describe("AdminDashboard Navigation & Layout Toggles", () => {
         <AdminDashboard />
       </MemoryRouter>
     );
-    // ✅ Wait for loading spinner to clear and dashboard to mount
     expect(await screen.findByText(/Platform Analytics/i)).toBeInTheDocument();
     expect(screen.getByText(/Facility Operations/i)).toBeInTheDocument();
   });
 
-  it("swaps viewports seamlessly to handle live facility bookings table", async () => {
+  it("swaps viewports seamlessly to handle live facility bookings table and confirm drop-off actions", async () => {
     render(
       <MemoryRouter>
         <AdminDashboard />
       </MemoryRouter>
     );
-    
-    // ✅ Use findByText to await the auth lifecycle state resolution before interacting
+
     const opsButton = await screen.findByText(/Facility Operations/i);
-    
-    // ✅ Wrap state-mutating UI clicks in act() to clear console warnings
+    await act(async () => {
+      fireEvent.click(opsButton);
+    });
+
+    expect(screen.getByText(/Live Booking Verification/i)).toBeInTheDocument();
+
+    // Test the handleReceive 'Confirm' button activation link loop
+    const confirmButton = screen.getByRole("button", { name: "Confirm" });
+    await act(async () => {
+      fireEvent.click(confirmButton);
+    });
+
+    expect(supabase.from).toHaveBeenCalledWith("facility_bookings");
+  });
+
+  it("handles the complete pipeline for running transaction handover completion statuses", async () => {
+    render(
+      <MemoryRouter>
+        <AdminDashboard />
+      </MemoryRouter>
+    );
+
+    const opsButton = await screen.findByText(/Facility Operations/i);
+    await act(async () => {
+      fireEvent.click(opsButton);
+    });
+
+    // Test the handleRelease 'Complete' button workflow trigger
+    const completeButton = screen.getByRole("button", { name: "Complete" });
+    await act(async () => {
+      fireEvent.click(completeButton);
+    });
+
+    expect(supabase.from).toHaveBeenCalledWith("facility_bookings");
+  });
+
+  it("swaps viewports seamlessly to load facility config settings form and updates configuration payload parameters", async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <AdminDashboard />
+      </MemoryRouter>
+    );
+
+    const configButton = await screen.findByText(/Facility Configuration/i);
+    await act(async () => {
+      fireEvent.click(configButton);
+    });
+
+    expect(screen.getByText(/Facility Parameters & Constraints/i)).toBeInTheDocument();
+
+    // Modify duration state values to check full form binding
+    const inputs = screen.getAllByRole("spinbutton");
+    await act(async () => {
+      await user.clear(inputs[0]);
+      await user.type(inputs[0], "45");
+    });
+
+    const submitConfigBtn = screen.getByRole("button", { name: /Save Operational Rules/i });
+    await act(async () => {
+      fireEvent.click(submitConfigBtn);
+    });
+
+    await waitFor(() => {
+      expect(window.alert).toHaveBeenCalledWith(expect.stringContaining("Facility operation parameters updated successfully!"));
+    });
+  });
+
+  it("coordinates logout actions smoothly, calling the signOut session utility link", async () => {
+    render(
+      <MemoryRouter>
+        <AdminDashboard />
+      </MemoryRouter>
+    );
+
+    const signOutBtn = await screen.findByRole("button", { name: /Sign Out Dashboard/i });
+    await act(async () => {
+      fireEvent.click(signOutBtn);
+    });
+
+    expect(supabase.auth.signOut).toHaveBeenCalled();
+    expect(mockNavigate).toHaveBeenCalledWith("/auth");
+  });
+
+  /* ======================================================================
+      🚀 BOUNDARY VALUE TESTING (BVA) & EQUIVALENCE PARTITIONS (EP)
+     ====================================================================== */
+
+  it("Boundary Check: Renders zero-state empty fallback message nodes when booking database rows evaluate to absolute zero", async () => {
+    // Intercept and resolve facility_bookings to an absolute zero length array
+    vi.spyOn(supabase, "from").mockImplementationOnce((table) => ({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      order: vi.fn().mockResolvedValue({ data: [], error: null })
+    }));
+
+    render(
+      <MemoryRouter>
+        <AdminDashboard />
+      </MemoryRouter>
+    );
+
+    const opsButton = await screen.findByText(/Facility Operations/i);
     await act(async () => {
       fireEvent.click(opsButton);
     });
 
     await waitFor(() => {
-      expect(screen.getByText(/Live Booking Verification/i)).toBeInTheDocument();
+      expect(screen.getByText(/No facility transactions logged in database profiles./i)).toBeInTheDocument();
     });
   });
 
-  it("swaps viewports seamlessly to load facility config settings form", async () => {
+  it("Boundary Check: Confirms system configuration form inputs accept absolute minimum boundary values safely", async () => {
+    const user = userEvent.setup();
     render(
       <MemoryRouter>
         <AdminDashboard />
       </MemoryRouter>
     );
-    
-    // ✅ Use findByText to wait out the layout's initial global spinner state
+
     const configButton = await screen.findByText(/Facility Configuration/i);
-    
-    // ✅ Wrap state-mutating UI clicks in act() to clear console warnings
     await act(async () => {
       fireEvent.click(configButton);
     });
 
+    const inputs = screen.getAllByRole("spinbutton");
+    
+    // Boundary Lower Limit (Value = 1)
+    await act(async () => {
+      await user.clear(inputs[0]);
+      await user.type(inputs[0], "1");
+      await user.clear(inputs[1]);
+      await user.type(inputs[1], "1");
+    });
+
+    const submitConfigBtn = screen.getByRole("button", { name: /Save Operational Rules/i });
+    await act(async () => {
+      fireEvent.click(submitConfigBtn);
+    });
+
     await waitFor(() => {
-      expect(screen.getByText(/Facility Parameters & Constraints/i)).toBeInTheDocument();
+      expect(window.alert).toHaveBeenCalledWith(expect.stringContaining("Facility operation parameters updated successfully!"));
     });
   });
 });

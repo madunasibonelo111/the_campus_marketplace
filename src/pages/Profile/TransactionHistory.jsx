@@ -1,3 +1,4 @@
+// src/pages/Profile/TransactionHistory.jsx
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/supabase/supabaseClient";
@@ -13,32 +14,28 @@ export default function TransactionHistory() {
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [filter, setFilter] = useState("all");
 
- 
-
-useEffect(() => {
-  const checkSessionAndFetch = async () => {
-    try {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError || !session?.user) {
-        console.log("No authentic session token found. Redirecting...");
-        navigate("/auth");
-        return;
+  useEffect(() => {
+    const checkSessionAndFetch = async () => {
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError || !session?.user) {
+          console.log("No authentic session token found. Redirecting...");
+          navigate("/auth");
+          return;
+        }
+        
+        setUser(session.user);
+        await fetchTransactions(session.user.id);
+        
+      } catch (globalAuthErr) {
+        console.error("Critical core layout authentication checkpoint error:", globalAuthErr);
+        setError("Authorization verification checkpoint failure.");
       }
-      
-      setUser(session.user);
-      // Run the data fetch safely now that the token is validated independently
-      await fetchTransactions(session.user.id);
-      
-    } catch (globalAuthErr) {
-      console.error("Critical core layout authentication checkpoint error:", globalAuthErr);
-      setError("Authorization verification checkpoint failure.");
-    }
-  };
-  
-  checkSessionAndFetch();
-}, [navigate, location.pathname, location.state]);
-
+    };
+    
+    checkSessionAndFetch();
+  }, [navigate, location.pathname, location.state]);
 
   const fetchTransactions = async (userId) => {
     try {
@@ -60,7 +57,6 @@ useEffect(() => {
           trade_item_description,
           completed_at,
           accepted_at,
-        
           seller:seller_id ( id, user_id, name ),
           buyer:buyer_id ( id, user_id, name ),
           listings:listing_id (
@@ -81,7 +77,6 @@ useEffect(() => {
             method,
             status,
             shortfall_amount,
-            paid_at,
             created_at
           ),
           ratings:ratings!transaction_id ( id )
@@ -93,24 +88,19 @@ useEffect(() => {
         console.error("Fetch error:", error);
         throw error;
       }
-      
-
 
       const formatted = (data || []).map(t => {
-        //Match against the nested profiles user_id string to guarantee a clean match on page refresh
         const isBuyer = t.buyer_id === userId || t.buyer?.user_id === userId;
-        const isSeller = t.seller_id === userId || t.seller?.user_id === userId;
-        
         const listing = t.listings;
         const otherPartyName = isBuyer ? t.seller?.name : t.buyer?.name;
         
         const totalAmount = Number(t.offer_amount || listing?.price || 0);
-        
         const paymentArray = Array.isArray(t.payments) ? t.payments : [];
         const totalPaid = paymentArray.reduce((sum, p) => sum + Number(p.amount || 0), 0);
         const remainingBalance = totalAmount - totalPaid;
         
-        const hasShortfall = remainingBalance >= 0.10 && t.status?.toLowerCase() !== 'completed' && t.status?.toLowerCase() !== 'cancelled';
+        const rawStatus = String(t.status || 'pending').toLowerCase();
+        const hasShortfall = remainingBalance >= 0.10 && rawStatus !== 'completed' && rawStatus !== 'cancelled';
         const latestPayment = paymentArray.length > 0 ? paymentArray[paymentArray.length - 1] : null;
         const alreadyRated = Array.isArray(t.ratings) ? t.ratings.length > 0 : !!t.ratings;
         
@@ -126,9 +116,9 @@ useEffect(() => {
           amount: totalAmount,
           amountPaid: totalPaid,
           remainingBalance: Math.max(0, remainingBalance),
-          cashShortfall: latestPayment ? Number(latestPayment.shortfall_amount || 0) : 0,
+          cashShortfall: remainingBalance > 0 ? remainingBalance : 0,
           hasShortfall: hasShortfall,
-          status: String(t.status || 'pending').toLowerCase(),
+          status: rawStatus,
           paymentStatus: latestPayment ? latestPayment.status : 'N/A',
           paymentMethod: latestPayment ? latestPayment.method : 'N/A',
           offerStatus: t.offer_status,
@@ -165,61 +155,31 @@ useEffect(() => {
   };
 
   const getStatusColor = (status) => {
-    switch(status?.toLowerCase()) {
+    switch(status) {
       case "completed": return "#4caf50";
-      case "pending_payment": return "#ffa500";
+      case "payment_cleared": return "#ffa500";
       case "pending": return "#ffa500";
       case "pending_dropoff": return "#385723";
       case "pending_collection": return "#385723";
       case "item_in_custody": return "#2196f3";
-      case "item_received": return "#2196f3";
-      case "cancelled": return "#f44336";
       case "partial_payment": return "#ff9800";
+      case "cancelled": return "#f44336";
       default: return "#666";
     }
   };
 
   const getStatusLabel = (status) => {
-    switch(status?.toLowerCase()) {
-      case "completed": return "Completed";
-      case "pending_payment": return "Payment Pending";
+    switch(status) {
+      case "completed": return "Handed Over & Completed";
+      case "payment_cleared": return "Payment Confirmed";
       case "pending": return "Pending";
       case "pending_dropoff": return "Drop-off Booked";
       case "pending_collection": return "Collection Booked";
       case "item_in_custody": return "In Custody";
-      case "item_received": return "Item Received";
       case "cancelled": return "Cancelled";
       case "partial_payment": return "Partial Payment";
-      default: return status || "Unknown";
+      default: return status ? status.replace('_', ' ') : "Unknown";
     }
-  };
-
-  const getPaymentStatusColor = (status) => {
-    switch(status?.toLowerCase()) {
-      case "completed": return "#4caf50";
-      case "partial": return "#ff9800";
-      case "pending": return "#ffa500";
-      case "failed": return "#f44336";
-      default: return "#666";
-    }
-  };
-
-  const getPaymentStatusLabel = (status) => {
-    switch(status?.toLowerCase()) {
-      case "completed": return "Fully Paid";
-      case "partial": return "Partial Payment";
-      case "pending": return "Pending";
-      case "failed": return "Failed";
-      default: return status || "N/A";
-    }
-  };
-
-  const hasOutstandingShortfall = (transaction) => {
-    return transaction.hasShortfall && transaction.remainingBalance >= 0.10;
-  };
-
-  const getShortfallAmount = (transaction) => {
-    return Math.max(0, transaction.remainingBalance);
   };
 
   const handleCompletePayment = (transaction, e) => {
@@ -234,6 +194,7 @@ useEffect(() => {
     });
   };
 
+  // 🚀 FIXED TAB FILTER RULE GATES: Prevents the blank screen layout bug
   const filteredTransactions = transactions.filter(t => {
     if (filter === "all") return true;
     if (filter === "buy") return t.type === "buy";
@@ -243,23 +204,10 @@ useEffect(() => {
     return true;
   });
 
-  const getTotalSpent = () => {
-    return transactions.filter(t => t.type === 'buy').reduce((sum, t) => sum + t.amountPaid, 0);
-  };
-
-  const getTotalEarned = () => {
-    return transactions.filter(t => t.type === 'sell').reduce((sum, t) => sum + t.amountPaid, 0);
-  };
-
-  const getPendingPayments = () => {
-    return transactions.filter(t => t.type === 'buy' && t.hasShortfall && t.remainingBalance >= 0.10).length;
-  };
-
-  const getOutstandingBalance = () => {
-    return transactions
-      .filter(t => t.type === 'buy' && t.hasShortfall && t.remainingBalance >= 0.10)
-      .reduce((sum, t) => sum + t.remainingBalance, 0);
-  };
+  const getTotalSpent = () => transactions.filter(t => t.type === 'buy').reduce((sum, t) => sum + t.amountPaid, 0);
+  const getTotalEarned = () => transactions.filter(t => t.type === 'sell').reduce((sum, t) => sum + t.amountPaid, 0);
+  const getPendingPayments = () => transactions.filter(t => t.type === 'buy' && t.hasShortfall).length;
+  const getOutstandingBalance = () => transactions.filter(t => t.type === 'buy' && t.hasShortfall).reduce((sum, t) => sum + t.remainingBalance, 0);
 
   if (loading) {
     return (
@@ -284,7 +232,7 @@ useEffect(() => {
           <p className="history-subtitle">Track all your purchases, sales, trades, and partial payments</p>
         </div>
 
-        {/* Statistics Cards */}
+        {/* Dynamic Statistics Metrics Header Block View */}
         <div className="history-stats">
           <div className="stat-card">
             <div className="stat-icon">💰</div>
@@ -323,7 +271,7 @@ useEffect(() => {
           </div>
         </div>
 
-        {/* Filters */}
+        {/* Navigation Category Filter Selection Bar Component */}
         <div className="history-filters">
           <div className="filter-buttons">
             <button className={`filter-btn ${filter === "all" ? "active" : ""}`} onClick={() => setFilter("all")}>All</button>
@@ -342,13 +290,13 @@ useEffect(() => {
         )}
 
         <div className="history-card">
-          {transactions.length === 0 && !error ? (
+          {filteredTransactions.length === 0 ? (
             <div className="empty-state">
               <div className="empty-icon">📭</div>
-              <p>No transactions found</p>
+              <p>No transactions found matching criteria</p>
               <button className="shop-now-btn" onClick={() => navigate("/basket")}>Start Shopping</button>
             </div>
-          ) : transactions.length > 0 ? (
+          ) : (
             <div className="transactions-list">
               {filteredTransactions.map((transaction) => (
                 <div key={transaction.id} className="transaction-row" onClick={() => setSelectedTransaction(transaction)}>
@@ -357,89 +305,42 @@ useEffect(() => {
                   </div>
                   
                   <div className="transaction-details">
-                    
 
-                    
-                    {/* Book Drop-off Slot (Only visible if the listing needs an appointment and hasn't been scheduled yet) */}
-                    {transaction.type === 'sell' && 
-                      ['pending', 'partial_payment', 'pending_payment'].includes(transaction.status) && 
-                      !['pending_dropoff', 'pending_collection', 'item_in_custody', 'completed'].includes(transaction.status) && (
+                    {/* ======================================================================
+                          🚨 DYNAMIC PROGRESS LIFECYCLE BANNERS LAYER
+                       ====================================================================== */}
+
+                    {/* 1. SELLER WORKFLOW: Drop-off slot appointment selection available */}
+                    {transaction.type === 'sell' && ['pending', 'payment_cleared', 'partial_payment'].includes(transaction.status) && (
                       <div className="booking-trigger-section" style={{ marginTop: '12px', marginBottom: '12px' }}>
                         <button 
                           className="btn-book-slot"
                           onClick={(e) => {
                             e.stopPropagation();
                             localStorage.setItem('lastTransactionId', transaction.id);
-                            navigate("/booking/dropoff", { state: { transactionId: transaction.id, mode: 'dropoff' } });
+                            navigate("/booking/dropoff", { state: { transactionId: transaction.id } });
                           }}
-                          style={{ background: '#28a745', color: 'white', padding: '#8px 16px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}
+                          style={{ background: '#28a745', color: 'white', padding: '8px 16px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}
                         >
                           📦 Book Seller Drop-off Slot
                         </button>
                       </div>
                     )}
 
-                    {/* Confirmed Drop-off Scheduled Tracking Banner */}
+                    {/* 2. SELLER WORKFLOW STATUS BADGE: Drop-off Booked but not yet handed to staff */}
                     {transaction.type === 'sell' && transaction.status === 'pending_dropoff' && (
                       <div className="booking-status-badge-container" style={{ marginTop: '12px', marginBottom: '12px' }}>
-                        <span style={{ 
-                          background: '#eef2ff', 
-                          color: '#4f46e5', 
-                          padding: '6px 14px', 
-                          borderRadius: '20px', 
-                          fontSize: '13px', 
-                          fontWeight: 'bold', 
-                          display: 'inline-flex', 
-                          alignItems: 'center', 
-                          gap: '6px', 
-                          border: '1px solid #c7d2fe' 
-                        }}>
+                        <span style={{ background: '#eef2ff', color: '#4f46e5', padding: '6px 14px', borderRadius: '20px', fontSize: '13px', fontWeight: 'bold', border: '1px solid #c7d2fe' }}>
                           ⏳ Drop-off Scheduled (Awaiting Desk Delivery)
                         </span>
                       </div>
                     )}
 
-                    {/* Transaction Completed & Collected Banner (Shows once item is with buyer) */}
-                    {transaction.type === 'sell' && transaction.status === 'completed' && (
-                      <div className="booking-status-badge-container" style={{ marginTop: '12px', marginBottom: '12px' }}>
-                        <span style={{ 
-                          background: '#e2f0d9', 
-                          color: '#385723', 
-                          padding: '6px 14px', 
-                          borderRadius: '20px', 
-                          fontSize: '13px', 
-                          fontWeight: 'bold', 
-                          display: 'inline-flex', 
-                          alignItems: 'center', 
-                          gap: '6px', 
-                          border: '1px solid #c5e0b4' 
-                        }}>
-                          ✅ Transaction Completed & Collected
-                        </span>
-                      </div>
-                    )}
-                  
-
-                    {/* BUYER WORKFLOW GATES WITH DEFENSIVE SHORTFALL LOCKS*/}
-
-                    {/* Rule Check A: Item in custody but buyer HAS AN ACTIVE CASH SHORTFALL RECORDED */}
-                    {transaction.type === 'buy' && 
-                    transaction.status === 'item_in_custody' && 
-                    transaction.cashShortfall > 0 && ( /* ✅ FIX: Lock strictly checks cashShortfall state */
+                    {/* 3. BUYER WORKFLOW WORK-GATE: Settle Outstanding remaining balance split debt */}
+                    {transaction.type === 'buy' && ['partial_payment', 'item_in_custody'].includes(transaction.status) && transaction.remainingBalance >= 0.10 && (
                       <div className="booking-trigger-section" style={{ marginTop: '12px', marginBottom: '12px' }} onClick={(e) => e.stopPropagation()}>
-                        <div style={{
-                          background: '#fff1f0',
-                          border: '1px solid #ffa39e',
-                          padding: '12px 16px',
-                          borderRadius: '10px',
-                          marginBottom: '10px',
-                          fontSize: '13px',
-                          color: '#cf1322',
-                          fontWeight: '500',
-                          lineHeight: '1.4',
-                          textAlign: 'left'
-                        }}>
-                          🛑 **Collection Locked:** You have an unpaid shortfall balance of **R{transaction.cashShortfall.toFixed(2)}**. Please settle this remaining amount below before scheduling a physical facility pickup.
+                        <div style={{ background: '#fff1f0', border: '1px solid #ffa39e', padding: '12px 16px', borderRadius: '10px', marginBottom: '10px', fontSize: '13px', color: '#cf1322', fontWeight: '500' }}>
+                          🛑 **Collection Locked:** You have an unpaid shortfall balance of **R{transaction.remainingBalance.toFixed(2)}**. Please settle this remaining amount below before scheduling a physical facility pickup.
                         </div>
                         <button 
                           className="btn-book-slot"
@@ -451,10 +352,8 @@ useEffect(() => {
                       </div>
                     )}
 
-                    {/* Rule Check B: Item in custody and fully paid off (Zero Cash Shortfall) -> Unlocked */}
-                    {transaction.type === 'buy' && 
-                    transaction.status === 'item_in_custody' && 
-                    transaction.cashShortfall <= 0 && ( /* ✅ FIX: Only unlocks if there is absolutely no shortfall */
+                    {/* 4. BUYER WORKFLOW WORK-GATE: Item verified in custody and balance clear -> Book pickup */}
+                    {transaction.type === 'buy' && transaction.status === 'item_in_custody' && transaction.remainingBalance < 0.10 && (
                       <div className="booking-trigger-section" style={{ marginTop: '12px', marginBottom: '12px' }}>
                         <button 
                           className="btn-book-slot"
@@ -470,35 +369,42 @@ useEffect(() => {
                       </div>
                     )}
 
-                    {/* Rate Seller Trigger - Only renders if transaction is fully completed AND has not been rated yet */}
+                    {/* 5. BUYER SESSIONS: Show Rate Seller link if transaction completed but feedback missing */}
                     {transaction.type === 'buy' && transaction.status === 'completed' && !transaction.alreadyRated && (
                       <div className="booking-trigger-section" style={{ marginTop: '12px', marginBottom: '12px' }}>
                         <button 
                           className="btn-book-slot"
                           onClick={(e) => {
                             e.stopPropagation();
-                            const numericTargetId = transaction.seller_user_id || transaction.seller_id;
-                            navigate(`/reviews/${numericTargetId}?action=rate`, { 
+                            navigate(`/reviews/${transaction.seller_user_id || transaction.buyer_id}?action=rate`, { 
                               state: { transactionId: transaction.id } 
                             });
                           }}
                           style={{ background: '#f39c12', color: 'white', padding: '#8px 16px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}
                         >
-                          ⭐ Rate Seller
+                          ⭐ Rate Seller Performance
                         </button>
                       </div>
                     )}
 
-                    {/*  Already Rated Badge - Replaces the button permanently after submission to lock interaction */}
-                    {transaction.type === 'buy' && transaction.status === 'completed' && transaction.alreadyRated && (
+                    {/* 6. COMPLETE CONFIRMATION BADGE LABELS */}
+                    {transaction.status === 'completed' && (
                       <div className="booking-status-badge-container" style={{ marginTop: '12px', marginBottom: '12px' }}>
-                        <span style={{ background: '#e2f0d9', color: '#385723', padding: '6px 14px', borderRadius: '20px', fontSize: '13px', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '6px', border: '1px solid #c5e0b4' }}>
-                          ✅ Rated (Feedback Logged)
+                        <span style={{ background: '#e2f0d9', color: '#385723', padding: '6px 14px', borderRadius: '20px', fontSize: '13px', fontWeight: 'bold', border: '1px solid #c5e0b4' }}>
+                          ✅ Transaction Completed & Handed Over
                         </span>
                       </div>
                     )}
 
+                    {transaction.status === 'completed' && transaction.alreadyRated && (
+                      <div className="booking-status-badge-container" style={{ marginTop: '4px' }}>
+                        <span style={{ background: '#e2f0d9', color: '#385723', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', border: '1px solid #c5e0b4' }}>
+                          ✓ Feedback Submitted
+                        </span>
+                      </div>
+                    )}
 
+                    {/* Metadata Content Attributes Info Lines */}
                     <div className="transaction-item">
                       <strong>{transaction.item}</strong>
                       <span className="transaction-type">
@@ -511,57 +417,32 @@ useEffect(() => {
                       {new Date(transaction.date).toLocaleDateString()}
                     </div>
                     
-                    {transaction.cashShortfall > 0 && (
+                    {transaction.remainingBalance >= 0.10 && (
                       <span className="shortfall-badge">
-                        ⚠️ R{transaction.cashShortfall.toFixed(2)} shortfall recorded
+                        ⚠️ R{transaction.remainingBalance.toFixed(2)} shortfall recorded
                       </span>
                     )}
                     
                     <div className="transaction-id">ID: {transaction.transactionId.slice(0, 8)}...</div>
-
-                    {/* Actionable Shortfall Warning Banner for BUYER */}
-                    {transaction.type === 'buy' && hasOutstandingShortfall(transaction) && (
-                      <div className="shortfall-alert" style={{ background: '#fff3cd', borderLeft: '4px solid #ffc107', padding: '10px 15px', marginTop: '10px', borderRadius: '8px' }}>
-                        <span className="alert-icon">⚠️</span>
-                        <span className="alert-text" style={{ color: '#856404', fontWeight: '500' }}>
-                          Outstanding balance: R{getShortfallAmount(transaction).toFixed(2)}
-                        </span>
-                        <button className="complete-payment-btn" onClick={(e) => handleCompletePayment(transaction, e)}>
-                          Complete Payment
-                        </button>
-                      </div>
-                    )}
-
-                    {/* Read-only Debt Tracking Notice for SELLER */}
-                    {transaction.type === 'sell' && hasOutstandingShortfall(transaction) && (
-                      <div className="seller-shortfall-notice" style={{ background: '#fce8e6', borderLeft: '4px solid #ea4335', padding: '10px 15px', marginTop: '10px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span className="alert-icon">ℹ️</span>
-                        <span className="alert-text" style={{ color: '#c5221f', fontWeight: '500', fontSize: '14px' }}>
-                          Awaiting Buyer Balance: R{getShortfallAmount(transaction).toFixed(2)} outstanding from buyer.
-                        </span>
-                      </div>
-                    )}
                   </div>
                   
                   <div className="transaction-amount-info">
                     <div className="transaction-amount">Paid: R{transaction.amountPaid.toFixed(2)}</div>
-                  
-
                     {transaction.remainingBalance >= 0.10 && (
                       <div className="transaction-remaining">Remaining: R{transaction.remainingBalance.toFixed(2)}</div>
                     )}
-                    <div className="transaction-status" style={{ color: getStatusColor(transaction.status) }}>
+                    <div className="transaction-status" style={{ color: getStatusColor(transaction.status), fontWeight: 'bold' }}>
                       {getStatusLabel(transaction.status)}
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-          ) : null}
+          )}
         </div>
       </div>
 
-      {/* Detail Modal overlay rendering */}
+      {/* Detail Overlay Sheet Drawer Modal component */}
       {selectedTransaction && (
         <div className="modal-overlay" onClick={() => setSelectedTransaction(null)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>

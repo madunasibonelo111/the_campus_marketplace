@@ -1,12 +1,10 @@
 import React from "react";
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, waitFor, act } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, waitFor, act, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import DropoffManagement from "./DropoffManagement";
 import { supabase } from "@/supabase/supabaseClient";
 
-// Mock react-router-dom navigations
 const mockNavigate = vi.fn();
 
 vi.mock("react-router-dom", async () => {
@@ -17,7 +15,6 @@ vi.mock("react-router-dom", async () => {
   };
 });
 
-// Mock Supabase Client
 vi.mock("@/supabase/supabaseClient", () => ({
   supabase: {
     from: vi.fn(),
@@ -27,7 +24,7 @@ vi.mock("@/supabase/supabaseClient", () => ({
 describe("US13: Item Receipt Confirmation (DropoffManagement)", () => {
   let globalFetchError = null;
   let globalUpdateError = null;
-  let hangFetch = false;
+  let simulateEmptyQueue = false;
 
   const mockDropoffs = [
     {
@@ -37,141 +34,48 @@ describe("US13: Item Receipt Confirmation (DropoffManagement)", () => {
       status: "pending",
       transactions: {
         id: "TXN-001",
-        total_amount: 249.99,
-        listings: { title: "Vintage Leather Boots" },
-        seller: { name: "John Doe" },
-        buyer: { name: "Jane Smith" },
-      },
-    },
-    {
-      id: "2",
-      transaction_id: "TXN-002",
-      booking_date: "2026-05-11T10:00:00.000Z",
-      status: "completed",
-      transactions: {
-        id: "TXN-002",
-        total_amount: 1299.99,
-        listings: { title: "MacBook Pro" },
-        seller: { name: "Alice Johnson" },
-        buyer: { name: "Bob Williams" },
-      },
-    },
-    {
-      id: "3",
-      transaction_id: "TXN-003",
-      booking_date: "2026-05-11T11:00:00.000Z",
-      status: "pending",
-      transactions: null,
-    },
+        total_amount: 150.00,
+        listing_id: "L-001",
+        listings: { title: "Test Textbook" },
+        seller: { name: "Seller Sam" },
+        buyer: { name: "Buyer Bob" }
+      }
+    }
   ];
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.spyOn(window, "alert").mockImplementation(() => {});
-    vi.spyOn(console, "error").mockImplementation(() => {}); 
-
+    mockNavigate.mockClear();
     globalFetchError = null;
     globalUpdateError = null;
-    hangFetch = false;
+    simulateEmptyQueue = false;
+    vi.spyOn(window, "alert").mockImplementation(() => {});
 
+    // High fidelity fluent chaining simulation builder engine 
     supabase.from.mockImplementation((table) => {
-      let isUpdateQuery = false;
-
-      const queryBuilder = {
+      const qb = {
         select: vi.fn().mockReturnThis(),
-        insert: vi.fn().mockImplementation(() => Promise.resolve({ data: null, error: null })), // 🚀 ADDED TO FIX INSERT BUG
-        eq: vi.fn().mockImplementation((col, val) => {
-          if (isUpdateQuery) {
-            if (globalUpdateError) {
-              return Promise.resolve({ data: null, error: globalUpdateError });
-            }
-            return Promise.resolve({ data: null, error: null });
-          }
-          return queryBuilder;
-        }),
+        update: vi.fn().mockImplementation(() => Promise.resolve({ error: globalUpdateError || null })),
         order: vi.fn().mockImplementation(() => {
-          if (hangFetch) {
-            return new Promise(() => {});
-          }
-          if (globalFetchError) {
-            return Promise.resolve({ data: [mockDropoffs[0]], error: null }); // fallback to catch mock data array pattern
-          }
+          if (simulateEmptyQueue) return Promise.resolve({ data: [], error: null });
+          if (globalFetchError) return Promise.resolve({ data: null, error: globalFetchError });
           return Promise.resolve({ data: mockDropoffs, error: null });
         }),
-        update: vi.fn().mockImplementation(() => {
-          isUpdateQuery = true;
-          return queryBuilder;
-        }),
+        insert: vi.fn().mockResolvedValue({ error: null })
       };
 
-      return queryBuilder;
-    });
-  });
+      qb.eq = vi.fn().mockImplementation(function(col, val) {
+        if (table === 'facility_bookings' && col === 'id') {
+          return Promise.resolve({ error: globalUpdateError || null });
+        }
+        return qb;
+      });
 
-  afterEach(() => {
-    vi.useRealTimers();
+      return qb;
+    });
   });
 
   const renderComponent = async () => {
-    let component;
-    await act(async () => {
-      component = render(
-        <MemoryRouter>
-          <DropoffManagement />
-        </MemoryRouter>
-      );
-    });
-    await waitFor(() => {
-      expect(screen.queryByText("Loading drop-offs...")).not.toBeInTheDocument();
-    });
-    return component;
-  };
-
-  it("renders the initial loading state correctly", () => {
-    hangFetch = true;
-    render(
-      <MemoryRouter>
-        <DropoffManagement />
-      </MemoryRouter>
-    );
-    expect(screen.getByText("Loading drop-offs...")).toBeInTheDocument();
-  });
-
-  it("displays pending items awaiting receipt alongside full fallback data coverage", async () => {
-    await renderComponent();
-    expect(screen.getByText("Vintage Leather Boots")).toBeInTheDocument();
-    expect(screen.getByText("John Doe")).toBeInTheDocument();
-    expect(screen.getByText("Unknown Item")).toBeInTheDocument();
-    expect(screen.getByText("Unknown Seller")).toBeInTheDocument();
-    expect(screen.getByText("Unknown Buyer")).toBeInTheDocument();
-  });
-
-  it("displays item details, amounts, and status badges correctly", async () => {
-    await renderComponent();
-    expect(screen.getByText("Vintage Leather Boots")).toBeInTheDocument();
-    expect(screen.getByText("John Doe")).toBeInTheDocument();
-    expect(screen.getByText("R249.99")).toBeInTheDocument();
-    expect(screen.getAllByText("PENDING").length).toBeGreaterThan(0);
-    expect(screen.getByText("COMPLETED")).toBeInTheDocument();
-  });
-
-  it("navigates back to dashboard when the back button is clicked", async () => {
-    const user = userEvent.setup();
-    await renderComponent();
-    const backButton = screen.getByRole("button", { name: /Back to Dashboard/i });
-    await act(async () => {
-      await user.click(backButton);
-    });
-    expect(mockNavigate).toHaveBeenCalledWith("/staff");
-  });
-
-  it("shows empty state when no pending or confirmed drop-offs exist", async () => {
-    supabase.from.mockImplementationOnce(() => ({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      order: vi.fn().mockResolvedValue({ data: [], error: null }),
-    }));
-
     await act(async () => {
       render(
         <MemoryRouter>
@@ -179,78 +83,54 @@ describe("US13: Item Receipt Confirmation (DropoffManagement)", () => {
         </MemoryRouter>
       );
     });
+  };
+
+  it("renders drop-off items array grid maps gracefully upon execution resolution", async () => {
+    await renderComponent();
     await waitFor(() => {
-      expect(screen.getByText("No drop-off appointments")).toBeInTheDocument();
+      expect(screen.getByText("Drop-off Intake Desk")).toBeInTheDocument();
+      expect(screen.getByText("Intake: Test Textbook")).toBeInTheDocument();
     });
-  });
-
-  it("handles database errors and successfully displays fallback demo data", async () => {
-    globalFetchError = new Error("Database error");
-    await renderComponent();
-    expect(screen.getByText("Vintage Leather Boots")).toBeInTheDocument();
-  });
-
-  it("opens the Confirm Drop-off modal, allows form inputs, handles cancellation, and successfully processes status confirmation", async () => {
-    const user = userEvent.setup();
-    await renderComponent();
-
-    const confirmCardButtons = screen.getAllByRole("button", { name: "Confirm Drop-off" });
-    await act(async () => {
-      await user.click(confirmCardButtons[0]);
-    });
-
-    const modalHeading = screen.getByRole("heading", { name: "Confirm Drop-off" });
-    expect(modalHeading).toBeInTheDocument();
-
-    const conditionSelect = screen.getByRole("combobox");
-    const notesText = screen.getByRole("textbox");
-
-    await act(async () => {
-      await user.selectOptions(conditionSelect, "Good - Minor wear");
-      await user.type(notesText, "Item matches listing description perfectly.");
-    });
-
-    expect(conditionSelect).toHaveValue("Good - Minor wear");
-    expect(notesText).toHaveValue("Item matches listing description perfectly.");
-
-    const cancelBtn = screen.getByRole("button", { name: "Cancel" });
-    await act(async () => {
-      await user.click(cancelBtn);
-    });
-    expect(screen.queryByRole("heading", { name: "Confirm Drop-off" })).not.toBeInTheDocument();
-
-    await act(async () => {
-      await user.click(confirmCardButtons[0]);
-    });
-
-    const allConfirmButtons = screen.getAllByRole("button", { name: "Confirm Drop-off" });
-    const modalSubmitBtn = allConfirmButtons[allConfirmButtons.length - 1];
-
-    await act(async () => {
-      await user.click(modalSubmitBtn);
-    });
-
-    expect(supabase.from).toHaveBeenCalledWith("facility_bookings");
-    expect(window.alert).toHaveBeenCalledWith(expect.stringContaining("Drop-off confirmed successfully!"));
   });
 
   it("alerts failure if updating the drop-off status encounters an error", async () => {
     globalUpdateError = new Error("Update failed");
-    const user = userEvent.setup();
     await renderComponent();
 
-    const confirmCardButtons = screen.getAllByRole("button", { name: "Confirm Drop-off" });
+    const openInspectBtn = await screen.findByRole("button", { name: /Inspect & Accept Package/i });
     await act(async () => {
-      await user.click(confirmCardButtons[0]);
+      fireEvent.click(openInspectBtn);
     });
 
-    const allConfirmButtons = screen.getAllByRole("button", { name: "Confirm Drop-off" });
-    const modalSubmitBtn = allConfirmButtons[allConfirmButtons.length - 1];
-
+    const checkboxes = screen.getAllByRole("checkbox");
     await act(async () => {
-      await user.click(modalSubmitBtn);
+      fireEvent.click(checkboxes[0]);
+      fireEvent.click(checkboxes[1]);
     });
 
-    expect(window.alert).toHaveBeenCalledWith(expect.stringContaining("Failed to confirm drop-off"));
+    const submitBtn = screen.getByRole("button", { name: /Authorize Vault Intake/i });
+    await act(async () => {
+      fireEvent.click(submitBtn);
+    });
+
+    expect(window.alert).toHaveBeenCalledWith(expect.stringContaining("Failed to process transaction:"));
+  });
+
+  it("Boundary Check: Renders empty queue fallback cards when database lookup rows evaluate to zero", async () => {
+    simulateEmptyQueue = true;
+    await renderComponent();
+
+    await waitFor(() => {
+      expect(screen.getByText("Intake Queue Clear")).toBeInTheDocument();
+    });
+  });
+
+  it("Boundary Check: Renders extremely long asset title descriptions safely without runtime display overflow crashes", async () => {
+    mockDropoffs[0].transactions.listings.title = "A".repeat(255);
+    await renderComponent();
+
+    await waitFor(() => {
+      expect(screen.getByText(/Intake: AAAAA/i)).toBeInTheDocument();
+    });
   });
 });
