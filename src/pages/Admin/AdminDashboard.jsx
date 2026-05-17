@@ -1,8 +1,12 @@
-      import { useNavigate } from 'react-router-dom';
-      import React, { useEffect, useState } from "react";
-      import { supabase } from "@/supabase/supabaseClient";
-      import AnalyticsView from "./AnalyticsView";
-      import "./AdminDashboard.css";
+import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from "react";
+import { supabase } from "@/supabase/supabaseClient";
+import AnalyticsView from "./AnalyticsView"
+import "./AdminDashboard.css";
+import ModerationQueue from './ModerationQueue';
+import ExportReports from './ExportReports';
+
+
 
       export default function AdminDashboard() {
   const navigate = useNavigate();
