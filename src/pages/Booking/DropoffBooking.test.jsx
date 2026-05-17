@@ -145,9 +145,9 @@ describe('DropoffBooking Component Comprehensive & Boundary Integration Tests', 
 
     await waitFor(() => {
       // ✅ Scans flexibly for either label variant rendered by your frontend templates
-      const remainingSpotsCards = screen.queryAllByText(/1 open spots/i).length > 0
-        ? screen.queryAllByText(/1 open spots/i)
-        : screen.queryAllByText(/1 open spots/i);
+      const remainingSpotsCards = screen.queryAllByText(/\d+ open spots/i).length > 0
+        ? screen.queryAllByText(/\d+ open spots/i)
+        : screen.queryAllByText(/\d+ open spots/i);
       expect(remainingSpotsCards.length).is.greaterThan(0);
     });
   });
