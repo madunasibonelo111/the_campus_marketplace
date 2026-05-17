@@ -147,7 +147,7 @@ describe('DropoffBooking Component Comprehensive & Boundary Integration Tests', 
       // ✅ Scans flexibly for either label variant rendered by your frontend templates
       const remainingSpotsCards = screen.queryAllByText(/1 open spots/i).length > 0
         ? screen.queryAllByText(/1 open spots/i)
-        : screen.queryAllByText(/1 spots available/i);
+        : screen.queryAllByText(/1 open spots/i);
       expect(remainingSpotsCards.length).is.greaterThan(0);
     });
   });
