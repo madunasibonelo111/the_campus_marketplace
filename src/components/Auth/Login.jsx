@@ -95,7 +95,7 @@ export default function Login({ switchToRegister }) {
           break;
         case "student":
         default:
-          navigate("/"); // Matches test assertion path
+          navigate("/basket"); // Matches test assertion path
           break;
       }
     } catch (error) {
