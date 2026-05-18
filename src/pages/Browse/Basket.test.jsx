@@ -1,100 +1,82 @@
-import { render, screen, act, fireEvent } from '@testing-library/react';
+import { render, screen, act, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import Basket from './Basket.jsx';
+import { supabase } from "@/supabase/supabaseClient";
+import React from 'react';
 
-// mock navigate
+const mockNavigate = vi.fn();
+
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
   return {
     ...actual,
-    useNavigate: () => vi.fn(),
+    useNavigate: () => mockNavigate,
   };
 });
 
 const mockOnViewListing = vi.fn();
-
-// mock alert
 global.alert = vi.fn();
 
-vi.mock('@/supabase/supabaseClient', () => ({
-  supabase: {
-    auth: {
-      getSession: vi.fn(() =>
-        Promise.resolve({
-          data: { session: { user: { id: '1' } } },
-          error: null,
-        })
-      ),
-      onAuthStateChange: vi.fn(() => ({
-        data: { subscription: { unsubscribe: vi.fn() } },
-      })),
-    },
+vi.mock('@/supabase/supabaseClient', () => {
+  const mockChain = {
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    single: vi.fn(),
+    insert: vi.fn().mockReturnThis(),
+    selectAfterInsert: vi.fn().mockReturnThis(),
+  };
 
-    from: vi.fn((table) => {
-
-      if (table === 'categories') {
-        return {
-          select: vi.fn(() =>
-            Promise.resolve({
-              data: [
-                { name: 'Textbooks' },
-                { name: 'Electronics' },
-              ],
-              error: null,
-            })
-          ),
-        };
-      }
-
-      if (table === 'listings') {
-        return {
-          select: vi.fn(() =>
-            Promise.resolve({
-              data: [
-                {
-                  id: 1,
-                  title: 'Calculus',
-                  price: 350,
-                  listing_images: [],
-                  categories: { name: 'Textbooks' },
-                  user_id: '2',
-                  listing_type: 'buy',
-                },
-              ],
-              error: null,
-            })
-          ),
-        };
-      }
-
-      return {
-        select: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            eq: vi.fn(() => ({
-              eq: vi.fn(() => ({
-                maybeSingle: vi.fn(() =>
-                  Promise.resolve({ data: null })
-                ),
-              })),
-            })),
-          })),
+  return {
+    supabase: {
+      auth: {
+        getSession: vi.fn(() =>
+          Promise.resolve({
+            data: { session: { user: { id: 'user-123', email: 'test@wits.ac.za', user_metadata: { name: 'Test User' } } } },
+            error: null,
+          })
+        ),
+        onAuthStateChange: vi.fn(() => ({
+          data: { subscription: { unsubscribe: vi.fn() } },
         })),
-        insert: vi.fn(() => ({
-          select: vi.fn(() => ({
-            single: vi.fn(() =>
+      },
+      from: vi.fn((table) => {
+        if (table === 'categories') {
+          return {
+            select: vi.fn(() => Promise.resolve({ data: [{ name: 'Textbooks' }, { name: 'Electronics' }], error: null })),
+          };
+        }
+        if (table === 'listings') {
+          return {
+            select: vi.fn(() =>
               Promise.resolve({
-                data: { id: 'conv1' },
+                data: [
+                  {
+                    id: 1,
+                    title: 'Calculus textbook',
+                    price: 350,
+                    listing_images: [],
+                    categories: { name: 'Textbooks' },
+                    user_id: 'seller-456',
+                    listing_type: 'buy',
+                    status: 'active',
+                  },
+                ],
+                error: null,
               })
             ),
-          })),
-        })),
-      };
-    }),
-  },
-}));
+          };
+        }
+        return mockChain;
+      }),
+    },
+  };
+});
 
-describe('Basket Page', () => {
+describe('Basket Page Extended Lifecycle', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('renders categories sidebar correctly', async () => {
     await act(async () => {
@@ -106,7 +88,6 @@ describe('Basket Page', () => {
     });
 
     fireEvent.click(screen.getByText(/Explore Categories/i));
-
     const btn = await screen.findByRole('button', { name: /Textbooks/i });
     expect(btn).toBeInTheDocument();
   });
@@ -121,24 +102,16 @@ describe('Basket Page', () => {
     });
 
     const addBtn = await screen.findByText(/Add to Basket/i);
+    await act(async () => { fireEvent.click(addBtn); });
 
-    await act(async () => {
-      fireEvent.click(addBtn);
-    });
-
-    const basketBtn = await screen.findByRole('button', {
-      name: /open basket/i,
-    });
-
-    await act(async () => {
-      fireEvent.click(basketBtn);
-    });
+    const basketBtn = await screen.findByRole('button', { name: /open basket/i });
+    await act(async () => { fireEvent.click(basketBtn); });
 
     const checkout = await screen.findByText(/Proceed to Checkout/i);
     expect(checkout).toBeInTheDocument();
   });
 
-  it('removes item from basket', async () => {
+  it('removes item from basket cleanly', async () => {
     await act(async () => {
       render(
         <BrowserRouter>
@@ -148,59 +121,148 @@ describe('Basket Page', () => {
     });
 
     const addBtn = await screen.findByText(/Add to Basket/i);
+    await act(async () => { fireEvent.click(addBtn); });
 
-    await act(async () => {
-      fireEvent.click(addBtn);
-    });
+    const basketBtn = await screen.findByRole('button', { name: /open basket/i });
+    await act(async () => { fireEvent.click(basketBtn); });
 
-    const basketBtn = await screen.findByRole('button', {
-      name: /open basket/i,
-    });
+    const minusBtn = screen.getByText('−');
+    await act(async () => { fireEvent.click(minusBtn); });
 
-    await act(async () => {
-      fireEvent.click(basketBtn);
-    });
-
-    const minusBtn = await screen.findByText('−');
-
-    await act(async () => {
-      fireEvent.click(minusBtn);
-    });
-
-    // ✅ correct check
     expect(screen.queryByText(/Qty:/i)).not.toBeInTheDocument();
   });
 
-  it('checkout triggers supabase logic', async () => {
-    await act(async () => {
-      render(
-        <BrowserRouter>
-          <Basket onViewListing={mockOnViewListing} />
-        </BrowserRouter>
-      );
+  it('creates a new profile record if the student profile lookup returns empty', async () => {
+    const mockInsert = vi.fn().mockReturnThis();
+    const mockSelect = vi.fn().mockReturnThis();
+    const mockSingle = vi.fn()
+      .mockResolvedValueOnce({ data: null, error: { code: 'PGRST116' } }) // First call: profile lookup fails
+      .mockResolvedValueOnce({ data: { id: 'user-123', name: 'Test User' }, error: null }); // Second call: after insert resolves successfully
+
+    const profilesChain = {
+      select: mockSelect,
+      eq: vi.fn().mockReturnThis(),
+      single: mockSingle,
+      insert: mockInsert
+    };
+
+    const transactionsChain = {
+      insert: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: { id: 'trans-999' }, error: null })
+    };
+
+    vi.spyOn(supabase, 'from').mockImplementation((table) => {
+      if (table === 'profiles') return profilesChain;
+      if (table === 'transactions') return transactionsChain;
+      if (table === 'categories') return { select: vi.fn(() => Promise.resolve({ data: [] })) };
+      if (table === 'listings') {
+        return {
+          select: vi.fn(() => Promise.resolve({ data: [{ id: 1, title: 'Calculus', price: 350, user_id: 'seller-456' }] }))
+        };
+      }
     });
+
+    render(
+      <BrowserRouter>
+        <Basket onViewListing={mockOnViewListing} />
+      </BrowserRouter>
+    );
 
     const addBtn = await screen.findByText(/Add to Basket/i);
+    await act(async () => { fireEvent.click(addBtn); });
 
-    await act(async () => {
-      fireEvent.click(addBtn);
+    const basketBtn = screen.getByRole("button", { name: /open basket/i });
+    await act(async () => { fireEvent.click(basketBtn); });
+
+    const checkoutBtn = screen.getByText(/Proceed to Checkout/i);
+    await act(async () => { fireEvent.click(checkoutBtn); });
+
+    await waitFor(() => {
+      expect(mockInsert).toHaveBeenCalledWith(expect.objectContaining({ id: 'user-123' }));
+      expect(mockNavigate).toHaveBeenCalledWith('/payment', expect.any(Object));
+    });
+  });
+  
+  it('completes the checkout journey and navigates to the payment page when profile already exists', async () => {
+    const profilesChain = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: { id: 'user-123', name: 'Existing User' }, error: null })
+    };
+
+    const transactionsChain = {
+      insert: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: { id: 'trans-777' }, error: null })
+    };
+
+    vi.spyOn(supabase, 'from').mockImplementation((table) => {
+      if (table === 'profiles') return profilesChain;
+      if (table === 'transactions') return transactionsChain;
+      if (table === 'categories') return { select: vi.fn(() => Promise.resolve({ data: [] })) };
+      if (table === 'listings') {
+        return {
+          select: vi.fn(() => Promise.resolve({ data: [{ id: 1, title: 'Calculus', price: 350, user_id: 'seller-456' }] }))
+        };
+      }
     });
 
-    const basketBtn = await screen.findByRole('button', {
-      name: /open basket/i,
+    render(
+      <BrowserRouter>
+        <Basket onViewListing={mockOnViewListing} />
+      </BrowserRouter>
+    );
+
+    const addBtn = await screen.findByText(/Add to Basket/i);
+    await act(async () => { fireEvent.click(addBtn); });
+
+    const basketBtn = screen.getByRole('button', { name: /open basket/i });
+    await act(async () => { fireEvent.click(basketBtn); });
+
+    const checkoutBtn = screen.getByText(/Proceed to Checkout/i);
+    await act(async () => { fireEvent.click(checkoutBtn); });
+
+    await waitFor(() => {
+      expect(transactionsChain.insert).toHaveBeenCalled();
+      expect(mockNavigate).toHaveBeenCalledWith('/payment', expect.any(Object));
     });
-
-    await act(async () => {
-      fireEvent.click(basketBtn);
-    });
-
-    const checkoutBtn = await screen.findByText(/Proceed to Checkout/i);
-
-    await act(async () => {
-      fireEvent.click(checkoutBtn);
-    });
-
-    expect(global.alert).toHaveBeenCalled();
   });
 
+  it('intercepts system errors within the checkout transaction loop gracefully', async () => {
+    vi.spyOn(supabase, 'from').mockImplementation((table) => {
+      if (table === 'profiles') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          single: vi.fn().mockRejectedValue(new Error('Connection failure'))
+        };
+      }
+      if (table === 'listings') {
+        return {
+          select: vi.fn(() => Promise.resolve({ data: [{ id: 1, title: 'Calculus', price: 350, user_id: 'seller-456' }] }))
+        };
+      }
+      return { select: vi.fn(() => Promise.resolve({ data: [] })) };
+    });
+
+    render(
+      <BrowserRouter>
+        <Basket onViewListing={mockOnViewListing} />
+      </BrowserRouter>
+    );
+
+    const addBtn = await screen.findByText(/Add to Basket/i);
+    await act(async () => { fireEvent.click(addBtn); });
+
+    const basketBtn = screen.getByRole('button', { name: /open basket/i });
+    await act(async () => { fireEvent.click(basketBtn); });
+
+    const checkoutBtn = screen.getByText(/Proceed to Checkout/i);
+    await act(async () => { fireEvent.click(checkoutBtn); });
+
+    await waitFor(() => {
+      expect(global.alert).toHaveBeenCalledWith(expect.stringContaining('Error processing checkout:'));
+    });
+  });
 });

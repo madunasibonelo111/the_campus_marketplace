@@ -1,9 +1,12 @@
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import EmailConfirmed from './EmailConfirmed';
+import { supabase } from "@/supabase/supabaseClient";
+import React from 'react';
 
 const mockNavigate = vi.fn();
+
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
   return { ...actual, useNavigate: () => mockNavigate };
@@ -20,10 +23,11 @@ vi.mock('@/supabase/supabaseClient', () => ({
   },
 }));
 
-describe('EmailConfirmed Component', () => {
+describe('EmailConfirmed Component Lifecycle', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.clearAllMocks();
+    vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -43,9 +47,40 @@ describe('EmailConfirmed Component', () => {
     await act(async () => {
       render(<BrowserRouter><EmailConfirmed /></BrowserRouter>);
     });
+    
     act(() => {
       vi.advanceTimersByTime(5000);
     });
     expect(mockNavigate).toHaveBeenCalledWith('/auth');
+  });
+
+  it('handles the negative boundary path cleanly when the authenticated user returns null', async () => {
+    // This explicitly triggers the false side of the if (user) condition to satisfy branch coverage
+    vi.spyOn(supabase.auth, 'getUser').mockResolvedValueOnce({ data: { user: null }, error: null });
+    const mockUpsert = vi.fn().mockResolvedValue({ error: null });
+    vi.spyOn(supabase, 'from').mockImplementation(() => ({ upsert: mockUpsert }));
+
+    await act(async () => {
+      render(<BrowserRouter><EmailConfirmed /></BrowserRouter>);
+    });
+
+    // Confirms that the database pipeline is safely bypassed when no session exists
+    expect(mockUpsert).not.toHaveBeenCalled();
+  });
+
+  it('intercepts and logs backend profiles database synchronization rejections accurately', async () => {
+    // Equivalence partition check to verify operational error logging outputs
+    vi.spyOn(supabase, 'from').mockImplementation(() => ({
+      upsert: vi.fn().mockResolvedValue({ error: { message: "Database constraint breach" } })
+    }));
+
+    await act(async () => {
+      render(<BrowserRouter><EmailConfirmed /></BrowserRouter>);
+    });
+
+    expect(console.error).toHaveBeenCalledWith(
+      expect.stringContaining("Profile sync failed:"),
+      "Database constraint breach"
+    );
   });
 });
