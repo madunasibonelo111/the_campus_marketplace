@@ -224,245 +224,202 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div
-      className="admin-dashboard-app-wrapper"
-      style={{
-        display: "flex",
-        minHeight: "100vh",
-        background: "#f8fafc",
-      }}
-    >
-      {/* Sidebar */}
-      <aside
-        className="admin-sidebar"
-        style={{
-          width: "280px",
-          background: "#0f172a",
-          color: "white",
-          padding: "35px 24px",
-          display: "flex",
-          flexDirection: "column",
-          gap: "40px",
-          flexShrink: 0,
-        }}
-      >
-        <div className="sidebar-branding">
-          <h2
-            style={{
-              fontSize: "20px",
-              fontWeight: "800",
-              margin: 0,
-              color: "#38bdf8",
-            }}
+      <div className="admin-dashboard-app-wrapper" style={{ display: 'flex', minHeight: '100vh', background: '#f8fafc' }}>
+        
+        {/* 🧭 Shared Administrative Navigation Sidebar Control */}
+        <aside className="admin-sidebar" style={{ width: '280px', background: '#0f172a', color: 'white', padding: '35px 24px', display: 'flex', flexDirection: 'column', gap: '40px', flexShrink: 0 }}>
+          <div className="sidebar-branding">
+            <h2 style={{ fontSize: '20px', fontWeight: '800', margin: 0, letterSpacing: '0.5px', color: '#38bdf8' }}>Campus Admin</h2>
+            <span style={{ fontSize: '12px', color: '#94a3b8' }}>Manager: {admin?.name || "Executive"}</span>
+          </div>
+  
+          <nav className="sidebar-navigation-links" style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: 1 }}>
+            <button 
+              onClick={() => setActiveTab("analytics")} 
+              style={{ 
+                width: '100%', textAlign: 'left', padding: '14px 18px', borderRadius: '12px', border: 'none', 
+                background: activeTab === 'analytics' ? '#1e293b' : 'transparent', 
+                color: activeTab === 'analytics' ? '#38bdf8' : '#94a3b8', 
+                cursor: 'pointer', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '12px', fontSize: '14px', transition: 'all 0.2s' 
+              }}
+            >
+              📊 Platform Analytics
+            </button>
+  
+            <button 
+              onClick={() => setActiveTab("facility_ops")} 
+              style={{ 
+                width: '100%', textAlign: 'left', padding: '14px 18px', borderRadius: '12px', border: 'none', 
+                background: activeTab === 'facility_ops' ? '#1e293b' : 'transparent', 
+                color: activeTab === 'facility_ops' ? '#38bdf8' : '#94a3b8', 
+                cursor: 'pointer', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '12px', fontSize: '14px', transition: 'all 0.2s' 
+              }}
+            >
+              📋 Facility Operations
+            </button>
+  
+            <button 
+              onClick={() => setActiveTab("facility_config")} 
+              style={{ 
+                width: '100%', textAlign: 'left', padding: '14px 18px', borderRadius: '12px', border: 'none', 
+                background: activeTab === 'facility_config' ? '#1e293b' : 'transparent', 
+                color: activeTab === 'facility_config' ? '#38bdf8' : '#94a3b8', 
+                cursor: 'pointer', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '12px', fontSize: '14px', transition: 'all 0.2s' 
+              }}
+            >
+              🔧 Facility Configuration
+            </button>
+            
+            <button 
+              onClick={() => setActiveTab("moderation")} 
+              style={{ 
+                width: '100%', textAlign: 'left', padding: '14px 18px', borderRadius: '12px', border: 'none', 
+                background: activeTab === 'moderation' ? '#1e293b' : 'transparent', 
+                color: activeTab === 'moderation' ? '#38bdf8' : '#94a3b8', 
+                cursor: 'pointer', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '12px', fontSize: '14px', transition: 'all 0.2s' 
+              }}
+            >
+              🛡️ Content Moderation
+            </button>
+            
+            <button 
+              onClick={() => setActiveTab("exports")} 
+              style={{ 
+                width: '100%', textAlign: 'left', padding: '14px 18px', borderRadius: '12px', border: 'none', 
+                background: activeTab === 'exports' ? '#1e293b' : 'transparent', 
+                color: activeTab === 'exports' ? '#38bdf8' : '#94a3b8', 
+                cursor: 'pointer', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '12px', fontSize: '14px', transition: 'all 0.2s' 
+              }}
+            >
+              📥 Export Reports
+            </button>
+          </nav>
+  
+          <button 
+            onClick={async () => { await supabase.auth.signOut(); navigate('/auth'); }} 
+            style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #334155', background: 'transparent', color: '#f1f5f9', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}
           >
-            Campus Admin
-          </h2>
-
-          <span
-            style={{
-              fontSize: "12px",
-              color: "#94a3b8",
-            }}
-          >
-            Manager: {admin?.name || "Executive"}
-          </span>
-        </div>
-
-        {/* Navigation */}
-        <nav
-          className="sidebar-navigation-links"
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "10px",
-            flex: 1,
-          }}
-        >
-          <button
-            onClick={() => setActiveTab("analytics")}
-            className={activeTab === "analytics" ? "active-admin-tab" : ""}
-          >
-            📊 Platform Analytics
+            Sign Out Dashboard
           </button>
-
-          <button
-            onClick={() => setActiveTab("facility_ops")}
-            className={activeTab === "facility_ops" ? "active-admin-tab" : ""}
-          >
-            📋 Facility Operations
-          </button>
-
-          <button
-            onClick={() => setActiveTab("facility_config")}
-            className={activeTab === "facility_config" ? "active-admin-tab" : ""}
-          >
-            🔧 Facility Configuration
-          </button>
-
-          <button
-            onClick={() => setActiveTab("moderation")}
-            className={activeTab === "moderation" ? "active-admin-tab" : ""}
-          >
-            🛡️ Content Moderation
-          </button>
-
-          <button
-            onClick={() => setActiveTab("exports")}
-            className={activeTab === "exports" ? "active-admin-tab" : ""}
-          >
-            📥 Export Reports
-          </button>
-        </nav>
-
-        {/* Logout */}
-        <button
-          onClick={async () => {
-            await supabase.auth.signOut();
-            navigate("/auth");
-          }}
-          style={{
-            width: "100%",
-            padding: "12px",
-            borderRadius: "10px",
-            border: "1px solid #334155",
-            background: "transparent",
-            color: "#f1f5f9",
-            cursor: "pointer",
-            fontSize: "13px",
-            fontWeight: "600",
-          }}
-        >
-          Sign Out Dashboard
-        </button>
-      </aside>
-
-      {/* Main Content */}
-      <main
-        className="admin-main-viewport"
-        style={{
-          flex: 1,
-          padding: "40px 50px",
-          overflowY: "auto",
-        }}
-      >
-        {/* Analytics */}
-        {activeTab === "analytics" && <AnalyticsView />}
-
-        {/* Facility Operations */}
-        {activeTab === "facility_ops" && (
-          <div className="bookings-card">
-            <h2>Live Booking Verification</h2>
-
-            <table className="bookings-table">
-              <thead>
-                <tr>
-                  <th>Type</th>
-                  <th>Student</th>
-                  <th>Date</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {bookings.map((b) => (
-                  <tr key={b.id}>
-                    <td>
-                      {b.booking_type === "drop_off"
-                        ? "📦 Drop-Off"
-                        : "🎁 Collection"}
-                    </td>
-
-                    <td>{b.profiles?.name || "Unknown Student"}</td>
-
-                    <td>
-                      {new Date(b.booking_date).toLocaleDateString()}
-                    </td>
-
-                    <td>{b.status}</td>
-
-                    <td>
-                      {b.status === "pending" && (
-                        <button onClick={() => handleReceive(b.id)}>
-                          Confirm
-                        </button>
-                      )}
-
-                      {b.status === "confirmed" && (
-                        <button onClick={() => handleRelease(b)}>
-                          Complete
-                        </button>
-                      )}
-                    </td>
+        </aside>
+  
+        {/* 🖥️ Main Dynamic Workspace Panel Viewport */}
+        <main className="admin-main-viewport" style={{ flex: 1, padding: '40px 50px', overflowY: 'auto' }}>
+          
+          {/* User Story 1 View Component */}
+          {activeTab === "analytics" && <AnalyticsView />}
+  
+          {/* Live Booking Operational Table View */}
+          {activeTab === "facility_ops" && (
+            <div className="bookings-card" style={{ background: 'white', padding: '30px', borderRadius: '18px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.01)' }}>
+              <div style={{ marginBottom: '20px' }}>
+                <h2 style={{ fontSize: '22px', color: '#1e293b', margin: '0 0 4px 0', fontWeight: '700' }}>Live Booking Verification</h2>
+                <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>Confirm student appointments and manage drop-off/collection cycles directly.</p>
+              </div>
+              
+              <table className="bookings-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                <thead>
+                  <tr style={{ borderBottom: '2px solid #e2e8f0', color: '#475569', fontSize: '14px' }}>
+                    <th style={{ padding: '12px 16px' }}>Type</th>
+                    <th style={{ padding: '12px 16px' }}>Student</th>
+                    <th style={{ padding: '12px 16px' }}>Scheduled Date</th>
+                    <th style={{ padding: '12px 16px' }}>Status</th>
+                    <th style={{ padding: '12px 16px' }}>Action Actions</th>
                   </tr>
-                ))}
-
-                {bookings.length === 0 && (
-                  <tr>
-                    <td colSpan="5">
-                      No facility transactions available.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* Facility Config */}
-        {activeTab === "facility_config" && (
-          <div className="config-card">
-            <h2>Facility Parameters & Constraints</h2>
-
-            <form onSubmit={handleUpdateConfiguration}>
-              <input
-                type="number"
-                value={slotDuration}
-                onChange={(e) => setSlotDuration(e.target.value)}
-                placeholder="Slot Duration"
-              />
-
-              <input
-                type="number"
-                value={maxCapacity}
-                onChange={(e) => setMaxCapacity(e.target.value)}
-                placeholder="Max Capacity"
-              />
-
-              <input
-                type="time"
-                value={openTime}
-                onChange={(e) => setOpenTime(e.target.value)}
-              />
-
-              <input
-                type="time"
-                value={closeTime}
-                onChange={(e) => setCloseTime(e.target.value)}
-              />
-
-              <button type="submit" disabled={savingConfig}>
-                {savingConfig ? "Saving..." : "Save Configuration"}
-              </button>
-            </form>
-          </div>
-        )}
-
-        {/* Moderation */}
-        {activeTab === "moderation" && (
-          <div className="placeholder-card">
-            <h3>🛡️ Content Moderation Workspace</h3>
-
-            <p>
-              Queue processing view will populate immediately when
-              moderation tools are connected.
-            </p>
-          </div>
-        )}
-
-        {/* EXPORT REPORTS */}
-        {activeTab === "exports" && <Reports />}
-      </main>
-    </div>
-  );
+                </thead>
+                <tbody>
+                  {bookings.map((b) => (
+                    <tr key={b.id} style={{ borderBottom: '1px solid #f1f5f9', fontSize: '14px', color: '#334155' }}>
+                      <td style={{ padding: '16px', textTransform: 'capitalize', fontWeight: '600' }}>
+                        {b.booking_type === 'drop_off' ? '📦 Drop-off' : '🎁 Collection'}
+                      </td>
+                      <td style={{ padding: '16px' }}>
+                        {b.profiles?.name || "Unknown Student"}
+                      </td>
+                      <td style={{ padding: '16px' }}>{new Date(b.booking_date).toLocaleDateString()}</td>
+                      <td style={{ padding: '16px' }}>
+                        <span className={`status-pill ${b.status}`} style={{
+                          padding: '4px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold',
+                          background: b.status === 'completed' ? '#dcfce7' : b.status === 'confirmed' ? '#e0f2fe' : '#fef3c7',
+                          color: b.status === 'completed' ? '#15803d' : b.status === 'confirmed' ? '#0369a1' : '#b45309'
+                        }}>
+                          {b.status}
+                        </span>
+                      </td>
+                      <td style={{ padding: '16px' }}>
+                        {b.status === "pending" && (
+                          <button className="receive-btn" onClick={() => handleReceive(b.id)} style={{ background: '#22c55e', color: 'white', border: 'none', padding: '6px 14px', borderRadius: '8px', cursor: 'pointer', fontWeight: '600' }}>
+                            Confirm
+                          </button>
+                        )}
+                        {b.status === "confirmed" && (
+                          <button className="complete-btn" onClick={() => handleRelease(b)} style={{ background: '#3b82f6', color: 'white', border: 'none', padding: '6px 14px', borderRadius: '8px', cursor: 'pointer', fontWeight: '600' }}>
+                            Complete
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                  {bookings.length === 0 && (
+                    <tr>
+                      <td colSpan="5" style={{ padding: '30px', textAlign: 'center', color: '#94a3b8' }}>No facility transactions logged in database profiles.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+  
+          {/* 🔧 FACILITY CONFIGURATIONS FORM LAYOUT WRAPPER */}
+          {activeTab === "facility_config" && (
+            <div className="config-card" style={{ background: 'white', padding: '35px', borderRadius: '18px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.01)' }}>
+              <div style={{ marginBottom: '25px' }}>
+                <h2 style={{ fontSize: '22px', color: '#1e293b', margin: '0 0 4px 0', fontWeight: '700' }}>Facility Parameters & Constraints</h2>
+                <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>Modify automated calendar durations, lock hourly caps, and update campus trading window schedules.</p>
+              </div>
+  
+              <form onSubmit={handleUpdateConfiguration} style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '500px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <label style={{ fontSize: '14px', fontWeight: '600', color: '#475569' }}>Time Slot Duration (Minutes)</label>
+                  <input type="number" value={slotDuration} onChange={(e) => setSlotDuration(e.target.value)} required style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '14px' }} />
+                </div>
+  
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <label style={{ fontSize: '14px', fontWeight: '600', color: '#475569' }}>Max Capacity (Transactions Per Slot)</label>
+                  <input type="number" value={maxCapacity} onChange={(e) => setMaxCapacity(e.target.value)} required style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '14px' }} />
+                </div>
+  
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ fontSize: '14px', fontWeight: '600', color: '#475569' }}>Opening Time</label>
+                    <input type="time" value={openTime} onChange={(e) => setOpenTime(e.target.value)} required style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '14px' }} />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ fontSize: '14px', fontWeight: '600', color: '#475569' }}>Closing Time</label>
+                    <input type="time" value={closeTime} onChange={(e) => setCloseTime(e.target.value)} required style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '14px' }} />
+                  </div>
+                </div>
+  
+                <button type="submit" disabled={savingConfig} style={{ marginTop: '10px', background: '#4f46e5', color: 'white', border: 'none', padding: '12px', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '600', transition: 'background 0.2s' }}>
+                  {savingConfig ? "Saving System Rules..." : "Save Operational Rules"}
+                </button>
+              </form>
+            </div>
+          )}
+          
+          {/* User Story 2 Placeholder */}
+          {activeTab === "moderation" && (
+            <div className="placeholder-card" style={{ background: 'white', padding: '50px', borderRadius: '18px', border: '1px solid #e2e8f0', color: '#64748b', textAlign: 'center' }}>
+              <h3 style={{ color: '#1e293b', marginBottom: '8px' }}>🛡️ Content Moderation Workspace</h3>
+              <p style={{ fontSize: '14px', margin: 0 }}>Queue processing view will populate immediately when Sibonelo mounts his component links.</p>
+            </div>
+          )}
+  
+          {/* User Story 3  */}
+          {activeTab === "exports" && <Reports />}
+            
+  
+        </main>
+      </div>
+    );
 }
