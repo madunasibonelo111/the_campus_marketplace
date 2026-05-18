@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import React from "react";
 import ModerationQueue from "./ModerationQueue";
 import { supabase } from "../../supabase/supabaseClient";
 
@@ -10,10 +11,10 @@ vi.mock("../../supabase/supabaseClient", () => ({
   }
 }));
 
-describe("ModerationQueue Unit Tests", () => {
+describe("ModerationQueue Unit Tests & Branch Coverage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Spy on console.error so our terminal stays clean when we intentionally trigger errors
+    // Spy on console.error and window.alert so our terminal stays clean during error simulations
     vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.spyOn(window, 'alert').mockImplementation(() => {});
   });
@@ -33,101 +34,106 @@ describe("ModerationQueue Unit Tests", () => {
   });
 
   it("renders the table with flagged items successfully", async () => {
-    supabase.rpc.mockResolvedValueOnce({
-      data: [{
+    const mockFlags = [
+      {
         flag_id: "flag-123",
-        item_id: "item-999",
-        reporter_name: "Alice",
-        reason: "Spam",
-        created_at: "2026-05-18T10:00:00Z"
-      }],
-      error: null
-    });
+        item_id: "item-11122233",
+        reporter_name: "Alice Smith",
+        reason: "Counterfeit product",
+        created_at: "2026-05-18T08:30:00.000Z"
+      }
+    ];
+
+    supabase.rpc.mockResolvedValueOnce({ data: mockFlags, error: null });
     render(<ModerationQueue />);
-    await waitFor(() => {
-      expect(screen.getByText(/Alice/i)).toBeInTheDocument();
-      expect(screen.getByText(/Spam/i)).toBeInTheDocument();
-    });
+
+    expect(await screen.findByText("Alice Smith")).toBeInTheDocument();
+    expect(screen.getByText("Counterfeit product")).toBeInTheDocument();
+    expect(screen.getByText("item-111...")).toBeInTheDocument();
   });
 
-  it("calls the resolve RPC when the Dismiss button is clicked", async () => {
+  it("handles clicking Dismiss successfully and refreshes the list", async () => {
+    // 1st call: Fetch items initially
     supabase.rpc.mockResolvedValueOnce({
-      data: [{ flag_id: "flag-123", item_id: "item-999", reporter_name: "Alice", reason: "Spam", created_at: "2026-05-18T10:00:00Z" }],
+      data: [{ flag_id: "flag-124", item_id: "item-44455566", reporter_name: "Bob Jones", reason: "Spam Link", created_at: "2026-05-18T09:00:00.000Z" }],
       error: null
     });
-    render(<ModerationQueue />);
 
+    render(<ModerationQueue />);
     const dismissButton = await screen.findByRole("button", { name: /Dismiss/i });
-    
-    supabase.rpc
-      .mockResolvedValueOnce({ data: null, error: null })
-      .mockResolvedValueOnce({ data: [], error: null }); 
+
+    // 2nd call: Action mutation execution resolves happily
+    supabase.rpc.mockResolvedValueOnce({ data: null, error: null });
+    // 3rd call: Refresh re-fetch queue resolves with empty list
+    supabase.rpc.mockResolvedValueOnce({ data: [], error: null });
 
     fireEvent.click(dismissButton);
 
     await waitFor(() => {
       expect(supabase.rpc).toHaveBeenCalledWith("resolve_flagged_item", {
-        p_flag_id: "flag-123",
+        p_flag_id: "flag-124",
         p_action_status: "dismissed"
       });
     });
   });
 
-  // ✅ ADDED FOR 80%+ COVERAGE: Test the "Remove Item" branch
-  it("calls the resolve RPC with 'removed' when the Remove button is clicked", async () => {
+  it("handles clicking Remove successfully and refreshes the list", async () => {
     supabase.rpc.mockResolvedValueOnce({
-      data: [{ flag_id: "flag-124", item_id: "item-888", reporter_name: "Bob", reason: "Inappropriate", created_at: "2026-05-18T10:00:00Z" }],
+      data: [{ flag_id: "flag-125", item_id: "item-999aaabb", reporter_name: "Charlie Brown", reason: "Harassment", created_at: "2026-05-18T09:15:00.000Z" }],
       error: null
     });
-    render(<ModerationQueue />);
 
+    render(<ModerationQueue />);
     const removeButton = await screen.findByRole("button", { name: /Remove/i });
-    
-    supabase.rpc
-      .mockResolvedValueOnce({ data: null, error: null }) 
-      .mockResolvedValueOnce({ data: [], error: null });
+
+    // Action call and refresh re-fetch mock
+    supabase.rpc.mockResolvedValueOnce({ data: null, error: null });
+    supabase.rpc.mockResolvedValueOnce({ data: [], error: null });
 
     fireEvent.click(removeButton);
 
     await waitFor(() => {
       expect(supabase.rpc).toHaveBeenCalledWith("resolve_flagged_item", {
-        p_flag_id: "flag-124",
+        p_flag_id: "flag-125",
         p_action_status: "removed"
       });
     });
   });
 
-  // ✅ ADDED FOR 80%+ COVERAGE: Test the error branch during initial fetch
+  /* ======================================================================
+      🚀 COVERAGE BOOSTER: MUTATION & RETRIEVAL ERROR FALLBACKS
+     ====================================================================== */
+
   it("handles errors gracefully when fetching the queue fails", async () => {
     supabase.rpc.mockResolvedValueOnce({ data: null, error: { message: "Database offline" } });
     
     render(<ModerationQueue />);
 
-    // We just need to wait for the RPC to be called so the error state block executes
     await waitFor(() => {
       expect(supabase.rpc).toHaveBeenCalledWith("get_pending_flags");
-      expect(console.error).toHaveBeenCalled();
+      expect(console.error).toHaveBeenCalledWith('Error fetching flags:', { message: "Database offline" });
+      expect(screen.getByText(/Failed to load moderation queue/i)).toBeInTheDocument();
     });
   });
 
-  // ✅ ADDED FOR 80%+ COVERAGE: Test the error branch when taking an action fails
   it("handles errors gracefully when resolving a flag fails", async () => {
     supabase.rpc.mockResolvedValueOnce({
-      data: [{ flag_id: "flag-125", item_id: "item-777", reporter_name: "Charlie", reason: "Scam", created_at: "2026-05-18T10:00:00Z" }],
+      data: [{ flag_id: "flag-126", item_id: "item-777", reporter_name: "Charlie", reason: "Scam", created_at: "2026-05-18T10:00:00Z" }],
       error: null
     });
     render(<ModerationQueue />);
 
     const dismissButton = await screen.findByRole("button", { name: /Dismiss/i });
     
-    // Force the action to fail
-    supabase.rpc.mockResolvedValueOnce({ data: null, error: { message: "Action blocked by RLS" } });
+    // Force the resolve action call to throw an error payload
+    supabase.rpc.mockResolvedValueOnce({ data: null, error: { message: "Permission Denied" } });
 
     fireEvent.click(dismissButton);
 
     await waitFor(() => {
-      expect(supabase.rpc).toHaveBeenCalledWith("resolve_flagged_item", expect.anything());
-      expect(console.error).toHaveBeenCalled();
+      expect(console.error).toHaveBeenCalledWith('Error applying action dismissed:', { message: "Permission Denied" });
+      // Corrected to match the actual alert text inside your code
+      expect(window.alert).toHaveBeenCalledWith("Failed to resolve the item. Please check your connection and try again.");
     });
   });
 });
