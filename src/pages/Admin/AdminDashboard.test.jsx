@@ -1,4 +1,3 @@
-// src/pages/Admin/AdminDashboard.test.jsx
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor, fireEvent, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -10,6 +9,7 @@ import { supabase } from "@/supabase/supabaseClient";
 // Mock Navigate Link Actions
 const mockNavigate = vi.fn();
 
+// ✅ MOCK REACT ROUTER
 vi.mock("react-router-dom", async () => {
   const actual = await vi.importActual("react-router-dom");
   return {
@@ -69,6 +69,9 @@ describe("AdminDashboard Navigation, Mutation Handlers & Boundaries", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.spyOn(window, "alert").mockImplementation(() => {});
+    
+    // Ensure standard authentication session always evaluates successfully across basic rendering tests
+    supabase.auth.getUser.mockResolvedValue({ data: { user: { id: "admin-1" } } });
   });
 
   it("renders side navigation layout buttons correctly", async () => {
@@ -95,7 +98,6 @@ describe("AdminDashboard Navigation, Mutation Handlers & Boundaries", () => {
 
     expect(screen.getByText(/Live Booking Verification/i)).toBeInTheDocument();
 
-    // Test the handleReceive 'Confirm' button activation link loop
     const confirmButton = screen.getByRole("button", { name: "Confirm" });
     await act(async () => {
       fireEvent.click(confirmButton);
@@ -116,7 +118,6 @@ describe("AdminDashboard Navigation, Mutation Handlers & Boundaries", () => {
       fireEvent.click(opsButton);
     });
 
-    // Test the handleRelease 'Complete' button workflow trigger
     const completeButton = screen.getByRole("button", { name: "Complete" });
     await act(async () => {
       fireEvent.click(completeButton);
@@ -140,20 +141,19 @@ describe("AdminDashboard Navigation, Mutation Handlers & Boundaries", () => {
 
     expect(screen.getByText(/Facility Parameters & Constraints/i)).toBeInTheDocument();
 
-    // Modify duration state values to check full form binding
     const inputs = screen.getAllByRole("spinbutton");
     await act(async () => {
       await user.clear(inputs[0]);
       await user.type(inputs[0], "45");
     });
 
-    const submitConfigBtn = screen.getByRole("button", { name: /Save Operational Rules/i });
+    const submitConfigBtn = screen.getByRole("button", { name: /Save Configuration/i });
     await act(async () => {
       fireEvent.click(submitConfigBtn);
     });
 
     await waitFor(() => {
-      expect(window.alert).toHaveBeenCalledWith(expect.stringContaining("Facility operation parameters updated successfully!"));
+      expect(window.alert).toHaveBeenCalledWith(expect.stringContaining("Facility configuration updated!"));
     });
   });
 
@@ -178,12 +178,17 @@ describe("AdminDashboard Navigation, Mutation Handlers & Boundaries", () => {
      ====================================================================== */
 
   it("Boundary Check: Renders zero-state empty fallback message nodes when booking database rows evaluate to absolute zero", async () => {
-    // Intercept and resolve facility_bookings to an absolute zero length array
-    vi.spyOn(supabase, "from").mockImplementationOnce((table) => ({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      order: vi.fn().mockResolvedValue({ data: [], error: null })
-    }));
+    vi.spyOn(supabase, "from").mockImplementation((table) => {
+      const qbChain = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({ data: { name: "Bobo", role: "admin" }, error: null }),
+        maybeSingle: vi.fn().mockResolvedValue({ data: { id: "cfg-123", slot_duration_minutes: 30 }, error: null }),
+        order: vi.fn().mockResolvedValue({ data: [], error: null }) // Returns absolute zero bookings
+      };
+      return qbChain;
+    });
 
     render(
       <MemoryRouter>
@@ -197,11 +202,28 @@ describe("AdminDashboard Navigation, Mutation Handlers & Boundaries", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText(/No facility transactions logged in database profiles./i)).toBeInTheDocument();
+      expect(screen.getByText(/No facility transactions available./i)).toBeInTheDocument();
     });
   });
 
   it("Boundary Check: Confirms system configuration form inputs accept absolute minimum boundary values safely", async () => {
+    // Force database configuration queries to return mock structures safely
+    vi.spyOn(supabase, "from").mockImplementation((table) => {
+      const qbChain = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({ data: { name: "Bobo", role: "admin" }, error: null }),
+        maybeSingle: vi.fn().mockResolvedValue({ data: { id: "cfg-123", slot_duration_minutes: 30 }, error: null }),
+        order: vi.fn().mockResolvedValue({ data: [], error: null }),
+        update: vi.fn().mockImplementation(() => ({
+          eq: vi.fn().mockResolvedValue({ data: true, error: null })
+        })),
+        insert: vi.fn().mockResolvedValue({ data: true, error: null })
+      };
+      return qbChain;
+    });
+
     const user = userEvent.setup();
     render(
       <MemoryRouter>
@@ -224,13 +246,16 @@ describe("AdminDashboard Navigation, Mutation Handlers & Boundaries", () => {
       await user.type(inputs[1], "1");
     });
 
-    const submitConfigBtn = screen.getByRole("button", { name: /Save Operational Rules/i });
+    const submitConfigBtn = screen.getByRole("button", { name: /Save Configuration/i });
+    
+    // 1. Submit the form first!
     await act(async () => {
       fireEvent.click(submitConfigBtn);
     });
 
+    // 2. Assert the alert message second!
     await waitFor(() => {
-      expect(window.alert).toHaveBeenCalledWith(expect.stringContaining("Facility operation parameters updated successfully!"));
+      expect(window.alert).toHaveBeenCalledWith(expect.stringContaining("Facility configuration updated!"));
     });
   });
 });
