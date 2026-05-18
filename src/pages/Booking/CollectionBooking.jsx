@@ -148,7 +148,7 @@ export default function CollectionBooking() {
           const slotEnd = new Date(currentTime);
           slotEnd.setMinutes(slotEnd.getMinutes() + slotDuration);
           
-          // 🛑 CONSTRAINT SECURITY RULE: Must be on or after structural drop-off date
+          //CONSTRAINT SECURITY RULE: Must be on or after structural drop-off date
           if (currentTime >= floorDate) {
             const currentSlotISO = currentTime.toISOString();
             const bookedCount = bookingCountsMap[currentSlotISO] || 0;
@@ -177,49 +177,67 @@ export default function CollectionBooking() {
   };
 
   const handleCompleteBooking = async () => {
-    if (!selectedSlot || !user || !transaction) return;
-    setLoading(true);
+    if (!selectedSlot || !transaction || !user) return;
 
     try {
+      setLoading(true);
+
+      const collectionPayload = {
+        transaction_id: transaction.id,
+        user_id: user.id,
+        booking_type: 'collection',
+        booking_date: selectedSlot.datetime, 
+        status: 'pending',
+        created_at: new Date().toISOString()
+      };
+
       const { data: bookingData, error: bookingErr } = await supabase
         .from('facility_bookings')
-        .insert({
-          transaction_id: transaction.id,
-          user_id: user.id,
-          booking_type: 'collection',
-          booking_date: selectedSlot.datetime,
-          status: 'pending',
-          amount_due: 0,
-          created_at: new Date().toISOString()
-        })
+        .insert([collectionPayload])
         .select()
         .single();
 
       if (bookingErr) throw bookingErr;
+      setBooking(bookingData);
 
-      await supabase.from('notifications').insert({
-        user_id: user.id,
-        type: 'booking_confirmation',
-        title: 'Collection Appointment Slotted! 🎁',
-        message: `Your pickup for "${transaction.item_title}" has been reserved for ${selectedSlot.dayName}, ${selectedSlot.monthDay} at ${selectedSlot.startTime}.`,
-        is_read: false,
-        created_at: new Date().toISOString()
-      });
-
-      const { error: txErr } = await supabase
+      // 1. Set the transaction status flag parameters to pending_collection
+      await supabase
         .from('transactions')
         .update({ 
           status: 'pending_collection',
-          updated_at: new Date().toISOString() 
+          updated_at: new Date().toISOString()
         })
         .eq('id', transaction.id);
 
-      if (txErr) throw txErr;
+      // 2. Re-calculate capacity limits using matching timestamp parameters
+      const startOfToday = new Date();
+      startOfToday.setHours(0,0,0,0);
+      const endOfToday = new Date();
+      endOfToday.setHours(23,59,59,999);
 
-      setBooking(bookingData);
-    } catch (err) {
-      console.error("Booking error caught:", err);
-      alert("Scheduling error: " + err.message);
+      const { data: totalBookings } = await supabase
+        .from('facility_bookings')
+        .select('id')
+        .gte('booking_date', startOfToday.toISOString())
+        .lte('booking_date', endOfToday.toISOString())
+        .in('status', ['pending', 'confirmed', 'completed']);
+
+      const bookedCount = totalBookings ? totalBookings.length : 0;
+      const capacityPct = (bookedCount / 40) * 100;
+      const dateKeyString = new Date().toISOString().split('T')[0];
+
+      await supabase
+        .from('analytics_facility_utilization')
+        .upsert({
+          check_date: dateKeyString,
+          total_slots_available: 40,
+          total_slots_booked: bookedCount,
+          utilization_percentage: capacityPct
+        }, { onConflict: 'check_date' });
+
+    } catch (error) {
+      console.error("Booking handler exception encountered:", error);
+      alert("Fulfillment error securing collection slot: " + error.message);
     } finally {
       setLoading(false);
     }
@@ -252,47 +270,90 @@ export default function CollectionBooking() {
     );
   }
 
+ 
+
   return (
     <div className="collection-page-wrapper">
       <div className="collection-booking-panel">
         <div className="panel-container">
+          
+          {/* Main Top Header Banner */}
           <div className="panel-header">
             <h1>Schedule Buyer Collection</h1>
-            <p>Select an inventory pickup time block. Options are filtered to match or follow the seller's physical delivery timestamp ({dropoffDateFloor ? new Date(dropoffDateFloor).toLocaleDateString() : 'loading...'}).</p>
+            <p>Select an inventory pickup time block. Options are filtered to match or follow the seller's physical delivery timestamp.</p>
           </div>
 
-          {transaction && (
-            <div className="item-summary-box">
-              <h3>Item Metadata</h3>
-              <div className="box-details-grid">
-                <span>Item Title:</span><strong>{transaction.item_title}</strong>
-                <span>Paid Balance:</span><strong className="green-balance">R{transaction.amount.toFixed(2)}</strong>
+          {/*WORKSPACE SPLIT CONTAINER GRID OVERLAY */}
+          <div className="collection-workspace-split">
+            
+            {/* LEFT SIDE COLUMN SIDEBAR: Metadata info, descriptions and checklists */}
+            <div className="collection-info-pane">
+              {transaction && (
+                <div className="item-summary-box">
+                  <h3>Item Metadata</h3>
+                  <div className="box-details-grid">
+                    <span>Item Title:</span><strong>{transaction.item_title}</strong>
+                    <span>Paid Balance:</span><strong className="green-balance">R{transaction.amount.toFixed(2)}</strong>
+                  </div>
+                </div>
+              )}
+
+              <div className="collection-instructions-card">
+                <h4>📋 Collection Instructions:</h4>
+                <ul>
+                  <li>📍 Proceed to the Campus Safe-Zone Center (Room 101) at your designated time.</li>
+                  <li>🆔 Present your student ID to the staff member for security clearance.</li>
+                  <li>📦 The agent will open the trading zone vault and dispatch your verified item.</li>
+                </ul>
+              </div>
+
+              <div className="collection-security-notice">
+                <h4>⚠️ Security Policy:</h4>
+                <ul>
+                  <li>Schedules cannot precede the seller's verified drop-off delivery timestamp.</li>
+                  <li>Uncollected items after their duration window requires logistical re-scheduling.</li>
+                </ul>
               </div>
             </div>
-          )}
 
-          <div className="slots-explorer-section">
-            <h3>Available Collection Windows</h3>
-            {loading ? (
-              <div className="slots-loading-placeholder"><div className="animated-spinner"></div><p>Calculating valid schedules...</p></div>
-            ) : availableSlots.length > 0 ? (
-              <div className="slots-cards-grid">
-                {availableSlots.map((slot, index) => (
-                  <div key={index} className={`explorer-slot-card ${selectedSlot === slot ? 'active-selection' : ''}`} onClick={() => setSelectedSlot(slot)}>
-                    <div className="explorer-day">{slot.dayName}</div>
-                    <div className="explorer-date">{slot.monthDay}</div>
-                    <div className="explorer-time">{slot.startTime} - {slot.endTime}</div>
-                    <div className="explorer-spots">{slot.available} open windows</div>
+            {/* RIGHT SIDE COLUMN: Interactive scrollable calendar grid */}
+            <div className="collection-picker-pane">
+              <div className="slots-explorer-section">
+                <h3>Available Collection Windows</h3>
+                <p>Filtered operating blocks ({facilityConfig?.open_time || '09:00'} - {facilityConfig?.close_time || '17:00'})</p>
+                
+                {loading ? (
+                  <div className="slots-loading-placeholder">
+                    <div className="animated-spinner"></div>
+                    <p>Calculating valid schedules...</p>
                   </div>
-                ))}
+                ) : availableSlots.length > 0 ? (
+                  <div className="slots-cards-grid">
+                    {availableSlots.map((slot, index) => (
+                      <div 
+                        key={index} 
+                        className={`explorer-slot-card ${selectedSlot === slot ? 'active-selection' : ''}`} 
+                        onClick={() => setSelectedSlot(slot)}
+                      >
+                        <div className="explorer-day">{slot.dayName}</div>
+                        <div className="explorer-date">{slot.monthDay}</div>
+                        <div className="explorer-time">{slot.startTime} - {slot.endTime}</div>
+                        <div className="explorer-spots">{slot.available} open windows</div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="empty-slots-error">
+                    <p>No collection times available matching safety validation criteria.</p>
+                  </div>
+                )}
               </div>
-            ) : (
-              <div className="empty-slots-error"><p>No collection times available matching safety validation criteria.</p></div>
-            )}
-          </div>
+            </div>
 
-        
-          <div className="panel-action-footer" style={{ marginTop: '40px' }}>
+          </div> {/* End workspace split grid */}
+
+          {/* Locked Absolute Bottom Base Control Footer bar */}
+          <div className="panel-action-footer">
             <button onClick={() => navigate(-1)} className="btn-cancel-action">← Cancel</button>
             <button 
               onClick={handleCompleteBooking} 
@@ -302,6 +363,7 @@ export default function CollectionBooking() {
               {loading ? 'Processing...' : 'Confirm Collection Appointment'}
             </button>
           </div>
+
         </div>
       </div>
     </div>

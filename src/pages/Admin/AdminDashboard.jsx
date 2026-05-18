@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/supabase/supabaseClient";
 import AnalyticsView from "./AnalyticsView";
-import Reports from "./Reports";
+import Reports from "./Reports"; // 🔥 Kept from their branch
 import "./AdminDashboard.css";
 
 export default function AdminDashboard() {

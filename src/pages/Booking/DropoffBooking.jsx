@@ -49,7 +49,7 @@ export default function DropoffBooking() {
     try {
       console.log("Booking screen loading transaction ID:", transactionId);
       
-      // FIX: Query the exact columns that exist in your Supabase schema
+      // Query the exact columns that exist in your Supabase schema
       const { data: transactionData, error: transactionError } = await supabase
         .from('transactions')
         .select(`
@@ -195,7 +195,7 @@ export default function DropoffBooking() {
       dropoffDeadline.setDate(dropoffDeadline.getDate() + 3); 
       dropoffDeadline.setHours(23, 59, 59, 999);
 
-      // 🚀 PERFORMANCE FIX: Gather all booking slots for the week in ONE query trip
+      //Gather all booking slots for the week in ONE query trip
       const { data: activeBookings, error: batchErr } = await supabase
         .from('facility_bookings')
         .select('booking_date')
@@ -270,220 +270,251 @@ export default function DropoffBooking() {
 
 
 const bookDropoffSlot = async () => {
-  if (!selectedSlot) {
-    alert("Please select a drop-off time slot");
-    return;
-  }
+    if (!selectedSlot || !transaction || !user) return;
 
-  setLoading(true);
-  try {
-    // 1. Insert the booking record
-    const { data: bookingData, error: bookingError } = await supabase
-      .from('facility_bookings')
-      .insert({
+    try {
+      setLoading(true);
+
+      const bookingPayload = {
         transaction_id: transaction.id,
         user_id: user.id,
         booking_type: 'drop_off',
-        booking_date: selectedSlot.datetime,
+        booking_date: selectedSlot.datetime, 
         status: 'pending',
-        amount_due: 0,
         created_at: new Date().toISOString()
-      })
-      .select()
-      .single();
+      };
 
-    if (bookingError) throw bookingError;
+      const { data, error } = await supabase
+        .from('facility_bookings')
+        .insert([bookingPayload])
+        .select()
+        .single();
 
-    // 2. Send notification to user
-    await supabase.from('notifications').insert({
-      user_id: user.id,
-      type: 'booking_confirmation',
-      title: 'Drop-off Slot Booked! 📦',
-      message: `Your drop-off for "${transaction.listings?.title}" has been scheduled for ${selectedSlot.dayName}, ${selectedSlot.monthDay} at ${selectedSlot.startTime}. Please bring your student ID.`,
-      is_read: false,
-      created_at: new Date().toISOString()
-    });
-    
-    // 3. Update transaction table status to pending_dropoff directly using transaction.id
-    const { error: txUpdateError } = await supabase
-      .from('transactions')
-      .update({ 
-        status: 'pending_dropoff', 
-        updated_at: new Date().toISOString() 
-      })
-      .eq('id', transaction.id); // Securely use the loaded state id
+      if (error) throw error;
+      setBooking(data);
 
-    if (txUpdateError) throw txUpdateError;
+      // 1. Update the parent transaction status to 'pending_dropoff'
+      await supabase
+        .from('transactions')
+        .update({ 
+          status: 'pending_dropoff',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', transaction.id);
 
-    // 4. Update local state variables so that UI changes immediately
-    setTransaction(prev => ({ ...prev, status: 'pending_dropoff' }));
-    setBooking(bookingData);
+      //2.  Re-calculate capacity limits using matching timestamp parameters
+      const startOfToday = new Date();
+      startOfToday.setHours(0,0,0,0);
+      const endOfToday = new Date();
+      endOfToday.setHours(23,59,59,999);
+
+      const { data: totalBookings } = await supabase
+        .from('facility_bookings')
+        .select('id')
+        .gte('booking_date', startOfToday.toISOString())
+        .lte('booking_date', endOfToday.toISOString())
+        .in('status', ['pending', 'confirmed', 'completed']);
+
+      const bookedCount = totalBookings ? totalBookings.length : 0;
+      const capacityPct = (bookedCount / 40) * 100;
+      const dateKeyString = new Date().toISOString().split('T')[0];
+
+      await supabase
+        .from('analytics_facility_utilization')
+        .upsert({
+          check_date: dateKeyString,
+          total_slots_available: 40,
+          total_slots_booked: bookedCount,
+          utilization_percentage: capacityPct
+        }, { onConflict: 'check_date' });
+
       
-  } catch (err) {
-    console.error("Error booking slot:", err);
-    alert("Failed to book slot: " + err.message);
-  } finally {
-    setLoading(false);
-  }
-};
+
+    } catch (err) {
+      console.error("Booking error pipeline fault:", err);
+      alert("Failed to confirm drop-off slot: " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
-  if (booking) {
-    return (
+  
+if (booking && selectedSlot) {
+  return (
     <div className="dropoff-page-wrapper">
-      <div className="booking-confirmation">
-        <div className="confirmation-card">
-          <div className="success-icon">✅</div>
-          <h1>Drop-off Slot Booked!</h1>
-          <p>Your drop-off has been scheduled successfully.</p>
+      <div className="dropoff-booking">
+        <div className="booking-container confirmation-center-view">
           
-          <div className="booking-details">
-            <h3>Booking Details</h3>
-            <div className="detail-row">
-              <span>Item:</span>
-              <strong>{transaction?.listings?.title || 'Unknown Item'}</strong>
+          <div className="success-banner-header">
+            <div className="success-icon">🎉</div>
+            <h2>Drop-off Slot Secured!</h2>
+            <p>Your appointment has been logged successfully into our campus facility queue.</p>
+          </div>
+
+          <div className="confirmation-receipt-body">
+            <h3>Fulfillment Details</h3>
+            
+            <div className="receipt-row">
+              <span>Item Title:</span>
+              <strong>{transaction?.listings?.title || 'Marketplace Asset'}</strong>
             </div>
-            <div className="detail-row">
-              <span>Date:</span>
+            
+            <div className="receipt-row">
+              <span>Scheduled Date:</span>
               <strong>{selectedSlot.dayName}, {selectedSlot.monthDay}</strong>
             </div>
-            <div className="detail-row">
-              <span>Time:</span>
+            
+            <div className="receipt-row">
+              <span>Arrival Time Window:</span>
               <strong>{selectedSlot.startTime} - {selectedSlot.endTime}</strong>
             </div>
-            <div className="detail-row">
-              <span>Location:</span>
-              <strong>Campus Trade Facility (Student Center, Room 101)</strong>
-            </div>
-            <div className="detail-row">
-              <span>Booking ID:</span>
-              <strong>#{booking.id.slice(0, 8)}</strong>
-              </div>
+            
+            <div className="receipt-row">
+              <span>Facility Intake Zone:</span>
+              <strong>Student Center (Safe Zone, Room 101)</strong>
             </div>
           </div>
 
-          <div className="next-steps">
-            <h4>📋 Next Steps:</h4>
-            <ul>
-              <li>📦 Bring your item to the Campus Trade Facility</li>
-              <li>🆔 Bring your student ID for verification</li>
-              <li>⏰ Arrive 5 minutes before your scheduled time</li>
-              <li>📱 Show this confirmation to staff upon arrival</li>
-            </ul>
-          </div>
-
-          <div className="important-info">
-            <h4>⚠️ Important Information:</h4>
-            <ul>
-              <li>Please ensure your item is in the condition described in the listing</li>
-              <li>Late arrivals may result in rescheduling</li>
-              <li>The facility staff will verify and accept your item</li>
-            </ul>
-          </div>
-
-          <div className="action-buttons">
-            <button onClick={() => navigate('/history')} className="btn-view-history">
-              View My Transactions
+          <div className="confirmation-action-footer">
+            <button className="btn-view-history" onClick={() => navigate("/history")}>
+              📋 View My Transactions
             </button>
-            <button onClick={() => navigate('/basket')} className="btn-continue">
-              Continue Shopping
+            <button className="btn-continue" onClick={() => navigate("/basket")}>
+              🛒 Continue Shopping
             </button>
           </div>
+
         </div>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   return (
     <div className="dropoff-page-wrapper">
-    <div className="dropoff-booking">
-      <div className="booking-container">
-        <div className="booking-header">
-          <h1>Book Drop-off Slot</h1>
-          <p>Schedule a time to drop off your item at the Campus Trade Facility</p>
-        </div>
-        </div>
+      <div className="dropoff-booking">
+        <div className="booking-container">
+          
+          {/* Top Primary Fixed Title Block Banner */}
+          <div className="booking-header">
+            <h1>Book Drop-off Slot</h1>
+            <p>Schedule a time to drop off your item at the Campus Trade Facility</p>
+          </div>
 
-        {transaction && (
-          <div className="transaction-summary">
-            <h3>Transaction Summary</h3>
-            <div className="summary-details">
-              <div className="summary-icon">📦</div>
-              <div className="summary-info">
-                <div className="summary-row">
-                  <span>Item:</span>
-                  <strong>{transaction.listings?.title || 'Unknown Item'}</strong>
+          {/* Dynamic Balanced Split Panel Workspace Dashboard Workspace Layout */}
+          <div className="booking-workspace-split">
+            
+            {/* COLUMN SIDEBAR LEFT SIDE: Metadata transaction cards, rules, checklists */}
+            <div className="workspace-info-pane">
+              {transaction && (
+                <div className="transaction-summary">
+                  <h3>Transaction Summary</h3>
+                  <div className="summary-details">
+                    <div className="summary-icon">📦</div>
+                    <div className="summary-info">
+                      <div className="summary-row">
+                        <span>Item:</span>
+                        <strong>{transaction.listings?.title || 'Unknown Item'}</strong>
+                      </div>
+                      <div className="summary-row">
+                        <span>Seller:</span>
+                        <strong>{transaction.seller?.name || 'Unknown Seller'}</strong>
+                      </div>
+                      <div className="summary-row">
+                        <span>Amount Paid:</span>
+                        <span className="amount">R{transaction.total_amount?.toFixed(2) || '0.00'}</span>
+                      </div>
+                      <div className="summary-row">
+                        <span>Status:</span>
+                        <span className="status-badge success">
+                          {transaction.status === 'pending_dropoff' ? 'Drop-off Booked ✓' : 'Payment Completed ✓'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="summary-row">
-                  <span>Seller:</span>
-                  <span>{transaction.seller?.name || 'Unknown Seller'}</span>
-                </div>
-                <div className="summary-row">
-                  <span>Amount Paid:</span>
-                  <span className="amount">R{transaction.total_amount?.toFixed(2) || '0.00'}</span>
-                </div>
-               
-                <div className="summary-row">
-                  <span>Status:</span>
-                  <span className={`status-badge ${transaction.status}`}>
-                    {transaction.status === 'pending_dropoff' ? 'Drop-off Booked ✓' : 'Payment Completed ✓'}
-                  </span>
-                </div>
+              )}
+
+              {/* Onboarding Checklist Card Panels */}
+              <div className="next-steps">
+                <h4>📋 Next Steps:</h4>
+                <ul>
+                  <li>📦 Bring your item to the Campus Trade Facility</li>
+                  <li>🆔 Bring your student ID for verification</li>
+                  <li>⏰ Arrive 5 minutes before your scheduled time</li>
+                  <li>📱 Show this confirmation to staff upon arrival</li>
+                </ul>
+              </div>
+
+              <div className="important-info">
+                <h4>⚠️ Important Information:</h4>
+                <ul>
+                  <li>Please ensure your item is in the condition described in the listing</li>
+                  <li>Late arrivals may result in rescheduling</li>
+                  <li>The facility staff will verify and accept your item</li>
+                </ul>
               </div>
             </div>
-          </div>
-        )}
 
-        <div className="slot-selection">
-          <h3>Select a Drop-off Time</h3>
-          <p className="slot-info">
-            📍 Location: Campus Trade Facility (Student Center, Room 101)<br />
-            🕒 Operating Hours: {facilityConfig?.open_time || '09:00'} - {facilityConfig?.close_time || '17:00'} (Monday-Friday)
-          </p>
-          
-          {loading ? (
-            <div className="loading-slots">
-              <div className="spinner"></div>
-              <p>Loading available time slots...</p>
-            </div>
-          ) : availableSlots.length > 0 ? (
-            <div className="slots-grid">
-              {availableSlots.map((slot, index) => (
-                <div
-                  key={index}
-                  className={`slot-card ${selectedSlot === slot ? 'selected' : ''}`}
-                  onClick={() => setSelectedSlot(slot)}
-                >
-                  <div className="slot-day">{slot.dayName}</div>
-                  <div className="slot-date">{slot.monthDay}</div>
-                  <div className="slot-time">{slot.startTime} - {slot.endTime}</div>
-                  <div className="slot-availability">
-                    {slot.available} {slot.available === 1 ? 'spot' : 'spots'} available
+            {/* COLUMN SIDEBAR RIGHT SIDE: Independent Viewport Scrolling Calendar Picker */}
+            <div className="workspace-picker-pane">
+              <div className="slot-selection">
+                <h3>Select a Drop-off Time</h3>
+                <p className="slot-info">
+                  📍 Location: Campus Trade Facility (Student Center, Room 101)<br />
+                  🕒 Operating Hours: {facilityConfig?.open_time || '09:00'} - {facilityConfig?.close_time || '17:00'} (Monday-Friday)
+                </p>
+                
+                {loading ? (
+                  <div className="loading-slots">
+                    <div className="spinner"></div>
+                    <p>Loading available time slots...</p>
                   </div>
-                  {selectedSlot === slot && <div className="selected-check">✓ Selected</div>}
-                </div>
-              ))}
+                ) : availableSlots.length > 0 ? (
+                  <div className="slots-grid">
+                    {availableSlots.map((slot, index) => (
+                      <div
+                        key={index}
+                        className={`slot-card ${selectedSlot === slot ? 'selected' : ''}`}
+                        onClick={() => setSelectedSlot(slot)}
+                      >
+                        <div className="slot-day">{slot.dayName}</div>
+                        <div className="slot-date">{slot.monthDay}</div>
+                        <div className="slot-time">{slot.startTime} - {slot.endTime}</div>
+                        <div className="slot-availability">
+                          {slot.available} open spots
+                        </div>
+                        {selectedSlot === slot && <div className="selected-check">✓ Selected</div>}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="no-slots">
+                    <div className="no-slots-icon">📅</div>
+                    <p>No available slots found for the next 7 days</p>
+                    <p className="no-slots-sub">Please check back later or contact facility staff</p>
+                  </div>
+                )}
+              </div>
             </div>
-          ) : (
-            <div className="no-slots">
-              <div className="no-slots-icon">📅</div>
-              <p>No available slots found for the next 7 days</p>
-              <p className="no-slots-sub">Please check back later or contact facility staff</p>
-            </div>
-          )}
-        </div>
 
-        <div className="booking-footer">
-          <button onClick={() => navigate(-1)} className="btn-back">
-            ← Back
-          </button>
-          <button 
-            onClick={bookDropoffSlot} 
-            className="btn-book"
-            disabled={!selectedSlot || loading}
-          >
-            {loading ? 'Booking...' : 'Confirm Drop-off Slot'}
-          </button>
+          </div> {/* End dynamic dashboard split component layout frame wrapper */}
+
+          {/* Permanently Anchored Base Controls Navigation Bar Base Sheet Footer */}
+          <div className="booking-footer">
+            <button onClick={() => navigate(-1)} className="btn-back">
+              ← Back
+            </button>
+            <button 
+              onClick={bookDropoffSlot} 
+              className="btn-book"
+              disabled={!selectedSlot || loading}
+            >
+              {loading ? 'Booking...' : 'Confirm Drop-off Slot'}
+            </button>
+          </div>
+
         </div>
       </div>
     </div>
