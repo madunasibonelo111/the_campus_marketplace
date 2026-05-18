@@ -479,9 +479,15 @@ describe("AdminDashboard Navigation, Mutation Handlers & Boundaries", () => {
       fireEvent.click(opsButton);
     });
 
+<<<<<<< HEAD
+await waitFor(() => {
+  expect(screen.getByText(/No facility transactions logged in database profiles./i)).toBeInTheDocument();
+});
+=======
     await waitFor(() => {
       expect(screen.getByText(/No facility transactions logged in database profiles./i)).toBeInTheDocument();
     });
+>>>>>>> d39a6ca53b4d70738c6e631860cc563d44815976
   });
 
   it("Boundary Check: Confirms system configuration form inputs accept absolute minimum boundary values safely", async () => {
@@ -529,6 +535,10 @@ describe("AdminDashboard Navigation, Mutation Handlers & Boundaries", () => {
     });
 
     await waitFor(() => {
+<<<<<<< HEAD
+  expect(window.alert).toHaveBeenCalledWith("Facility configuration updated!");
+});
+=======
       expect(window.alert).toHaveBeenCalledWith("Facility configuration updated!");
     });
   });
@@ -549,5 +559,6 @@ describe("AdminDashboard Navigation, Mutation Handlers & Boundaries", () => {
     await waitFor(() => {
       expect(screen.getByTestId("mock-moderation-queue")).toBeInTheDocument();
     });
+>>>>>>> d39a6ca53b4d70738c6e631860cc563d44815976
   });
 });
