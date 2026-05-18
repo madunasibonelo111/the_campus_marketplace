@@ -273,13 +273,12 @@ const processPayment = async () => {
       
       if (paymentError) throw paymentError;
       
-      // Calculate accurate incremental accumulators safely
       const currentAmountPaid = totalPreviouslyPaid + finalAmount;
       const newRemainingBalance = Math.max(0, totalAgreedPrice - currentAmountPaid);
-      
-      //  Explicitly mark as completed if balance drops below our 10 cent floating-point math boundary
-      const transactionStatus = newRemainingBalance <= 0.10 ? 'completed' : 'partial_payment';
-      
+
+      // Full payment should flag as 'payment_cleared' so it doesn't skip custody tracking steps!
+      const transactionStatus = newRemainingBalance <= 0.10 ? 'payment_cleared' : 'partial_payment';
+
       console.log("Synchronizing Transaction State Engine Payload:", {
         id: currentTransaction?.id,
         status: transactionStatus,
@@ -294,11 +293,11 @@ const processPayment = async () => {
           amount_paid: currentAmountPaid,
           remaining_balance: newRemainingBalance,
           partial_payment_amount: transactionStatus === 'partial_payment' ? finalAmount : null,
-          updated_at: new Date().toISOString(),
-          ...(transactionStatus === 'completed' && { completed_at: new Date().toISOString() })
+          updated_at: new Date().toISOString()
+          
         })
         .eq('id', currentTransaction?.id);
-      
+        
       if (cashShortfall > 0 && newRemainingBalance > 0) {
         await createFacilityBooking(newRemainingBalance);
       }
@@ -429,26 +428,27 @@ const processPayment = async () => {
     return (
       <div className="success-container">
         <div className="success-card">
-          <div className="success-icon">✓</div>
-          <h2>Payment {shortfallInfo ? 'Partial' : 'Successful'}!</h2>
+          <div className="success-icon">{shortfallInfo ? '⚠️' : '✓'}</div>
+          <h2>Payment {shortfallInfo ? 'Balance Recorded' : 'Successful'}!</h2>
           <p>Amount Paid: <strong>R{paymentAmount.toFixed(2)}</strong></p>
-          {shortfallInfo && (
+          
+          {shortfallInfo ? (
             <>
-              <p>Remaining Balance: <strong>R{shortfallInfo.amount.toFixed(2)}</strong></p>
-              <div className="shortfall-warning">
-                <p>⚠️ {shortfallInfo.message}</p>
-                <p className="shortfall-detail">
-                  Your facility booking is scheduled for: <strong>{new Date(shortfallInfo.bookingDate).toLocaleDateString()}</strong>
-                </p>
-                <p className="shortfall-detail">
-                  Please visit the campus trade facility with the remaining amount to complete your transaction.
+              <p>Remaining Balance Owed: <strong>R{shortfallInfo.amount.toFixed(2)}</strong></p>
+              <div className="shortfall-warning" style={{ background: '#fff3cd', borderLeft: '4px solid #ffbc00', padding: '16px', borderRadius: '12px', marginTop: '15px' }}>
+                <p style={{ fontWeight: '600', margin: '0 0 6px 0', color: '#856404' }}>Partial Payment Registered</p>
+                <p style={{ margin: 0, fontSize: '13px', color: '#666', lineHeight: '1.4' }}>
+                  Your order is secured, but the transaction is on hold due to the remaining shortfall balance. Please navigate to your **Transaction History** panel to pay off your balance online or arrange cash fulfillment at the safe-zone desk.
                 </p>
               </div>
             </>
+          ) : (
+            <p className="success-text">A confirmation has been sent to your email and notification center.</p>
           )}
-          <p className="success-text">A confirmation has been sent to your email and notification center.</p>
-          <button className="success-btn" onClick={() => navigate("/history")}>View Transaction History</button>
-          <button className="success-btn secondary" onClick={() => navigate("/basket")} style={{ marginTop: '10px', background: '#666' }}>Continue Shopping</button>
+          
+          <button className="success-btn" onClick={() => navigate("/history")} style={{ marginTop: '20px' }}>
+            View My Transaction History
+          </button>
         </div>
       </div>
     );

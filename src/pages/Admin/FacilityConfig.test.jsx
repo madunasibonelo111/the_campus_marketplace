@@ -8,6 +8,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 
 import FacilityConfig from "./FacilityConfig";
+import { supabase } from "@/supabase/supabaseClient";
 
 
 // ✅ MOCK NAVIGATE
@@ -256,6 +257,42 @@ describe("FacilityConfig", () => {
 
   });
 
+  it("shows alert when configuration save fails", async () => {
+    window.alert = vi.fn();
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    // Use spyOn to specifically target the update method, 
+    // leaving the rest of the supabase.from chain intact
+    const fromSpy = vi.spyOn(supabase, 'from');
+    
+    // We mock the implementation to return a chain that handles update/eq
+    fromSpy.mockImplementation(() => ({
+      select: () => ({
+        limit: () => ({
+          single: () => Promise.resolve({ data: { id: 1 }, error: null })
+        })
+      }),
+      update: () => ({
+        eq: () => Promise.resolve({ error: new Error("DB Failure") })
+      })
+    }));
+
+    render(
+      <MemoryRouter>
+        <FacilityConfig />
+      </MemoryRouter>
+    );
+
+    const saveButton = await screen.findByRole("button", { name: /save changes/i });
+    await userEvent.click(saveButton);
+
+    await waitFor(() => {
+      expect(window.alert).toHaveBeenCalledWith("Error saving configuration");
+    });
+    
+    // Clean up spy
+    fromSpy.mockRestore();
+  });
 
   // ✅ SHOWS INPUT LABELS
   it("renders all input labels", async () => {
