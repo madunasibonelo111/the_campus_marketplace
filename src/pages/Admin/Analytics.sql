@@ -1,5 +1,5 @@
 
--- Calculates all the platform usage stats 
+
 
 CREATE OR REPLACE FUNCTION get_admin_dashboard_stats()
 RETURNS JSON AS $$
