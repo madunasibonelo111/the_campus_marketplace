@@ -1,0 +1,323 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="activity_us2_sprint4" name="Activity Diagram – US2 Monitor Flagged Content">
+    <mxGraphModel dx="2551" dy="536" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1800" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;                  fontSize=16;fontStyle=1;verticalAlign=middle;fontSize=20;fontColor=light-dark(#000000,#FF00FF);" value="Campus Marketplace – Activity Diagram (Process View)&lt;br&gt;US2: Monitor Flagged Content&amp;nbsp;" vertex="1">
+          <mxGeometry height="50" width="1000" x="200" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="pool" parent="1" style="shape=pool;html=1;childLayout=stackLayout;horizontal=1;                  startSize=30;horizontalStack=1;resizeParent=1;                  resizeParent=1;collapsible=0;fillColor=none;                  strokeColor=#000000;strokeWidth=2;                  fontSize=14;fontStyle=1;align=right;" value="&lt;font style=&quot;font-size: 15px;&quot;&gt;Monitor Flagged Content Workflow&lt;/font&gt;" vertex="1">
+          <mxGeometry height="1600" width="1280" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="lane_student" parent="pool" style="swimlane;startSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;                  fontSize=13;fontStyle=1;horizontal=0;strokeWidth=4;" value="Student" vertex="1">
+          <mxGeometry height="1600" width="300" as="geometry" />
+        </mxCell>
+        <mxCell id="start" parent="lane_student" style="ellipse;aspect=fixed;fillColor=#000000;strokeColor=#000000;" value="" vertex="1">
+          <mxGeometry height="30" width="30" x="120" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="s_a1" parent="lane_student" style="rounded=1;whiteSpace=wrap;html=1;                  fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" value="View Listing / Message / Review" vertex="1">
+          <mxGeometry height="50" width="170" x="65" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="s_d1" parent="lane_student" style="rhombus;whiteSpace=wrap;html=1;                  fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" value="Content&#xa;Abusive?" vertex="1">
+          <mxGeometry height="70" width="140" x="80" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="s_a2" parent="lane_student" style="rounded=1;whiteSpace=wrap;html=1;                  fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" value="Click &#39;Report&#39; Button&#xa;and Select Reason" vertex="1">
+          <mxGeometry height="50" width="170" x="65" y="370" as="geometry" />
+        </mxCell>
+        <mxCell id="s_a3" parent="lane_student" style="rounded=1;whiteSpace=wrap;html=1;                  fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" value="Submit Flag Report" vertex="1">
+          <mxGeometry height="50" width="170" x="65" y="470" as="geometry" />
+        </mxCell>
+        <mxCell id="s_a4" parent="lane_student" style="rounded=1;whiteSpace=wrap;html=1;                  fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" value="Receive Confirmation&#xa;&#39;Report Submitted&#39;" vertex="1">
+          <mxGeometry height="50" width="170" x="65" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="f_start_s1" edge="1" parent="lane_student" source="start" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeColor=light-dark(#000000,#D5E8D4);strokeWidth=3;" target="s_a1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f_s1_sd1" edge="1" parent="lane_student" source="s_a1" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeColor=light-dark(#000000,#E6D0DE);strokeWidth=3;" target="s_d1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f_sd1_s2" edge="1" parent="lane_student" source="s_d1" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeColor=light-dark(#000000,#E6D0DE);fontSize=12;fontStyle=2;strokeWidth=3;" target="s_a2" value="[yes]">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f_s2_s3" edge="1" parent="lane_student" source="s_a2" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeColor=light-dark(#000000,#E6D0DE);strokeWidth=3;" target="s_a3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f_sd1_no" edge="1" parent="lane_student" source="s_d1" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeColor=#b85450;fontSize=11;fontStyle=2;dashed=1;strokeWidth=3;" target="s_a1" value="[no]&#xa;Continue browsing">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="30" y="275" />
+              <mxPoint x="30" y="165" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="lane_system" parent="pool" style="swimlane;startSize=30;fillColor=#d5e8d4;strokeColor=#82b366;                  fontSize=13;fontStyle=1;horizontal=0;" value="System (Supabase / PostgREST)" vertex="1">
+          <mxGeometry height="1600" width="320" x="300" as="geometry" />
+        </mxCell>
+        <mxCell id="sys_a1" parent="lane_system" style="rounded=1;whiteSpace=wrap;html=1;                  fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;" value="Validate Auth Session&#xa;(JWT Check)" vertex="1">
+          <mxGeometry height="50" width="170" x="110" y="430" as="geometry" />
+        </mxCell>
+        <mxCell id="sys_d1" parent="lane_system" style="rhombus;whiteSpace=wrap;html=1;                  fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" value="Session&#xa;Valid?" vertex="1">
+          <mxGeometry height="70" width="140" x="90" y="570" as="geometry" />
+        </mxCell>
+        <mxCell id="sys_a2" parent="lane_system" style="rounded=1;whiteSpace=wrap;html=1;                  fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;" value="Return 401 Error&#xa;&#39;Unauthorised&#39;" vertex="1">
+          <mxGeometry height="50" width="170" x="75" y="690" as="geometry" />
+        </mxCell>
+        <mxCell id="sys_a3" parent="lane_system" style="rounded=1;whiteSpace=wrap;html=1;                  fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;" value="Call get_pending_flags()&#xa;(SECURITY DEFINER)" vertex="1">
+          <mxGeometry height="50" width="170" x="75" y="900" as="geometry" />
+        </mxCell>
+        <mxCell id="sys_a4" parent="lane_system" style="rounded=1;whiteSpace=wrap;html=1;                  fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;" value="Return Flag Queue&#xa;as JSON Array" vertex="1">
+          <mxGeometry height="50" width="170" x="75" y="1060" as="geometry" />
+        </mxCell>
+        <mxCell id="sys_a5" parent="lane_system" style="rounded=1;whiteSpace=wrap;html=1;                  fillColor=#d5e8d4;strokeColor=#82b366;fontSize:12;" value="Call resolve_flagged_item()&#xa;(SECURITY DEFINER)" vertex="1">
+          <mxGeometry height="50" width="170" x="75" y="1290" as="geometry" />
+        </mxCell>
+        <mxCell id="sys_a6" parent="lane_system" style="rounded=1;whiteSpace=wrap;html=1;                  fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;" value="Return Success&#xa;Response to Admin" vertex="1">
+          <mxGeometry height="50" width="170" x="75" y="1460" as="geometry" />
+        </mxCell>
+        <mxCell id="f_sys1_sysd1" edge="1" parent="lane_system" source="sys_a1" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeColor=light-dark(#000000,#E6D0DE);strokeWidth=3;" target="sys_d1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f_sysd1_no" edge="1" parent="lane_system" source="sys_d1" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeColor=#b85450;fontSize=12;fontStyle=2;strokeWidth=3;" target="sys_a2" value="[no]">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="30" y="605" />
+              <mxPoint x="30" y="715" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="f_sys3_sys4" edge="1" parent="lane_system" source="sys_a3" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeColor=light-dark(#000000,#E6D0DE);strokeWidth=3;" target="sys_a4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f_sys5_sys6" edge="1" parent="lane_system" source="sys_a5" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeColor=light-dark(#000000,#E6D0DE);strokeWidth=3;" target="sys_a6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lane_admin" parent="pool" style="swimlane;startSize=30;fillColor=#e1d5e7;strokeColor=#9673a6;                  fontSize=13;fontStyle=1;horizontal=0;" value="Admin" vertex="1">
+          <mxGeometry height="1600" width="320" x="620" as="geometry" />
+        </mxCell>
+        <mxCell id="adm_a1" parent="lane_admin" style="rounded=1;whiteSpace=wrap;html=1;                  fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;" value="Log In and Navigate to&#xa;Admin Dashboard" vertex="1">
+          <mxGeometry height="50" width="170" x="75" y="820" as="geometry" />
+        </mxCell>
+        <mxCell id="adm_a2" parent="lane_admin" style="rounded=1;whiteSpace=wrap;html=1;                  fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;" value="View Flagged Content&#xa;Queue (Pending Items)" vertex="1">
+          <mxGeometry height="50" width="170" x="90" y="1030" as="geometry" />
+        </mxCell>
+        <mxCell id="adm_a3" parent="lane_admin" style="rounded=1;whiteSpace=wrap;html=1;                  fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;" value="Select a Flag to Review&#xa;(View Content Detail)" vertex="1">
+          <mxGeometry height="50" width="170" x="75" y="1170" as="geometry" />
+        </mxCell>
+        <mxCell id="adm_d1" parent="lane_admin" style="rhombus;whiteSpace=wrap;html=1;                  fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" value="Admin&#xa;Decision?" vertex="1">
+          <mxGeometry height="80" width="140" x="90" y="1270" as="geometry" />
+        </mxCell>
+        <mxCell id="adm_a4" parent="lane_admin" style="rounded=1;whiteSpace=wrap;html=1;                  fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;" value="Select &#39;Dismiss&#39;&#xa;(No Violation Found)" vertex="1">
+          <mxGeometry height="50" width="145" x="10" y="1410" as="geometry" />
+        </mxCell>
+        <mxCell id="adm_a5" parent="lane_admin" style="rounded=1;whiteSpace=wrap;html=1;                  fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;" value="Select &#39;Remove&#39;&#xa;(Content Violates Rules)" vertex="1">
+          <mxGeometry height="50" width="145" x="165" y="1410" as="geometry" />
+        </mxCell>
+        <mxCell id="adm_join" parent="lane_admin" style="shape=mxgraph.bpmn.shape;perimeter=mxPerimeter.ellipsePerimeter;symbol=terminate;                  fillColor=#000000;strokeColor=#000000;" value="" vertex="1">
+          <mxGeometry height="8" width="170" x="75" y="1520" as="geometry" />
+        </mxCell>
+        <mxCell id="end_inner" parent="lane_admin" style="ellipse;aspect=fixed;fillColor=#000000;strokeColor=#000000;" value="" vertex="1">
+          <mxGeometry height="24" width="24" x="118" y="1555" as="geometry" />
+        </mxCell>
+        <mxCell id="end_outer" parent="lane_admin" style="ellipse;aspect=fixed;fillColor=none;strokeColor=#000000;strokeWidth=4;" value="" vertex="1">
+          <mxGeometry height="36" width="36" x="112" y="1549" as="geometry" />
+        </mxCell>
+        <mxCell id="f_adm1_adm2" edge="1" parent="lane_admin" source="adm_a1" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeColor=light-dark(#000000,#E6D0DE);strokeWidth=3;" target="adm_a2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f_adm2_adm3" edge="1" parent="lane_admin" source="adm_a2" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeColor=light-dark(#000000,#E6D0DE);strokeWidth=3;" target="adm_a3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f_adm3_admd1" edge="1" parent="lane_admin" source="adm_a3" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeColor=light-dark(#000000,#E6D0DE);strokeWidth=3;" target="adm_d1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f_admd1_adm4" edge="1" parent="lane_admin" source="adm_d1" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeColor=light-dark(#000000,#E6D0DE);fontSize=11;fontStyle=2;strokeWidth=3;" target="adm_a4" value="[dismiss]">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="80" y="1350" />
+              <mxPoint x="82" y="1435" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="f_admd1_adm5" edge="1" parent="lane_admin" source="adm_d1" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeColor=light-dark(#000000,#E6D0DE);fontSize=11;fontStyle=2;strokeWidth=3;" target="adm_a5" value="[remove]">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="230" y="1350" />
+              <mxPoint x="237" y="1435" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="f_adm4_end" edge="1" parent="lane_admin" source="adm_a4" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeColor=light-dark(#000000,#E6D0DE);strokeWidth=3;" target="end_inner">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="82" y="1567" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="f_adm5_end" edge="1" parent="lane_admin" source="adm_a5" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeColor=light-dark(#000000,#E6D0DE);strokeWidth=3;" target="end_inner">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="237" y="1567" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="lane_db" parent="pool" style="swimlane;startSize=30;fillColor=#f8cecc;strokeColor=#b85450;                  fontSize=13;fontStyle=1;horizontal=0;" value="Database (PostgreSQL)" vertex="1">
+          <mxGeometry height="1600" width="340" x="940" as="geometry" />
+        </mxCell>
+        <mxCell id="db_a1" parent="lane_db" style="rounded=1;whiteSpace=wrap;html=1;                  fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;" value="INSERT INTO flagged_content&#xa;status = &#39;pending&#39;" vertex="1">
+          <mxGeometry height="50" width="190" x="85" y="580" as="geometry" />
+        </mxCell>
+        <mxCell id="db_a2" parent="lane_db" style="rounded=1;whiteSpace=wrap;html=1;                  fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;" value="Return&#xa;Inserted Row" vertex="1">
+          <mxGeometry height="50" width="190" x="85" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="db_a3" parent="lane_db" style="rounded=1;whiteSpace=wrap;html=1;                  fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;" value="SELECT FROM flagged_content&#xa;WHERE status = &#39;pending&#39;" vertex="1">
+          <mxGeometry height="50" width="190" x="85" y="960" as="geometry" />
+        </mxCell>
+        <mxCell id="db_a4" parent="lane_db" style="rounded=1;whiteSpace=wrap;html=1;                  fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;" value="Return Flag Rows&#xa;with Reporter Info" vertex="1">
+          <mxGeometry height="50" width="190" x="85" y="1060" as="geometry" />
+        </mxCell>
+        <mxCell id="db_fork" parent="lane_db" style="shape=mxgraph.flowchart.start_2;fillColor=#000000;strokeColor=#000000;                  fontSize=1;" value="" vertex="1">
+          <mxGeometry height="12" width="190" x="85" y="1310" as="geometry" />
+        </mxCell>
+        <mxCell id="db_a5" parent="lane_db" style="rounded=1;whiteSpace=wrap;html=1;                  fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;" value="UPDATE flagged_content&#xa;SET status = action&#xa;Trigger sets resolved_at" vertex="1">
+          <mxGeometry height="65" width="155" x="20" y="1380" as="geometry" />
+        </mxCell>
+        <mxCell id="db_a6" parent="lane_db" style="rounded=1;whiteSpace=wrap;html=1;                  fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;" value="INSERT INTO audit_logs&#xa;action = &#39;RESOLVED_FLAG&#39;&#xa;(Immutable Record)" vertex="1">
+          <mxGeometry height="65" width="155" x="185" y="1380" as="geometry" />
+        </mxCell>
+        <mxCell id="db_join" parent="lane_db" style="shape=mxgraph.flowchart.start_2;fillColor=#000000;strokeColor=#000000;                  fontSize=1;" value="" vertex="1">
+          <mxGeometry height="12" width="190" x="85" y="1500" as="geometry" />
+        </mxCell>
+        <mxCell id="f_db1_db2" edge="1" parent="lane_db" source="db_a1" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeColor=light-dark(#000000,#E6D0DE);strokeWidth=3;" target="db_a2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f_db3_db4" edge="1" parent="lane_db" source="db_a3" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeColor=light-dark(#000000,#E6D0DE);fontSize=12;strokeWidth=3;" target="db_a4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f_fork_db5" edge="1" parent="lane_db" source="db_fork" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeColor=light-dark(#000000,#E6D0DE);strokeWidth=3;" target="db_a5">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="97" y="1345" />
+              <mxPoint x="97" y="1395" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="f_fork_db6" edge="1" parent="lane_db" source="db_fork" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeColor=light-dark(#000000,#E6D0DE);strokeWidth=3;" target="db_a6">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="262" y="1345" />
+              <mxPoint x="262" y="1395" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="f_db5_join" edge="1" parent="lane_db" source="db_a5" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeColor=light-dark(#000000,#E6D0DE);strokeWidth=3;" target="db_join">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="97" y="1460" />
+              <mxPoint x="97" y="1506" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="f_db6_join" edge="1" parent="lane_db" source="db_a6" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeColor=light-dark(#000000,#E6D0DE);strokeWidth=3;" target="db_join">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="262" y="1460" />
+              <mxPoint x="262" y="1506" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cf1" edge="1" parent="pool" source="s_a3" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;                  strokeColor=#555555;fontSize=11;strokeWidth=3;" target="sys_a1" value="submit flag">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cf2" edge="1" parent="pool" source="sys_d1" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;                  strokeColor=#555555;fontSize=13;fontStyle=2;strokeWidth=3;verticalAlign=bottom;" target="db_a1" value="[valid] INSERT flag">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cf3" edge="1" parent="pool" source="db_a2" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;dashed=1;                  strokeColor=#555555;fontSize=13;strokeWidth=3;verticalAlign=top;" target="sys_a1" value="row inserted">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="490" y="725" />
+              <mxPoint x="490" y="760" />
+              <mxPoint x="390" y="760" />
+              <mxPoint x="390" y="495" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cf4" edge="1" parent="pool" source="sys_a1" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;dashed=1;                  strokeColor=#555555;fontSize=11;strokeWidth=3;verticalAlign=top;" target="s_a4" value="confirmation">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="390" y="495" />
+              <mxPoint x="190" y="495" />
+              <mxPoint x="190" y="725" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cf5" edge="1" parent="pool" source="adm_a1" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;                  strokeColor=#555555;fontSize=13;verticalAlign=bottom;strokeWidth=3;" target="sys_a3" value="request flag queue">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cf6" edge="1" parent="pool" source="sys_a3" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;                  strokeColor=#555555;fontSize=13;strokeWidth=3;verticalAlign=top;" target="db_a3" value="SELECT pending">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cf7" edge="1" parent="pool" source="db_a4" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;dashed=1;                  strokeColor=#555555;fontSize=13;strokeWidth=3;verticalAlign=top;" target="sys_a4" value="rows returned">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cf8" edge="1" parent="pool" source="sys_a4" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;dashed=1;                  strokeColor=#555555;fontSize=11;" target="adm_a2" value="render queue">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cf9" edge="1" parent="pool" source="adm_a4" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;                  strokeColor=#555555;fontSize=11;" target="sys_a5" value="resolve(flag_id, action)">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="712" y="1435" />
+              <mxPoint x="712" y="1315" />
+              <mxPoint x="460" y="1315" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cf9b" edge="1" parent="pool" source="adm_a5" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;                  strokeColor=#555555;fontSize=11;" target="sys_a5" value="resolve(flag_id, action)">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="857" y="1435" />
+              <mxPoint x="857" y="1315" />
+              <mxPoint x="460" y="1315" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cf10" edge="1" parent="pool" source="sys_a5" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;                  strokeColor=#555555;fontSize=11;" target="db_fork" value="UPDATE + INSERT">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cf11" edge="1" parent="pool" source="db_join" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;dashed=1;                  strokeColor=#555555;fontSize=11;strokeWidth=3;" target="sys_a6" value="writes complete">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1060" y="1506" />
+              <mxPoint x="1060" y="1485" />
+              <mxPoint x="460" y="1485" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="legend_box" parent="1" style="rounded=1;fillColor=#f5f5f5;strokeColor=#666666;" value="" vertex="1">
+          <mxGeometry height="50" width="620" x="60" y="1730" as="geometry" />
+        </mxCell>
+        <mxCell id="leg_title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontStyle=1;fontSize=12;" value="Legend" vertex="1">
+          <mxGeometry height="20" width="80" x="60" y="1732" as="geometry" />
+        </mxCell>
+        <mxCell id="leg1" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=11;" value="● = Start" vertex="1">
+          <mxGeometry height="20" width="80" x="150" y="1732" as="geometry" />
+        </mxCell>
+        <mxCell id="leg2" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=11;" value="◎ = End" vertex="1">
+          <mxGeometry height="20" width="80" x="240" y="1732" as="geometry" />
+        </mxCell>
+        <mxCell id="leg3" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=11;" value="▭ = Action" vertex="1">
+          <mxGeometry height="20" width="80" x="330" y="1732" as="geometry" />
+        </mxCell>
+        <mxCell id="leg4" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=11;" value="◇ = Decision" vertex="1">
+          <mxGeometry height="20" width="90" x="420" y="1732" as="geometry" />
+        </mxCell>
+        <mxCell id="leg5" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=11;" value="━━ = Fork / Join (concurrent)" vertex="1">
+          <mxGeometry height="20" width="200" x="150" y="1754" as="geometry" />
+        </mxCell>
+        <mxCell id="leg6" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=11;" value="- - → = Return / Response" vertex="1">
+          <mxGeometry height="20" width="200" x="370" y="1754" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
