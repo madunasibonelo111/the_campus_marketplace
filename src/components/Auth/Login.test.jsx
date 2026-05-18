@@ -100,7 +100,7 @@ describe("Login Component Core Validation & Security Pipeline", () => {
         password: "password123",
       });
       expect(supabase.from).toHaveBeenCalledWith("profiles");
-      expect(mockNavigate).toHaveBeenCalledWith("/");
+      expect(mockNavigate).toHaveBeenCalledWith("/Basket");
     });
   });
 
