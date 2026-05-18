@@ -1,0 +1,106 @@
+
+
+/* View Container Animation */
+.analytics-view-container {
+  animation: adminFadeIn 0.4s ease-out;
+}
+
+/* 📊 Summary Metrics Grid Layout */
+.admin-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 24px;
+  margin-top: 20px;
+  margin-bottom: 40px;
+}
+
+/* Stat Card Design */
+.admin-stat-metric-card {
+  background: #ffffff;
+  padding: 24px;
+  border-radius: 16px;
+  box-shadow: 0 4px 15px rgba(15, 23, 42, 0.02);
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), 
+              box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1), 
+              border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Interactive Card Elevation on Hover */
+.admin-stat-metric-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.06);
+  border-color: #cbd5e1;
+}
+
+/* Icon Badges Sub-containers */
+.metric-badge-icon {
+  width: 56px;
+  height: 56px;
+  font-size: 24px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Internal Card Typography Layout */
+.metric-data-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.metric-data-block span {
+  display: block;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.metric-data-block strong {
+  display: block;
+  font-size: 22px;
+  color: #0f172a;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* 🌀 Contract Loading Spinner Element */
+.analytics-spinner {
+  width: 44px;
+  height: 44px;
+  border: 4px solid #e2e8f0;
+  border-top: 4px solid #4f46e5;
+  border-radius: 50%;
+  animation: adminSpin 0.8s linear infinite;
+}
+
+/* Error Boundary Component Layout */
+.analytics-error-box {
+  animation: adminFadeIn 0.3s ease-out;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.05);
+}
+
+/* Global Keyframe System Animations */
+@keyframes adminFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes adminSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

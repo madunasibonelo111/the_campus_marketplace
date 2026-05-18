@@ -1,10 +1,12 @@
+// src/pages/Profile/TransactionHistory.jsx
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/supabase/supabaseClient";
 import "./TransactionHistory.css";
 
 export default function TransactionHistory() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [user, setUser] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -13,110 +15,112 @@ export default function TransactionHistory() {
   const [filter, setFilter] = useState("all");
 
   useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        navigate("/auth");
-        return;
+    const checkSessionAndFetch = async () => {
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError || !session?.user) {
+          console.log("No authentic session token found. Redirecting...");
+          navigate("/auth");
+          return;
+        }
+        
+        setUser(session.user);
+        await fetchTransactions(session.user.id);
+        
+      } catch (globalAuthErr) {
+        console.error("Critical core layout authentication checkpoint error:", globalAuthErr);
+        setError("Authorization verification checkpoint failure.");
       }
-      setUser(user);
-      fetchTransactions(user.id);
     };
     
-    getUser();
-  }, [navigate]);
+    checkSessionAndFetch();
+  }, [navigate, location.pathname, location.state]);
 
   const fetchTransactions = async (userId) => {
     try {
       console.log("Fetching transactions for user:", userId);
       
-      // Fetch transactions where user is buyer or seller
-     
-  const { data, error } = await supabase
-    .from('transactions')
-    .select(`
-      id,
-      listing_id,
-      buyer_id,
-      seller_id,
-      type,
-      status,
-      created_at,
-      updated_at,
-      offer_amount,
-      offer_status,
-      trade_item_description,
-      completed_at,
-      accepted_at,
-    
-      seller:seller_id ( id, user_id, name ),
-      buyer:buyer_id ( id, user_id, name ),
-      listings:listing_id (
-        id,
-        title,
-        description,
-        price,
-        condition,
-        listing_type,
-        listing_images (
-          image_url,
-          display_order
-        )
-      ),
-      payments:payments (
-        id,
-        amount,
-        method,
-        status,
-        shortfall_amount,
-        paid_at,
-        created_at
-      )
-    `)
-    .or(`buyer_id.eq.${userId},seller_id.eq.${userId}`)
-    .order('created_at', { ascending: false });
-      
+      const { data, error } = await supabase
+        .from('transactions')
+        .select(`
+          id,
+          listing_id,
+          buyer_id,
+          seller_id,
+          type,
+          status,
+          created_at,
+          updated_at,
+          offer_amount,
+          offer_status,
+          trade_item_description,
+          completed_at,
+          accepted_at,
+          seller:seller_id ( id, user_id, name ),
+          buyer:buyer_id ( id, user_id, name ),
+          listings:listing_id (
+            id,
+            title,
+            description,
+            price,
+            condition,
+            listing_type,
+            listing_images (
+              image_url,
+              display_order
+            )
+          ),
+          payments:payments (
+            id,
+            amount,
+            method,
+            status,
+            shortfall_amount,
+            created_at
+          ),
+          ratings:ratings!transaction_id ( id )
+        `)
+        .or(`buyer_id.eq.${userId},seller_id.eq.${userId}`)
+        .order('created_at', { ascending: false });
+          
       if (error) {
         console.error("Fetch error:", error);
         throw error;
       }
-      
-      console.log("Raw transactions data:", data);
-      
-      const formatted = (data || []).map(t => {
-        const isBuyer = t.buyer_id === userId;
-        const listing = t.listings;
 
+      const formatted = (data || []).map(t => {
+        const isBuyer = t.buyer_id === userId || t.buyer?.user_id === userId;
+        const listing = t.listings;
         const otherPartyName = isBuyer ? t.seller?.name : t.buyer?.name;
         
-        // Calculate total amount from listing price or offer amount
-        const totalAmount = t.offer_amount || listing?.price || 0;
-        
-        // Calculate total paid across all payments
-        const totalPaid = t.payments?.reduce((sum, p) => sum + (p.amount || 0), 0) || 0;
+        const totalAmount = Number(t.offer_amount || listing?.price || 0);
+        const paymentArray = Array.isArray(t.payments) ? t.payments : [];
+        const totalPaid = paymentArray.reduce((sum, p) => sum + Number(p.amount || 0), 0);
         const remainingBalance = totalAmount - totalPaid;
-        const hasShortfall = remainingBalance > 0 && t.status !== 'completed' && t.status !== 'cancelled';
         
-        // Get the most recent payment
-        const latestPayment = t.payments?.[t.payments.length - 1];
+        const rawStatus = String(t.status || 'pending').toLowerCase();
+        const hasShortfall = remainingBalance >= 0.10 && rawStatus !== 'completed' && rawStatus !== 'cancelled';
+        const latestPayment = paymentArray.length > 0 ? paymentArray[paymentArray.length - 1] : null;
+        const alreadyRated = Array.isArray(t.ratings) ? t.ratings.length > 0 : !!t.ratings;
         
         return {
           id: t.id,
           otherPartyName: otherPartyName || "Campus User",
-         seller_user_id: t.seller?.user_id, 
-         buyer_id: t.buyer_id,
+          seller_user_id: t.seller?.user_id || null, 
+          buyer_id: t.buyer_id,
           type: isBuyer ? 'buy' : 'sell',
           listingType: t.type || 'purchase',
           item: listing?.title || 'Unknown Item',
-          itemPrice: listing?.price || 0,
+          itemPrice: Number(listing?.price || 0),
           amount: totalAmount,
           amountPaid: totalPaid,
-          remainingBalance: remainingBalance,
-          cashShortfall: latestPayment?.shortfall_amount || 0,
+          remainingBalance: Math.max(0, remainingBalance),
+          cashShortfall: remainingBalance > 0 ? remainingBalance : 0,
           hasShortfall: hasShortfall,
-          status: t.status,
-          paymentStatus: latestPayment?.status,
-          paymentMethod: latestPayment?.method,
+          status: rawStatus,
+          paymentStatus: latestPayment ? latestPayment.status : 'N/A',
+          paymentMethod: latestPayment ? latestPayment.method : 'N/A',
           offerStatus: t.offer_status,
           tradeItemDescription: t.trade_item_description,
           date: t.created_at,
@@ -124,13 +128,12 @@ export default function TransactionHistory() {
           acceptedAt: t.accepted_at,
           transactionId: t.id,
           listingId: t.listing_id,
-          allPayments: t.payments || []
+          allPayments: paymentArray,
+          alreadyRated: alreadyRated
         };
       });
-      
-      console.log("Formatted transactions:", formatted);
+
       setTransactions(formatted);
-      
     } catch (err) {
       console.error("Detailed error:", err);
       setError(`Failed to load transactions: ${err.message}`);
@@ -152,69 +155,38 @@ export default function TransactionHistory() {
   };
 
   const getStatusColor = (status) => {
-    switch(status?.toLowerCase()) {
+    switch(status) {
       case "completed": return "#4caf50";
-      case "pending_payment": return "#ffa500";
+      case "payment_cleared": return "#ffa500";
       case "pending": return "#ffa500";
-      case "accepted": return "#2196f3";
-      case "rejected": return "#f44336";
-      case "cancelled": return "#f44336";
+      case "pending_dropoff": return "#385723";
+      case "pending_collection": return "#385723";
+      case "item_in_custody": return "#2196f3";
       case "partial_payment": return "#ff9800";
+      case "cancelled": return "#f44336";
       default: return "#666";
     }
   };
 
   const getStatusLabel = (status) => {
-    switch(status?.toLowerCase()) {
-      case "completed": return "Completed";
-      case "pending_payment": return "Payment Pending";
+    switch(status) {
+      case "completed": return "Handed Over & Completed";
+      case "payment_cleared": return "Payment Confirmed";
       case "pending": return "Pending";
-      case "accepted": return "Accepted";
-      case "rejected": return "Rejected";
+      case "pending_dropoff": return "Drop-off Booked";
+      case "pending_collection": return "Collection Booked";
+      case "item_in_custody": return "In Custody";
       case "cancelled": return "Cancelled";
       case "partial_payment": return "Partial Payment";
-      default: return status || "Unknown";
+      default: return status ? status.replace('_', ' ') : "Unknown";
     }
-  };
-
-  const getPaymentStatusColor = (status) => {
-    switch(status?.toLowerCase()) {
-      case "completed": return "#4caf50";
-      case "partial": return "#ff9800";
-      case "pending": return "#ffa500";
-      case "failed": return "#f44336";
-      case "refunded": return "#9c27b0";
-      default: return "#666";
-    }
-  };
-
-  const getPaymentStatusLabel = (status) => {
-    switch(status?.toLowerCase()) {
-      case "completed": return "Fully Paid";
-      case "partial": return "Partial Payment";
-      case "pending": return "Pending";
-      case "failed": return "Failed";
-      case "refunded": return "Refunded";
-      default: return status || "N/A";
-    }
-  };
-
-  const hasOutstandingShortfall = (transaction) => {
-    return transaction.hasShortfall && transaction.remainingBalance > 0;
-  };
-
-  const getShortfallAmount = (transaction) => {
-    return transaction.remainingBalance;
   };
 
   const handleCompletePayment = (transaction, e) => {
     if (e) e.stopPropagation();
     navigate("/payment", {
       state: {
-        transaction: {
-          id: transaction.id,
-          amount: transaction.amount
-        },
+        transaction: { id: transaction.id, amount: transaction.amount },
         totalAmount: transaction.remainingBalance,
         remainingBalance: transaction.remainingBalance,
         isPartialPayment: true
@@ -222,6 +194,7 @@ export default function TransactionHistory() {
     });
   };
 
+  // 🚀 FIXED TAB FILTER RULE GATES: Prevents the blank screen layout bug
   const filteredTransactions = transactions.filter(t => {
     if (filter === "all") return true;
     if (filter === "buy") return t.type === "buy";
@@ -231,27 +204,10 @@ export default function TransactionHistory() {
     return true;
   });
 
-  const getTotalSpent = () => {
-    return transactions
-      .filter(t => t.type === 'buy')
-      .reduce((sum, t) => sum + t.amountPaid, 0);
-  };
-
-  const getTotalEarned = () => {
-    return transactions
-      .filter(t => t.type === 'sell')
-      .reduce((sum, t) => sum + t.amountPaid, 0);
-  };
-
-  const getPendingPayments = () => {
-    return transactions.filter(t => t.hasShortfall).length;
-  };
-
-  const getOutstandingBalance = () => {
-    return transactions
-      .filter(t => t.hasShortfall)
-      .reduce((sum, t) => sum + t.remainingBalance, 0);
-  };
+  const getTotalSpent = () => transactions.filter(t => t.type === 'buy').reduce((sum, t) => sum + t.amountPaid, 0);
+  const getTotalEarned = () => transactions.filter(t => t.type === 'sell').reduce((sum, t) => sum + t.amountPaid, 0);
+  const getPendingPayments = () => transactions.filter(t => t.type === 'buy' && t.hasShortfall).length;
+  const getOutstandingBalance = () => transactions.filter(t => t.type === 'buy' && t.hasShortfall).reduce((sum, t) => sum + t.remainingBalance, 0);
 
   if (loading) {
     return (
@@ -264,29 +220,19 @@ export default function TransactionHistory() {
 
   return (
     <div className="history-page-container">
-
       <div className="history-nav-header">
-        <button 
-          onClick={() => navigate('/basket')} 
-          className="back-btn-pill" 
-          style={{ 
-            
-            padding: '10px 24px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.1)' 
-          }}
-        >
+        <button onClick={() => navigate('/basket')} className="back-btn-pill" style={{ padding: '10px 24px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
           ← Back to Shop
         </button>
       </div>
 
       <div className="history-container">
-        
         <div className="history-header">
           <h1 className="history-title">Transaction History</h1>
           <p className="history-subtitle">Track all your purchases, sales, trades, and partial payments</p>
         </div>
 
-        {/* Statistics Cards */}
+        {/* Dynamic Statistics Metrics Header Block View */}
         <div className="history-stats">
           <div className="stat-card">
             <div className="stat-icon">💰</div>
@@ -325,74 +271,140 @@ export default function TransactionHistory() {
           </div>
         </div>
 
-        {/* Filters */}
+        {/* Navigation Category Filter Selection Bar Component */}
         <div className="history-filters">
           <div className="filter-buttons">
-            <button 
-              className={`filter-btn ${filter === "all" ? "active" : ""}`}
-              onClick={() => setFilter("all")}
-            >
-              All
-            </button>
-            <button 
-              className={`filter-btn ${filter === "buy" ? "active" : ""}`}
-              onClick={() => setFilter("buy")}
-            >
-              🛒 Purchases
-            </button>
-            <button 
-              className={`filter-btn ${filter === "sell" ? "active" : ""}`}
-              onClick={() => setFilter("sell")}
-            >
-              💰 Sales
-            </button>
-            <button 
-              className={`filter-btn ${filter === "trade" ? "active" : ""}`}
-              onClick={() => setFilter("trade")}
-            >
-              🔄 Trades
-            </button>
-            <button 
-              className={`filter-btn ${filter === "partial" ? "active" : ""}`}
-              onClick={() => setFilter("partial")}
-            >
-              ⚠️ Partial Payments
-            </button>
+            <button className={`filter-btn ${filter === "all" ? "active" : ""}`} onClick={() => setFilter("all")}>All</button>
+            <button className={`filter-btn ${filter === "buy" ? "active" : ""}`} onClick={() => setFilter("buy")}>🛒 Purchases</button>
+            <button className={`filter-btn ${filter === "sell" ? "active" : ""}`} onClick={() => setFilter("sell")}>💰 Sales</button>
+            <button className={`filter-btn ${filter === "trade" ? "active" : ""}`} onClick={() => setFilter("trade")}>🔄 Trades</button>
+            <button className={`filter-btn ${filter === "partial" ? "active" : ""}`} onClick={() => setFilter("partial")}>⚠️ Partial Payments</button>
           </div>
         </div>
 
         {error && (
           <div className="error-message">
             <strong>Error:</strong> {error}
-            <button onClick={() => fetchTransactions(user?.id)} style={{ marginLeft: '10px' }}>
-              Retry
-            </button>
+            <button onClick={() => fetchTransactions(user?.id)} style={{ marginLeft: '10px' }}>Retry</button>
           </div>
         )}
 
         <div className="history-card">
-          {transactions.length === 0 && !error ? (
+          {filteredTransactions.length === 0 ? (
             <div className="empty-state">
               <div className="empty-icon">📭</div>
-              <p>No transactions found</p>
-              <p className="empty-subtitle">Complete a purchase to see your transaction history</p>
-              <button className="shop-now-btn" onClick={() => navigate("/basket")}>
-                Start Shopping
-              </button>
+              <p>No transactions found matching criteria</p>
+              <button className="shop-now-btn" onClick={() => navigate("/basket")}>Start Shopping</button>
             </div>
-          ) : transactions.length > 0 ? (
+          ) : (
             <div className="transactions-list">
               {filteredTransactions.map((transaction) => (
-                <div 
-                  key={transaction.id} 
-                  className="transaction-row"
-                  onClick={() => setSelectedTransaction(transaction)}
-                >
+                <div key={transaction.id} className="transaction-row" onClick={() => setSelectedTransaction(transaction)}>
                   <div className="transaction-type-icon">
                     {getTypeIcon(transaction.type, transaction.listingType)}
                   </div>
                   
                   <div className="transaction-details">
+
+                    {/* ======================================================================
+                          🚨 DYNAMIC PROGRESS LIFECYCLE BANNERS LAYER
+                       ====================================================================== */}
+
+                    {/* 1. SELLER WORKFLOW: Drop-off slot appointment selection available */}
+                    {transaction.type === 'sell' && ['pending', 'payment_cleared', 'partial_payment'].includes(transaction.status) && (
+                      <div className="booking-trigger-section" style={{ marginTop: '12px', marginBottom: '12px' }}>
+                        <button 
+                          className="btn-book-slot"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            localStorage.setItem('lastTransactionId', transaction.id);
+                            navigate("/booking/dropoff", { state: { transactionId: transaction.id } });
+                          }}
+                          style={{ background: '#28a745', color: 'white', padding: '8px 16px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}
+                        >
+                          📦 Book Seller Drop-off Slot
+                        </button>
+                      </div>
+                    )}
+
+                    {/* 2. SELLER WORKFLOW STATUS BADGE: Drop-off Booked but not yet handed to staff */}
+                    {transaction.type === 'sell' && transaction.status === 'pending_dropoff' && (
+                      <div className="booking-status-badge-container" style={{ marginTop: '12px', marginBottom: '12px' }}>
+                        <span style={{ background: '#eef2ff', color: '#4f46e5', padding: '6px 14px', borderRadius: '20px', fontSize: '13px', fontWeight: 'bold', border: '1px solid #c7d2fe' }}>
+                          ⏳ Drop-off Scheduled (Awaiting Desk Delivery)
+                        </span>
+                      </div>
+                    )}
+
+                    {/* 3. BUYER WORKFLOW WORK-GATE: Settle Outstanding remaining balance split debt */}
+                    {transaction.type === 'buy' && ['partial_payment', 'item_in_custody'].includes(transaction.status) && transaction.remainingBalance >= 0.10 && (
+                      <div className="booking-trigger-section" style={{ marginTop: '12px', marginBottom: '12px' }} onClick={(e) => e.stopPropagation()}>
+                        <div style={{ background: '#fff1f0', border: '1px solid #ffa39e', padding: '12px 16px', borderRadius: '10px', marginBottom: '10px', fontSize: '13px', color: '#cf1322', fontWeight: '500' }}>
+                          🛑 **Collection Locked:** You have an unpaid shortfall balance of **R{transaction.remainingBalance.toFixed(2)}**. Please settle this remaining amount below before scheduling a physical facility pickup.
+                        </div>
+                        <button 
+                          className="btn-book-slot"
+                          onClick={(e) => handleCompletePayment(transaction, e)}
+                          style={{ background: '#ff9800', color: 'white', padding: '#8px 16px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}
+                        >
+                          💳 Pay Outstanding Shortfall Balance
+                        </button>
+                      </div>
+                    )}
+
+                    {/* 4. BUYER WORKFLOW WORK-GATE: Item verified in custody and balance clear -> Book pickup */}
+                    {transaction.type === 'buy' && transaction.status === 'item_in_custody' && transaction.remainingBalance < 0.10 && (
+                      <div className="booking-trigger-section" style={{ marginTop: '12px', marginBottom: '12px' }}>
+                        <button 
+                          className="btn-book-slot"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            localStorage.setItem('lastTransactionId', transaction.id);
+                            navigate("/booking/collection", { state: { transactionId: transaction.id } });
+                          }}
+                          style={{ background: '#007bff', color: 'white', padding: '#8px 16px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}
+                        >
+                          🎁 Book Buyer Collection Slot
+                        </button>
+                      </div>
+                    )}
+
+                    {/* 5. BUYER SESSIONS: Show Rate Seller link if transaction completed but feedback missing */}
+                    {transaction.type === 'buy' && transaction.status === 'completed' && !transaction.alreadyRated && (
+                      <div className="booking-trigger-section" style={{ marginTop: '12px', marginBottom: '12px' }}>
+                        <button 
+                          className="btn-book-slot"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/reviews/${transaction.seller_user_id || transaction.buyer_id}?action=rate`, { 
+                              state: { transactionId: transaction.id } 
+                            });
+                          }}
+                          style={{ background: '#f39c12', color: 'white', padding: '#8px 16px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}
+                        >
+                          ⭐ Rate Seller Performance
+                        </button>
+                      </div>
+                    )}
+
+                    {/* 6. COMPLETE CONFIRMATION BADGE LABELS */}
+                    {transaction.status === 'completed' && (
+                      <div className="booking-status-badge-container" style={{ marginTop: '12px', marginBottom: '12px' }}>
+                        <span style={{ background: '#e2f0d9', color: '#385723', padding: '6px 14px', borderRadius: '20px', fontSize: '13px', fontWeight: 'bold', border: '1px solid #c5e0b4' }}>
+                          ✅ Transaction Completed & Handed Over
+                        </span>
+                      </div>
+                    )}
+
+                    {transaction.status === 'completed' && transaction.alreadyRated && (
+                      <div className="booking-status-badge-container" style={{ marginTop: '4px' }}>
+                        <span style={{ background: '#e2f0d9', color: '#385723', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', border: '1px solid #c5e0b4' }}>
+                          ✓ Feedback Submitted
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Metadata Content Attributes Info Lines */}
                     <div className="transaction-item">
                       <strong>{transaction.item}</strong>
                       <span className="transaction-type">
@@ -401,242 +413,45 @@ export default function TransactionHistory() {
                     </div>
                     
                     <div className="transaction-meta">
-                      {transaction.type === 'buy' && transaction.paymentMethod && (
-                        <>Payment: {transaction.paymentMethod} • </>
-                      )}
+                      {transaction.type === 'buy' && transaction.paymentMethod && `Payment: ${transaction.paymentMethod} • `}
                       {new Date(transaction.date).toLocaleDateString()}
                     </div>
                     
-                    {transaction.cashShortfall > 0 && (
+                    {transaction.remainingBalance >= 0.10 && (
                       <span className="shortfall-badge">
-                        ⚠️ R{transaction.cashShortfall.toFixed(2)} shortfall recorded
+                        ⚠️ R{transaction.remainingBalance.toFixed(2)} shortfall recorded
                       </span>
                     )}
                     
-                    {transaction.listingType === 'trade' && transaction.tradeItemDescription && (
-                      <div className="trade-info">
-                        🔄 Trade: {transaction.tradeItemDescription}
-                      </div>
-                    )}
-                    
-                    <div className="transaction-id">
-                      ID: {transaction.transactionId.slice(0, 8)}...
-                    </div>
-
-                    {/* Outstanding Shortfall Alert */}
-                    {hasOutstandingShortfall(transaction) && (
-                      <div className="shortfall-alert">
-                        <span className="alert-icon">⚠️</span>
-                        <span className="alert-text">
-                          Outstanding balance: R{getShortfallAmount(transaction).toFixed(2)}
-                        </span>
-                        <button 
-                          className="complete-payment-btn"
-                          onClick={(e) => handleCompletePayment(transaction, e)}
-                        >
-                          Complete Payment
-                        </button>
-                      </div>
-                    )}
+                    <div className="transaction-id">ID: {transaction.transactionId.slice(0, 8)}...</div>
                   </div>
                   
                   <div className="transaction-amount-info">
-                    <div className="transaction-amount">
-                      Paid: R{transaction.amountPaid.toFixed(2)}
-                    </div>
-                    {transaction.remainingBalance > 0 && (
-                      <div className="transaction-remaining">
-                        Remaining: R{transaction.remainingBalance.toFixed(2)}
-                      </div>
+                    <div className="transaction-amount">Paid: R{transaction.amountPaid.toFixed(2)}</div>
+                    {transaction.remainingBalance >= 0.10 && (
+                      <div className="transaction-remaining">Remaining: R{transaction.remainingBalance.toFixed(2)}</div>
                     )}
-                    {transaction.amountPaid !== transaction.amount && transaction.amount > 0 && (
-                      <div className="transaction-total">
-                        Total: R{transaction.amount.toFixed(2)}
-                      </div>
-                    )}
-                    <div 
-                      className="transaction-status"
-                      style={{ color: getStatusColor(transaction.status) }}
-                    >
+                    <div className="transaction-status" style={{ color: getStatusColor(transaction.status), fontWeight: 'bold' }}>
                       {getStatusLabel(transaction.status)}
                     </div>
-
-
-                    {transaction.paymentStatus && (
-                      <div 
-                        className="payment-status"
-                        style={{ color: getPaymentStatusColor(transaction.paymentStatus) }}
-                      >
-                        {getPaymentStatusLabel(transaction.paymentStatus)}
-                      </div>
-                    )}
-                    {transaction.hasShortfall && (
-                      <div className="partial-badge">
-                        Partial Payment
-                      </div>
-                    )}
-                      {transaction.status === 'completed' && transaction.type === 'buy' && (
-                        <button 
-                          className="rate-btn-small" 
-                          onClick={(e) => { 
-                            e.stopPropagation(); 
-                            navigate(`/reviews/${transaction.seller_user_id}?tid=${transaction.id}`);
-                          }}
-                          style={{ 
-                            background: '#f39c12', 
-                            color: 'white', 
-                            border: 'none', 
-                            borderRadius: '4px', 
-                            padding: '6px 10px', 
-                            fontSize: '12px', 
-                            marginTop: '8px', 
-                            cursor: 'pointer',
-                            fontWeight: 'bold',
-                            width: 'fit-content'
-                          }}
-                        >
-                          ⭐ Rate Seller
-                        </button>
-                        )}
-
                   </div>
                 </div>
               ))}
             </div>
-          ) : null}
+          )}
         </div>
       </div>
 
-      {/* Transaction Details Modal */}
+      {/* Detail Overlay Sheet Drawer Modal component */}
       {selectedTransaction && (
         <div className="modal-overlay" onClick={() => setSelectedTransaction(null)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <h2>Transaction Details</h2>
-
-
-            
-            <div className="detail-row">
-              <strong>{selectedTransaction.type === 'buy' ? 'Seller' : 'Buyer'}:</strong> {selectedTransaction.otherPartyName}
-            </div>
-            
-            <div className="detail-row">
-              <strong>Item:</strong> {selectedTransaction.item}
-            </div>
-            
-            <div className="detail-row">
-              <strong>Total Amount:</strong> R{selectedTransaction.amount.toFixed(2)}
-            </div>
-            
-            <div className="detail-row">
-              <strong>Amount Paid:</strong> R{selectedTransaction.amountPaid.toFixed(2)}
-            </div>
-            
-            {selectedTransaction.remainingBalance > 0 && (
-              <div className="detail-row highlight">
-                <strong>Remaining Balance:</strong> R{selectedTransaction.remainingBalance.toFixed(2)}
-                {hasOutstandingShortfall(selectedTransaction) && (
-                  <button 
-                    className="pay-remaining-btn"
-                    onClick={() => {
-                      setSelectedTransaction(null);
-                      handleCompletePayment(selectedTransaction, new Event('click'));
-                    }}
-                  >
-                    Pay Now
-                  </button>
-                )}
-              </div>
-            )}
-            
-            {selectedTransaction.cashShortfall > 0 && (
-              <div className="detail-row">
-                <strong>Cash Shortfall:</strong> R{selectedTransaction.cashShortfall.toFixed(2)}
-              </div>
-            )}
-            
-            <div className="detail-row">
-              <strong>Payment Method:</strong> {selectedTransaction.paymentMethod || 'N/A'}
-            </div>
-            
-            <div className="detail-row">
-              <strong>Payment Status:</strong> 
-              <span style={{ color: getPaymentStatusColor(selectedTransaction.paymentStatus) }}>
-                {getPaymentStatusLabel(selectedTransaction.paymentStatus)}
-              </span>
-            </div>
-            
-            <div className="detail-row">
-              <strong>Transaction Status:</strong>
-              <span style={{ color: getStatusColor(selectedTransaction.status) }}>
-                {getStatusLabel(selectedTransaction.status)}
-              </span>
-            </div>
-            
-            {selectedTransaction.listingType === 'trade' && selectedTransaction.tradeItemDescription && (
-              <div className="detail-row">
-                <strong>Trade Description:</strong> {selectedTransaction.tradeItemDescription}
-              </div>
-            )}
-            
-            {/* Payment History */}
-            {selectedTransaction.allPayments && selectedTransaction.allPayments.length > 1 && (
-              <div className="detail-row">
-                <strong>Payment History:</strong>
-                <div className="payment-history-list">
-                  {selectedTransaction.allPayments.map((payment, idx) => (
-                    <div key={payment.id} className="payment-history-item">
-                      <span>Payment {idx + 1}:</span>
-                      <span>R{payment.amount.toFixed(2)}</span>
-                      <span>({new Date(payment.created_at).toLocaleDateString()})</span>
-                      <span className="payment-method-badge">{payment.method}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            <div className="detail-row">
-              <strong>Date Created:</strong> {new Date(selectedTransaction.date).toLocaleString()}
-            </div>
-            
-            {selectedTransaction.completedAt && (
-              <div className="detail-row">
-                <strong>Completed Date:</strong> {new Date(selectedTransaction.completedAt).toLocaleString()}
-              </div>
-            )}
-            
-            <div className="detail-row">
-              <strong>Transaction ID:</strong> {selectedTransaction.transactionId}
-            </div>
-            
-            <div className="modal-actions-buttons">
-
-              {selectedTransaction.status === 'completed' && selectedTransaction.type === 'buy' && (
-                <button 
-                  className="complete-payment-modal-btn" 
-                  style={{ backgroundColor: '#f39c12' }}
-                  onClick={() => navigate(`/reviews/${selectedTransaction.seller_user_id}?tid=${selectedTransaction.id}`)}
-                >
-                    ⭐ Rate Seller
-                </button>
-              )}
-
-
-              {hasOutstandingShortfall(selectedTransaction) && (
-                <button 
-                  className="complete-payment-modal-btn"
-                  onClick={() => {
-                    setSelectedTransaction(null);
-                    handleCompletePayment(selectedTransaction, new Event('click'));
-                  }}
-                >
-                  Complete Payment
-                </button>
-              )}
-              <button className="close-modal" onClick={() => setSelectedTransaction(null)}>
-                Close
-              </button>
-            </div>
+            <div className="detail-row"><strong>{selectedTransaction.type === 'buy' ? 'Seller' : 'Buyer'}:</strong> {selectedTransaction.otherPartyName}</div>
+            <div className="detail-row"><strong>Item:</strong> {selectedTransaction.item}</div>
+            <div className="detail-row"><strong>Total Amount:</strong> R{selectedTransaction.amount.toFixed(2)}</div>
+            <div className="detail-row"><strong>Amount Paid:</strong> R{selectedTransaction.amountPaid.toFixed(2)}</div>
+            <button className="close-modal" onClick={() => setSelectedTransaction(null)}>Close</button>
           </div>
         </div>
       )}

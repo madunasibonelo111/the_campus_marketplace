@@ -1,3 +1,6 @@
+/* =========================
+   GLOBAL LAYOUT
+========================= */
 .admin-layout {
   display: flex;
   height: 100vh;
@@ -23,6 +26,7 @@
   border-radius: 8px;
   cursor: pointer;
   margin-bottom: 10px;
+  transition: background 0.2s ease;
 }
 
 .nav-item.active,
@@ -53,7 +57,6 @@
   padding: 8px 14px;
   border-radius: 8px;
   cursor: pointer;
-  font-weight: 600;
   transition: 0.2s ease;
 }
 
@@ -62,161 +65,8 @@
 }
 
 /* =========================
-   STATS / CARDS
+   HEADER ROW
 ========================= */
-.stats {
-  display: flex;
-  gap: 20px;
-}
-
-.card {
-  flex: 1;
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
-}
-
-/* =========================
-   BOOKINGS TABLE
-========================= */
-.bookings {
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
-  margin-top: 20px;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-th {
-  text-align: left;
-  padding: 10px;
-  color: gray;
-}
-
-td {
-  padding: 12px 10px;
-  border-top: 1px solid #eee;
-}
-
-/* STATUS COLORS */
-.status {
-  padding: 5px 10px;
-  border-radius: 8px;
-  font-size: 12px;
-  text-transform: capitalize;
-}
-
-.status.pending {
-  background: #facc15;
-}
-
-.status.received {
-  background: #22c55e;
-  color: white;
-}
-
-.status.released {
-  background: #3b82f6;
-  color: white;
-}
-
-/* =========================
-   FACILITY CONFIG PAGE
-========================= */
-.facility-config-page {
-  max-width: 700px;
-  margin: 0 auto;
-  padding: 30px;
-  background: #f5f7fb;
-  min-height: 100vh;
-
-  /* IMPORTANT: allows absolute button positioning */
-  position: relative;
-}
-
-/* Title */
-.facility-config-page h2 {
-  font-size: 26px;
-  margin-bottom: 20px;
-  color: #0f172a;
-}
-
-/* Config row card */
-.config-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-
-  background: white;
-  padding: 15px 18px;
-  margin-bottom: 12px;
-
-  border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
-
-  transition: 0.2s ease;
-}
-
-.config-item:hover {
-  transform: translateY(-2px);
-}
-
-/* Labels */
-.config-item span {
-  font-weight: 600;
-  color: #334155;
-}
-
-/* Inputs */
-.config-item input {
-  padding: 8px 10px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  outline: none;
-  width: 180px;
-  text-align: right;
-  transition: 0.2s;
-}
-
-.config-item input:focus {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
-}
-
-/* SAVE BUTTON */
-.save-btn {
-  width: 100%;
-  margin-top: 20px;
-  padding: 12px;
-
-  background: #2563eb;
-  color: white;
-
-  border: none;
-  border-radius: 10px;
-
-  font-size: 16px;
-  font-weight: 600;
-
-  cursor: pointer;
-  transition: 0.2s ease;
-}
-
-.save-btn:hover {
-  background: #1d4ed8;
-  transform: translateY(-1px);
-}
-
-/* =========================
-   BACK BUTTON (FIXED)
-========================= */
-
-
-/* HEADER ROW (NEW) */
 .facility-header {
   display: flex;
   justify-content: space-between;
@@ -226,283 +76,67 @@ td {
 
 /* BACK BUTTON */
 .back-btn {
-  position: fixed;   /* 🔥 key change */
-  top: 20px;
-  right: 20px;
-
   background: #ef4444;
   color: white;
   border: none;
   padding: 10px 16px;
   border-radius: 8px;
-
   font-weight: 600;
   cursor: pointer;
-
-  z-index: 999; /* ensures it's always on top */
+  transition: 0.2s ease;
 }
 
 .back-btn:hover {
   background: #dc2626;
 }
 
-/* ✅ RECEIVE BUTTON */
-
+/* =========================
+   ACTION BUTTONS
+========================= */
+/* RECEIVE / CONFIRM BUTTON */
 .receive-btn {
-
   background: #2563eb;
-
   color: white;
-
   border: none;
-
   padding: 10px 18px;
-
   border-radius: 10px;
-
   cursor: pointer;
-
   font-weight: 600;
-
   transition: 0.2s ease;
-
 }
 
 .receive-btn:hover {
-
   background: #1d4ed8;
-
   transform: translateY(-1px);
-
-}
-/* =========================
-   BOOKINGS TABLE STYLING
-========================= */
-
-.bookings table {
-
-  width: 100%;
-
-  border-collapse: collapse;
-
-  margin-top: 20px;
-
-  overflow: hidden;
-
-  border-radius: 16px;
-
-  background: white;
-
 }
 
-
-/* ✅ TABLE HEADERS */
-
-.bookings thead {
-
-  background: linear-gradient(
-    90deg,
-    #2563eb,
-    #1d4ed8
-  );
-
-}
-
-.bookings thead th {
-
-  color: white;
-
-  padding: 18px;
-
-  font-size: 16px;
-
-  font-weight: 700;
-
-  text-align: left;
-
-  letter-spacing: 0.5px;
-
-}
-
-
-/* ✅ TABLE ROWS */
-
-.bookings tbody tr {
-
-  border-bottom: 1px solid #e5e7eb;
-
-  transition: 0.2s ease;
-
-}
-
-.bookings tbody tr:hover {
-
-  background: #f8fafc;
-
-}
-
-
-/* ✅ TABLE CELLS */
-
-.bookings td {
-
-  padding: 18px;
-
-  font-size: 15px;
-
-  color: #374151;
-
-}
-
-
-/* =========================
-   STATUS BADGES
-========================= */
-
-.status {
-
-  padding: 8px 14px;
-
-  border-radius: 999px;
-
-  font-size: 13px;
-
-  font-weight: 600;
-
-  text-transform: capitalize;
-
-}
-
-
-/* ✅ PENDING */
-
-.status.pending {
-
-  background: #fef3c7;
-
-  color: #92400e;
-
-}
-
-
-/* ✅ CONFIRMED */
-
-.status.confirmed {
-
-  background: #dbeafe;
-
-  color: #1d4ed8;
-
-}
-
-
-/* ✅ COMPLETED */
-
-.status.completed {
-
-  background: #dcfce7;
-
-  color: #166534;
-
-}
-
-
-/* =========================
-   CONFIRM BUTTON
-========================= */
-
-.receive-btn {
-
-  background: #2563eb;
-
-  color: white;
-
-  border: none;
-
-  padding: 10px 18px;
-
-  border-radius: 10px;
-
-  cursor: pointer;
-
-  font-weight: 600;
-
-  transition: 0.2s ease;
-
-}
-
-.receive-btn:hover {
-
-  background: #1d4ed8;
-
-  transform: translateY(-1px);
-
-}
-
-
-/* =========================
-   COMPLETE BUTTON
-========================= */
-
+/* COMPLETE BUTTON */
 .complete-btn {
-
   background: #16a34a;
-
   color: white;
-
   border: none;
-
   padding: 10px 18px;
-
   border-radius: 10px;
-
   cursor: pointer;
-
   font-weight: 600;
-
   transition: 0.2s ease;
-
 }
 
 .complete-btn:hover {
-
   background: #15803d;
-
   transform: translateY(-1px);
-
 }
 
-
 /* =========================
-   BOOKINGS CONTAINER
+   ANIMATIONS
 ========================= */
-
-.bookings {
-
-  background: white;
-
-  padding: 30px;
-
-  border-radius: 24px;
-
-  box-shadow:
-    0 4px 12px rgba(0,0,0,0.04);
-
-}
-
-
-/* =========================
-   SECTION TITLES
-========================= */
-
-.bookings h2 {
-
-  font-size: 32px;
-
-  font-weight: 700;
-
-  color: #0f172a;
-
-  margin-bottom: 20px;
-
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

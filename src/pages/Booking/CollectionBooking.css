@@ -1,0 +1,423 @@
+.collection-page-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100vh; 
+  background-color: #f4f7fe !important;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  overflow: hidden; /* Prevents global page offsets */
+}
+
+
+.collection-booking-panel {
+  background: #ffffff;
+  width: 100%;
+  max-width: 1000px;
+  height: 92vh; 
+  border-radius: 24px;
+  box-shadow: 0 20px 60px rgba(0, 123, 255, 0.1);
+  overflow: hidden; 
+}
+
+.panel-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
+
+.panel-header {
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  padding: 26px 40px;
+  color: white;
+  flex-shrink: 0; 
+}
+
+.panel-header h1 {
+  font-size: 28px;
+  color: #ffffff;
+  margin: 0 0 6px 0;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.panel-header p {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Two-Column Flex Layout Alignment Workspace*/
+.collection-workspace-split {
+  display: grid;
+  grid-template-columns: 1.12fr 1fr;
+  flex-grow: 1;
+  min-height: 0; /* Important flex bugfix allowing independent inner side scroll layers */
+  width: 100%;
+}
+
+/* Left Sidebar Panel - Descriptions and Onboarding Metadata */
+.collection-info-pane {
+  padding: 32px 40px;
+  border-right: 1px solid #eef2f6;
+  background: #f8fafd;
+  overflow-y: auto; 
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Right Sidebar Panel - Interactive Grid Picker Area */
+.collection-picker-pane {
+  padding: 32px 40px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: #ffffff;
+}
+
+/* Item Summary Well Container Box */
+.item-summary-box {
+  background: #ffffff;
+  border-left: 5px solid #007bff;
+  padding: 20px;
+  border-radius: 4px 16px 16px 4px;
+  border: 1px solid #e4eaf2;
+  border-left-width: 5px;
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.01);
+}
+
+.item-summary-box h3 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #102a43;
+}
+
+.box-details-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px 24px;
+  font-size: 14px;
+  color: #486581;
+}
+
+.box-details-grid span {
+  color: #627d98;
+}
+
+.box-details-grid strong {
+  color: #102a43;
+}
+
+.green-balance {
+  color: #249e3e !important;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+/* Onboarding Informational Accent Blocks */
+.collection-instructions-card, .collection-security-notice {
+  background: #e6f2ff;
+  border-left: 4px solid #007bff;
+  border-radius: 4px 12px 12px 4px;
+  padding: 16px;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.collection-instructions-card h4, .collection-security-notice h4 {
+  margin: 0 0 8px 0;
+  color: #0056b3;
+  font-weight: 700;
+}
+
+.collection-instructions-card ul, .collection-security-notice ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.collection-instructions-card li, .collection-security-notice li {
+  margin: 6px 0;
+  color: #334e68;
+}
+
+/* Security Notice Orange Color Swap Accent Override */
+.collection-security-notice {
+  background: #fff8e1;
+  border-left-color: #ffb300;
+}
+
+.collection-security-notice h4 {
+  color: #b78103;
+}
+
+.collection-security-notice li {
+  color: #5d4037;
+}
+
+/*  Right side picker layout section titles */
+.slots-explorer-section {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.slots-explorer-section h3 {
+  font-size: 16px;
+  margin: 0 0 4px 0;
+  font-weight: 700;
+  color: #102a43;
+}
+
+.slots-explorer-section p {
+  font-size: 12px;
+  color: #627d98;
+  margin: 0 0 16px 0;
+}
+
+/* Dynamic Calendar Card Grid Area Wrapper */
+.slots-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  padding: 4px;
+  flex-grow: 1;
+  overflow-y: auto; /* ✅ ONLY the calendar grid scrolls! */
+  -webkit-overflow-scrolling: touch;
+}
+
+.slots-cards-grid::-webkit-scrollbar {
+  width: 6px;
+}
+
+.slots-cards-grid::-webkit-scrollbar-track {
+  background: #f8fafc;
+}
+
+.slots-cards-grid::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+/* Individual Slot Selection Item Sheets */
+.explorer-slot-card {
+  background: #ffffff;
+  border: 2px solid #e4eaf2;
+  border-radius: 16px;
+  padding: 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.explorer-slot-card:hover {
+  transform: translateY(-2px);
+  border-color: #007bff;
+  box-shadow: 0 6px 16px rgba(0, 123, 255, 0.05);
+}
+
+.explorer-slot-card.active-selection {
+  border-color: #249e3e;
+  background: #f0fff4;
+  box-shadow: 0 4px 12px rgba(36, 158, 62, 0.08);
+}
+
+.explorer-day {
+  font-weight: 700;
+  color: #102a43;
+  font-size: 14px;
+}
+
+.explorer-date {
+  font-size: 12px;
+  color: #627d98;
+  margin: 2px 0 8px 0;
+}
+
+.explorer-time {
+  font-size: 13px;
+  font-weight: 700;
+  color: #007bff;
+  background: #e6f2ff;
+  padding: 4px 8px;
+  border-radius: 6px;
+  display: inline-block;
+  margin-bottom: 6px;
+}
+
+/* Green Time Block Pill Swap on Selection Change */
+.explorer-slot-card.active-selection .explorer-time {
+  color: #249e3e;
+  background: #e8f5e9;
+}
+
+.explorer-spots {
+  font-size: 11px;
+  color: #486581;
+}
+
+/* Static Action Base Sheet Line Footer Component Module */
+.panel-action-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  padding: 16px 40px;
+  border-top: 1px solid #e4eaf2;
+  background: #f8fafd;
+  flex-shrink: 0; 
+}
+
+.btn-cancel-action {
+  background: #ffffff;
+  color: #486581;
+  border: 1px solid #cbd5e1;
+  padding: 12px 28px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.btn-cancel-action:hover {
+  background: #f1f5f9;
+}
+
+.btn-confirm-action {
+  background: #007bff;
+  color: #ffffff;
+  border: none;
+  padding: 12px 32px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.btn-confirm-action:hover:not(:disabled) {
+  background: #0056b3;
+}
+
+.btn-confirm-action:disabled {
+  background: #bac7d5;
+  cursor: not-allowed;
+}
+
+/* Utility placeholder styles */
+.slots-loading-placeholder {
+  text-align: center;
+  padding: 40px;
+  margin: auto;
+  color: #627d98;
+}
+
+.empty-slots-error {
+  text-align: center;
+  padding: 40px;
+  color: #94a3b8;
+  margin: auto;
+}
+
+/* Appointment Confirmation Success Layout */
+.booking-confirmation-view {
+  background: white;
+  padding: 40px;
+  border-radius: 24px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+  text-align: center;
+  max-width: 550px;
+  width: 100%;
+  overflow-y: auto;
+  max-height: 90vh;
+}
+
+.success-badge-icon {
+  font-size: 50px;
+  width: 84px;
+  height: 84px;
+  background: #e6f2ff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px auto;
+}
+
+.booking-meta-details {
+  background: #f8f9fa;
+  padding: 18px;
+  border-radius: 16px;
+  margin: 24px 0;
+  text-align: left;
+  border: 1px solid #edf2f7;
+}
+
+.booking-meta-details h3 {
+  margin: 0 0 12px 0;
+  font-size: 15px;
+  color: #102a43;
+}
+
+.meta-detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #edf2f7;
+  font-size: 13px;
+  color: #486581;
+}
+
+.meta-detail-row:last-child {
+  border-bottom: none;
+}
+
+.meta-detail-row strong {
+  color: #102a43;
+}
+
+.btn-return-history {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 14px 28px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.2s;
+}
+
+.btn-return-history:hover {
+  background: #0056b3;
+}
+
+/* Responsiveness fallback split layer conversion layout constraints */
+@media (max-width: 850px) {
+  .collection-workspace-split {
+    grid-template-columns: 1fr;
+  }
+  .collection-info-pane {
+    border-right: none;
+    border-bottom: 1px solid #e4eaf2;
+    padding: 20px;
+  }
+  .collection-picker-pane {
+    padding: 20px;
+  }
+  .collection-booking-panel {
+    height: 96vh;
+    padding: 0;
+  }
+  .panel-action-footer {
+    padding: 16px 20px;
+  }
+}

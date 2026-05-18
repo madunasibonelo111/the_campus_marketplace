@@ -1,0 +1,149 @@
+* {
+  box-sizing: border-box;
+}
+
+.reports-container {
+  width: 100%;
+}
+
+.reports-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 40px;
+  flex-wrap: wrap;
+}
+
+.reports-header h1 {
+  margin: 0;
+  font-size: 3rem;
+  font-weight: 900;
+  color: #08142c;
+}
+
+.reports-header p {
+  color: #64748b;
+  margin-top: 8px;
+}
+
+.reports-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.reports-actions input {
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid #dbe3ee;
+  background: white;
+}
+
+.reports-actions button {
+  border: none;
+  padding: 13px 18px;
+  border-radius: 12px;
+  background: linear-gradient(
+    135deg,
+    #2563eb,
+    #1d4ed8
+  );
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.reports-actions button:hover {
+  transform: translateY(-2px);
+}
+
+.export-dropdown {
+  position: relative;
+}
+
+.export-menu {
+  position: absolute;
+  top: 55px;
+  right: 0;
+  background: white;
+  border-radius: 14px;
+  overflow: hidden;
+  min-width: 180px;
+  box-shadow:
+    0 10px 30px rgba(0,0,0,0.12);
+  z-index: 999;
+}
+
+.export-menu button {
+  width: 100%;
+  text-align: left;
+  border-radius: 0;
+  background: white;
+  color: #08142c;
+}
+
+.export-menu button:hover {
+  background: #f8fafc;
+}
+
+.reports-stats {
+  display: grid;
+  grid-template-columns:
+    repeat(auto-fit, minmax(260px, 1fr));
+  gap: 24px;
+}
+
+.report-card {
+  background: white;
+  border-radius: 24px;
+  padding: 30px;
+  min-height: 170px;
+  box-shadow:
+    0 10px 30px rgba(15,23,42,0.06);
+}
+
+.report-card span {
+  color: #64748b;
+  font-weight: 600;
+}
+
+.report-card h2 {
+  margin-top: 16px;
+  font-size: 3.5rem;
+  font-weight: 900;
+  color: #08142c;
+}
+
+.revenue-card {
+  background: linear-gradient(
+    135deg,
+    #081225,
+    #1e3a8a
+  );
+}
+
+.revenue-card span,
+.revenue-card h2 {
+  color: white;
+}
+
+.loading-text {
+  padding: 80px;
+  text-align: center;
+  color: #64748b;
+}
+
+@media (max-width: 900px) {
+
+  .reports-header {
+    flex-direction: column;
+  }
+
+  .reports-header h1 {
+    font-size: 2.2rem;
+  }
+
+}

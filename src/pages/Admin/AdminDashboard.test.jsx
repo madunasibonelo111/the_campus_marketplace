@@ -1,647 +1,553 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import {
-  render,
-  screen,
-  waitFor
-} from "@testing-library/react";
-
+import { render, screen, waitFor, fireEvent, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-
 import { MemoryRouter } from "react-router-dom";
-
+import React from "react";
 import AdminDashboard from "./AdminDashboard";
+import { supabase } from "@/supabase/supabaseClient";
 
-
-// ✅ MOCK NAVIGATE
+// Mock Navigate Link Actions
 const mockNavigate = vi.fn();
-
 
 // ✅ MOCK REACT ROUTER
 vi.mock("react-router-dom", async () => {
-
-  const actual =
-    await vi.importActual(
-      "react-router-dom"
-    );
-
+  const actual = await vi.importActual("react-router-dom");
   return {
-
     ...actual,
-
-    useNavigate: () =>
-      mockNavigate
-
+    useNavigate: () => mockNavigate
   };
-
 });
 
-
-// ✅ MOCK SUPABASE
-vi.mock(
-  "@/supabase/supabaseClient",
-  () => ({
-
-    supabase: {
-
-      auth: {
-
-        // ✅ MOCK USER
-        getUser: vi.fn(() =>
-          Promise.resolve({
-            data: {
-              user: {
-                id: "admin-1"
-              }
-            }
-          })
-        ),
-
-        // ✅ MOCK LOGOUT
-        signOut: vi.fn(() =>
-          Promise.resolve()
-        )
-
-      },
-
-
-      // ✅ MOCK TABLES
-      from: vi.fn((table) => {
-
-        // =========================
-        // ✅ PROFILES TABLE
-        // =========================
-        if (table === "profiles") {
-
-          return {
-
-            select: () => ({
-
-              eq: () => ({
-
-                single: () =>
-                  Promise.resolve({
-
-                    data: {
-                      name: "Bobo",
-                      role: "admin"
-                    }
-
-                  })
-
-              })
-
-            })
-
-          };
-
-        }
-
-
-        // =========================
-        // ✅ FACILITY BOOKINGS
-        // =========================
-        if (
-          table === "facility_bookings"
-        ) {
-
-          return {
-
-            select: () => ({
-
-              order: () =>
-                Promise.resolve({
-
-                  data: [
-
-                    {
-                      id: 1,
-
-                      status:
-                        "pending",
-
-                      booking_date:
-                        "2026-01-01",
-
-                      profiles: {
-                        name:
-                          "Shikombiso Mashele"
-                      }
-
-                    },
-
-                    {
-                      id: 2,
-
-                      status:
-                        "confirmed",
-
-                      booking_date:
-                        "2026-01-02",
-
-                      profiles: {
-                        name:
-                          "Bobo"
-                      }
-
-                    }
-
-                  ]
-
-                })
-
-            }),
-
-            update: () => ({
-
-              eq: () =>
-                Promise.resolve({
-                  data: true
-                })
-
-            })
-
-          };
-
-        }
-
-
-        // =========================
-        // ✅ FACILITY CONFIG
-        // =========================
-        if (
-          table === "facility_config"
-        ) {
-
-          return {
-
-            select: () => ({
-
-              limit: () => ({
-
-                single: () =>
-                  Promise.resolve({
-
-                    data: {
-
-                      open_time:
-                        "08:00",
-
-                      close_time:
-                        "17:00",
-
-                      max_capacity_per_slot:
-                        20,
-
-                      slot_duration_minutes:
-                        30
-
-                    }
-
-                  })
-
-              })
-
-            })
-
-          };
-
-        }
-
-        return {};
-
-      })
-
-    }
-
-  })
-);
-
-
-// =========================
-// ✅ TEST SUITE
-// =========================
-describe(
-  "AdminDashboard",
-  () => {
-
-    beforeEach(() => {
-
-      vi.clearAllMocks();
-
+// ✅ UNIFIED TOP-LEVEL MOCK FOR SUPABASE
+let mockBookingsData = [
+  { id: "b-1", status: "pending", booking_date: "2026-05-16T10:00:00.000Z", booking_type: "drop_off", profiles: { name: "Sarah" } },
+  { id: "b-2", status: "confirmed", booking_date: "2026-05-17T12:00:00.000Z", booking_type: "collection", profiles: { name: "John" } }
+];
+
+vi.mock("@/supabase/supabaseClient", () => ({
+  supabase: {
+    auth: {
+      getUser: vi.fn(() => Promise.resolve({ data: { user: { id: "admin-1" } } })),
+      signOut: vi.fn(() => Promise.resolve())
+    },
+    from: vi.fn((table) => {
+      const chain = {
+        select: vi.fn().mockImplementation(() => chain),
+        eq: vi.fn().mockImplementation(() => chain),
+        order: vi.fn().mockImplementation(() => {
+          return Promise.resolve({ data: mockBookingsData, error: null });
+        }),
+        limit: vi.fn().mockImplementation(() => chain),
+        maybeSingle: vi.fn().mockImplementation(() => {
+          if (table === "profiles") return Promise.resolve({ data: { name: "Bobo", role: "admin" } });
+          if (table === "facility_config") return Promise.resolve({ data: { id: "cfg-123", slot_duration_minutes: 30, max_capacity_per_slot: 5, open_time: "09:00", close_time: "17:00" } });
+          return Promise.resolve({ data: null, error: null });
+        }),
+        single: vi.fn().mockImplementation(() => {
+          if (table === "profiles") return Promise.resolve({ data: { name: "Bobo", role: "admin" } });
+          return Promise.resolve({ data: null, error: null });
+        }),
+        update: vi.fn().mockImplementation(() => ({
+          eq: vi.fn().mockImplementation(() => Promise.resolve({ data: true, error: null }))
+        })),
+        insert: vi.fn().mockResolvedValue({ data: true, error: null })
+      };
+      return chain;
+    }),
+    rpc: vi.fn((rpcName) => {
+      if (rpcName === 'get_pending_flags') {
+        return Promise.resolve({ 
+          data: [{ 
+            flag_id: "test-flag-1", 
+            item_id: "item-12345678", 
+            reporter_name: "John Doe", 
+            reason: "Inappropriate content", 
+            created_at: new Date().toISOString() 
+          }] 
+        });
+      }
+      return Promise.resolve({
+        data: { total_transaction_volume: 12500, pending_flagged_items: 2, weekly_facility_utilization_pct: 10, monthly_successful_handoffs: 5 },
+        error: null
+      });
+    })
+  }
+}));
+
+// MOCK CHILD COMPONENTS
+vi.mock("./AnalyticsView", () => ({
+  default: () => <div data-testid="mock-analytics-view">Platform Analytics Dashboard</div>
+}));
+vi.mock("./ModerationQueue", () => ({
+  default: () => <div data-testid="mock-moderation-queue">🛡️ Moderation Work Queue</div>
+}));
+
+describe("AdminDashboard Navigation, Mutation Handlers & Boundaries", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.spyOn(window, "alert").mockImplementation(() => {});
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    
+    // Reset defaults for standard authorization session
+    supabase.auth.getUser.mockResolvedValue({ data: { user: { id: "admin-1" } } });
+  });
+
+  it("renders global dashboard layout after passing security checkpoint", async () => {
+    render(
+      <MemoryRouter>
+        <AdminDashboard />
+      </MemoryRouter>
+    );
+    expect(await screen.findByText(/Platform Analytics Dashboard/i)).toBeInTheDocument();
+    expect(screen.getByText(/Facility Operations/i)).toBeInTheDocument();
+  });
+
+  it("swaps viewports seamlessly to handle live facility bookings table and confirm drop-off actions", async () => {
+    render(
+      <MemoryRouter>
+        <AdminDashboard />
+      </MemoryRouter>
+    );
+
+    const opsButton = await screen.findByText(/Facility Operations/i);
+    await act(async () => {
+      fireEvent.click(opsButton);
     });
 
+    expect(screen.getByText(/Live Booking Verification/i)).toBeInTheDocument();
 
-    // =========================
-    // ✅ DASHBOARD HEADING
-    // =========================
-    it(
-      "renders dashboard heading",
-      async () => {
+    const confirmButton = screen.getByRole("button", { name: "Confirm" });
+    await act(async () => {
+      fireEvent.click(confirmButton);
+    });
 
-        render(
+    expect(supabase.from).toHaveBeenCalledWith("facility_bookings");
+  });
 
-          <MemoryRouter>
-
-            <AdminDashboard />
-
-          </MemoryRouter>
-
-        );
-
-        expect(
-
-          await screen.findByText(
-            /hello, bobo/i
-          )
-
-        ).toBeInTheDocument();
-
-      }
+  it("handles the complete pipeline for running transaction handover completion statuses", async () => {
+    render(
+      <MemoryRouter>
+        <AdminDashboard />
+      </MemoryRouter>
     );
 
+    const opsButton = await screen.findByText(/Facility Operations/i);
+    await act(async () => {
+      fireEvent.click(opsButton);
+    });
 
-    // =========================
-    // ✅ FACILITY CONFIG
-    // =========================
-    it(
-      "shows facility configuration",
-      async () => {
+    const completeButton = screen.getByRole("button", { name: "Complete" });
+    await act(async () => {
+      fireEvent.click(completeButton);
+    });
 
-        render(
+    expect(supabase.from).toHaveBeenCalledWith("facility_bookings");
+  });
 
-          <MemoryRouter>
-
-            <AdminDashboard />
-
-          </MemoryRouter>
-
-        );
-
-        expect(
-
-          await screen.findByText(
-            /opening time/i
-          )
-
-        ).toBeInTheDocument();
-
-        expect(
-
-          screen.getByText("08:00")
-
-        ).toBeInTheDocument();
-
-        expect(
-
-          screen.getByText(
-            /max capacity per slot/i
-          )
-
-        ).toBeInTheDocument();
-
-      }
+  it("swaps viewports seamlessly to load facility config settings form and updates configuration payload parameters", async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <AdminDashboard />
+      </MemoryRouter>
     );
 
+    const configButton = await screen.findByText(/Facility Configuration/i);
+    await act(async () => {
+      fireEvent.click(configButton);
+    });
 
-    // =========================
-    // ✅ BOOKING STATS
-    // =========================
-    it(
-      "shows booking statistics",
-      async () => {
+    expect(screen.getByText(/Facility Parameters & Constraints/i)).toBeInTheDocument();
 
-        render(
+    const inputs = screen.getAllByRole("spinbutton");
+    await act(async () => {
+      await user.clear(inputs[0]);
+      await user.type(inputs[0], "45");
+    });
 
-          <MemoryRouter>
+    const submitConfigBtn = screen.getByRole("button", { name: /Save Operational Rules/i });
+    await act(async () => {
+      fireEvent.click(submitConfigBtn);
+    });
 
-            <AdminDashboard />
+    await waitFor(() => {
+      expect(window.alert).toHaveBeenCalledWith(expect.stringContaining("Facility configuration updated!"));
+    });
+  });
 
-          </MemoryRouter>
-
-        );
-
-        await waitFor(() => {
-
-          expect(
-
-            screen.getByText(
-              /total bookings/i
-            )
-
-          ).toBeInTheDocument();
-
-        });
-
-        expect(
-
-          screen.getByText("2")
-
-        ).toBeInTheDocument();
-
-      }
+  it("coordinates logout actions smoothly, calling the signOut session utility link", async () => {
+    render(
+      <MemoryRouter>
+        <AdminDashboard />
+      </MemoryRouter>
     );
 
+    const signOutBtn = await screen.findByRole("button", { name: /Sign Out Dashboard/i });
+    await act(async () => {
+      fireEvent.click(signOutBtn);
+    });
 
-    // =========================
-    // ✅ RECENT BOOKINGS TABLE
-    // =========================
-    it(
-      "renders recent bookings table",
-      async () => {
+    expect(supabase.auth.signOut).toHaveBeenCalled();
+    expect(mockNavigate).toHaveBeenCalledWith("/auth");
+  });
 
-        render(
+  /* ======================================================================
+      🚀 COVERAGE BOOSTER: ERROR HANDLING & COLD PATH BRANCHING
+     ====================================================================== */
 
-          <MemoryRouter>
+  it("Security Checkpoint: Redirects to auth page if user session is null", async () => {
+    supabase.auth.getUser.mockResolvedValueOnce({ data: { user: null } });
 
-            <AdminDashboard />
-
-          </MemoryRouter>
-
-        );
-
-        expect(
-
-          await screen.findByText(
-            /recent bookings/i
-          )
-
-        ).toBeInTheDocument();
-
-        expect(
-
-          screen.getByText(
-            "Shikombiso Mashele"
-          )
-
-        ).toBeInTheDocument();
-
-        expect(
-
-          screen.getByText(
-            "Bobo"
-          )
-
-        ).toBeInTheDocument();
-
-      }
+    render(
+      <MemoryRouter>
+        <AdminDashboard />
+      </MemoryRouter>
     );
 
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith("/auth");
+    });
+  });
 
-    // =========================
-    // ✅ CONFIRM BUTTON EXISTS
-    // =========================
-    it(
-      "shows confirm button for pending booking",
-      async () => {
+  it("Security Checkpoint: Redirects to home page if user is not an admin", async () => {
+    vi.spyOn(supabase, "from").mockImplementationOnce((table) => {
+      const qbChain = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({ data: { name: "Regular Student", role: "student" }, error: null })
+      };
+      return qbChain;
+    });
 
-        render(
-
-          <MemoryRouter>
-
-            <AdminDashboard />
-
-          </MemoryRouter>
-
-        );
-
-        expect(
-
-          await screen.findByRole(
-            "button",
-            {
-              name: /confirm/i
-            }
-          )
-
-        ).toBeInTheDocument();
-
-      }
+    render(
+      <MemoryRouter>
+        <AdminDashboard />
+      </MemoryRouter>
     );
 
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith("/");
+    });
+  });
 
-    // =========================
-    // ✅ COMPLETE BUTTON EXISTS
-    // =========================
-    it(
-      "shows complete button for confirmed booking",
-      async () => {
+  it("Security Checkpoint: Redirects to home page if profile database retrieval throws an error", async () => {
+    // Force a genuine execution rejection to hit the catch(err) block
+    vi.spyOn(supabase, "from").mockImplementationOnce((table) => {
+      const qbChain = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockRejectedValue(new Error("Database disconnected completely"))
+      };
+      return qbChain;
+    });
 
-        render(
-
-          <MemoryRouter>
-
-            <AdminDashboard />
-
-          </MemoryRouter>
-
-        );
-
-        expect(
-
-          await screen.findByRole(
-            "button",
-            {
-              name: /complete/i
-            }
-          )
-
-        ).toBeInTheDocument();
-
-      }
+    render(
+      <MemoryRouter>
+        <AdminDashboard />
+      </MemoryRouter>
     );
 
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith("/");
+      expect(console.error).toHaveBeenCalledWith("Admin auth error:", expect.any(Object));
+    });
+  });
 
-    // =========================
-    // ✅ CLICK CONFIRM BUTTON
-    // =========================
-    it(
-      "confirms a pending booking",
-      async () => {
+  it("Data Resiliency: Logs catch error when fetchOriginalBookings query fails", async () => {
+    vi.spyOn(supabase, "from").mockImplementation((table) => {
+      const qbChain = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({ data: { name: "Bobo", role: "admin" }, error: null }),
+        maybeSingle: vi.fn().mockResolvedValue({ data: { id: "cfg-123" }, error: null }),
+        order: vi.fn().mockResolvedValue({ data: null, error: { message: "Bookings DB Timeout" } })
+      };
+      return qbChain;
+    });
 
-        render(
-
-          <MemoryRouter>
-
-            <AdminDashboard />
-
-          </MemoryRouter>
-
-        );
-
-        const confirmButton =
-
-          await screen.findByRole(
-            "button",
-            {
-              name: /confirm/i
-            }
-          );
-
-        await userEvent.click(
-          confirmButton
-        );
-
-        expect(
-          confirmButton
-        ).toBeInTheDocument();
-
-      }
+    render(
+      <MemoryRouter>
+        <AdminDashboard />
+      </MemoryRouter>
     );
 
+    await waitFor(() => {
+      expect(console.error).toHaveBeenCalledWith("Bookings fetch error:", expect.any(Object));
+    });
+  });
 
-    // =========================
-    // ✅ CLICK COMPLETE BUTTON
-    // =========================
-    it(
-      "completes a confirmed booking",
-      async () => {
+  it("Data Resiliency: Logs catch error when fetchFacilityConfiguration query fails", async () => {
+    vi.spyOn(supabase, "from").mockImplementation((table) => {
+      const qbChain = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({ data: { name: "Bobo", role: "admin" }, error: null }),
+        order: vi.fn().mockResolvedValue({ data: [], error: null }),
+        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: { message: "Config corruption" } })
+      };
+      return qbChain;
+    });
 
-        render(
-
-          <MemoryRouter>
-
-            <AdminDashboard />
-
-          </MemoryRouter>
-
-        );
-
-        const completeButton =
-
-          await screen.findByRole(
-            "button",
-            {
-              name: /complete/i
-            }
-          );
-
-        await userEvent.click(
-          completeButton
-        );
-
-        expect(
-          completeButton
-        ).toBeInTheDocument();
-
-      }
+    render(
+      <MemoryRouter>
+        <AdminDashboard />
+      </MemoryRouter>
     );
 
+    await waitFor(() => {
+      expect(console.error).toHaveBeenCalledWith("Config fetch error:", expect.any(Object));
+    });
+  });
 
-    // =========================
-    // ✅ LOGOUT
-    // =========================
-    it(
-      "logs out admin",
-      async () => {
+  it("Pipeline Execution: Runs INSERT branch during configuration initialization if no sequence exists", async () => {
+    const mockInsert = vi.fn().mockResolvedValue({ data: true, error: null });
+    
+    vi.spyOn(supabase, "from").mockImplementation((table) => {
+      const qbChain = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({ data: { name: "Bobo", role: "admin" }, error: null }),
+        order: vi.fn().mockResolvedValue({ data: [], error: null }),
+        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }), 
+        insert: mockInsert
+      };
+      return qbChain;
+    });
 
-        render(
-
-          <MemoryRouter>
-
-            <AdminDashboard />
-
-          </MemoryRouter>
-
-        );
-
-        const logoutButton =
-
-          await screen.findByRole(
-            "button",
-            {
-              name: /logout/i
-            }
-          );
-
-        await userEvent.click(
-          logoutButton
-        );
-
-        expect(
-          mockNavigate
-        ).toHaveBeenCalledWith(
-          "/auth"
-        );
-
-      }
+    render(
+      <MemoryRouter>
+        <AdminDashboard />
+      </MemoryRouter>
     );
 
+    const configButton = await screen.findByText(/Facility Configuration/i);
+    await act(async () => {
+      fireEvent.click(configButton);
+    });
 
-    // =========================
-    // ✅ SIDEBAR NAVIGATION
-    // =========================
-    it(
-      "navigates to facility config",
-      async () => {
+    const submitConfigBtn = screen.getByRole("button", { name: /Save Operational Rules/i });
+    await act(async () => {
+      fireEvent.click(submitConfigBtn);
+    });
 
-        render(
+    await waitFor(() => {
+      expect(mockInsert).toHaveBeenCalled();
+      expect(window.alert).toHaveBeenCalledWith("Facility configuration updated!");
+    });
+  });
 
-          <MemoryRouter>
+  it("Pipeline Execution: Displays window alert warning when saving configuration rules fails", async () => {
+    vi.spyOn(supabase, "from").mockImplementation((table) => {
+      const qbChain = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({ data: { name: "Bobo", role: "admin" }, error: null }),
+        order: vi.fn().mockResolvedValue({ data: [], error: null }),
+        maybeSingle: vi.fn().mockResolvedValue({ data: { id: "cfg-123" }, error: null }),
+        update: vi.fn().mockImplementation(() => ({
+          eq: vi.fn().mockResolvedValue({ data: null, error: { message: "Disk full" } })
+        }))
+      };
+      return qbChain;
+    });
 
-            <AdminDashboard />
-
-          </MemoryRouter>
-
-        );
-
-        const configButton =
-
-          screen.getByText(
-            "Facility Config"
-          );
-
-        await userEvent.click(
-          configButton
-        );
-
-        expect(
-          mockNavigate
-        ).toHaveBeenCalledWith(
-          "/admin/facility-config"
-        );
-
-      }
+    render(
+      <MemoryRouter>
+        <AdminDashboard />
+      </MemoryRouter>
     );
 
+    const configButton = await screen.findByText(/Facility Configuration/i);
+    await act(async () => {
+      fireEvent.click(configButton);
+    });
 
-    // =========================
-    // ✅ EDIT CONFIG BUTTON
-    // =========================
-    it(
-      "navigates using edit config button",
-      async () => {
+    const submitConfigBtn = screen.getByRole("button", { name: /Save Operational Rules/i });
+    await act(async () => {
+      fireEvent.click(submitConfigBtn);
+    });
 
-        render(
+    await waitFor(() => {
+      expect(window.alert).toHaveBeenCalledWith("Failed to save configuration.");
+      expect(console.error).toHaveBeenCalled();
+    });
+  });
 
-          <MemoryRouter>
+  it("Transaction Execution: Logs catch error when Confirm booking transaction updates reject", async () => {
+    vi.spyOn(supabase, "from").mockImplementation((table) => {
+      const qbChain = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({ data: { name: "Bobo", role: "admin" }, error: null }),
+        maybeSingle: vi.fn().mockResolvedValue({ data: { id: "cfg-123" }, error: null }),
+        order: vi.fn().mockResolvedValue({ data: mockBookingsData, error: null }),
+        update: vi.fn().mockImplementation(() => ({
+          eq: vi.fn().mockResolvedValue({ data: null, error: { message: "Network offline" } })
+        }))
+      };
+      return qbChain;
+    });
 
-            <AdminDashboard />
-
-          </MemoryRouter>
-
-        );
-
-        const editButton =
-
-          await screen.findByRole(
-            "button",
-            {
-              name: /edit config/i
-            }
-          );
-
-        await userEvent.click(
-          editButton
-        );
-
-        expect(
-          mockNavigate
-        ).toHaveBeenCalledWith(
-          "/admin/facility-config"
-        );
-
-      }
+    render(
+      <MemoryRouter>
+        <AdminDashboard />
+      </MemoryRouter>
     );
 
-  }
-);
+    const opsButton = await screen.findByText(/Facility Operations/i);
+    await act(async () => {
+      fireEvent.click(opsButton);
+    });
+
+    const confirmButton = screen.getByRole("button", { name: "Confirm" });
+    await act(async () => {
+      fireEvent.click(confirmButton);
+    });
+
+    await waitFor(() => {
+      expect(console.error).toHaveBeenCalledWith("Confirm booking error:", expect.any(Object));
+    });
+  });
+
+  it("Transaction Execution: Logs catch error when Complete booking transaction updates reject", async () => {
+    vi.spyOn(supabase, "from").mockImplementation((table) => {
+      const qbChain = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({ data: { name: "Bobo", role: "admin" }, error: null }),
+        maybeSingle: vi.fn().mockResolvedValue({ data: { id: "cfg-123" }, error: null }),
+        order: vi.fn().mockResolvedValue({ data: mockBookingsData, error: null }),
+        update: vi.fn().mockImplementation(() => ({
+          eq: vi.fn().mockResolvedValue({ data: null, error: { message: "Network offline" } })
+        }))
+      };
+      return qbChain;
+    });
+
+    render(
+      <MemoryRouter>
+        <AdminDashboard />
+      </MemoryRouter>
+    );
+
+    const opsButton = await screen.findByText(/Facility Operations/i);
+    await act(async () => {
+      fireEvent.click(opsButton);
+    });
+
+    const completeButton = screen.getByRole("button", { name: "Complete" });
+    await act(async () => {
+      fireEvent.click(completeButton);
+    });
+
+    await waitFor(() => {
+      expect(console.error).toHaveBeenCalledWith("Complete booking error:", expect.any(Object));
+    });
+  });
+
+  /* ======================================================================
+      🚀 BOUNDARY VALUE TESTING (BVA) & EQUIVALENCE PARTITIONS (EP)
+     ====================================================================== */
+
+  it("Boundary Check: Renders zero-state empty fallback message nodes when booking database rows evaluate to absolute zero", async () => {
+    vi.spyOn(supabase, "from").mockImplementation((table) => {
+      const qbChain = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({ data: { name: "Bobo", role: "admin" }, error: null }),
+        maybeSingle: vi.fn().mockResolvedValue({ data: { id: "cfg-123", slot_duration_minutes: 30 }, error: null }),
+        order: vi.fn().mockResolvedValue({ data: [], error: null })
+      };
+      return qbChain;
+    });
+
+    render(
+      <MemoryRouter>
+        <AdminDashboard />
+      </MemoryRouter>
+    );
+
+    const opsButton = await screen.findByText(/Facility Operations/i);
+    await act(async () => {
+      fireEvent.click(opsButton);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(/No facility transactions logged in database profiles./i)).toBeInTheDocument();
+    });
+  });
+
+  it("Boundary Check: Confirms system configuration form inputs accept absolute minimum boundary values safely", async () => {
+    vi.spyOn(supabase, "from").mockImplementation((table) => {
+      const qbChain = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({ data: { name: "Bobo", role: "admin" }, error: null }),
+        maybeSingle: vi.fn().mockResolvedValue({ data: { id: "cfg-123", slot_duration_minutes: 30 }, error: null }),
+        order: vi.fn().mockResolvedValue({ data: [], error: null }),
+        update: vi.fn().mockImplementation(() => ({
+          eq: vi.fn().mockResolvedValue({ data: true, error: null })
+        })),
+        insert: vi.fn().mockResolvedValue({ data: true, error: null })
+      };
+      return qbChain;
+    });
+
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <AdminDashboard />
+      </MemoryRouter>
+    );
+
+    const configButton = await screen.findByText(/Facility Configuration/i);
+    await act(async () => {
+      fireEvent.click(configButton);
+    });
+
+    const inputs = screen.getAllByRole("spinbutton");
+    
+    await act(async () => {
+      await user.clear(inputs[0]);
+      await user.type(inputs[0], "1");
+      await user.clear(inputs[1]);
+      await user.type(inputs[1], "1");
+    });
+
+    const submitConfigBtn = screen.getByRole("button", { name: /Save Operational Rules/i });
+    
+    await act(async () => {
+      fireEvent.click(submitConfigBtn);
+    });
+
+    await waitFor(() => {
+      expect(window.alert).toHaveBeenCalledWith("Facility configuration updated!");
+    });
+  });
+
+  it("swaps viewports seamlessly to load content moderation workspace", async () => {
+    render(
+      <MemoryRouter>
+        <AdminDashboard />
+      </MemoryRouter>
+    );
+    
+    const moderationButton = await screen.findByText(/Content Moderation/i);
+    
+    await act(async () => {
+      fireEvent.click(moderationButton);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("mock-moderation-queue")).toBeInTheDocument();
+    });
+  });
+});
