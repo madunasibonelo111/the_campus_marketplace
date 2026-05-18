@@ -1,7 +1,7 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import Home from './Home.jsx'; 
-import { expect, it, describe } from 'vitest';
+import { expect, it, describe, vi } from 'vitest';
 
 describe('Home Page stuff', () => {
   it('should show the main welcome text on the hero section', () => {
@@ -11,7 +11,6 @@ describe('Home Page stuff', () => {
       </BrowserRouter>
     );
 
-   
     const mainHeading = screen.getByText(/Your campus.*marketplace made.*simple/i);
     expect(mainHeading).toBeInTheDocument();
   });
@@ -23,7 +22,6 @@ describe('Home Page stuff', () => {
       </BrowserRouter>
     );
 
-    // finding the link to make sure the user goes to login/register
     const startLink = screen.getByRole('link', { name: /Get Started/i });
     expect(startLink).toHaveAttribute('href', '/auth');
   });
@@ -35,8 +33,23 @@ describe('Home Page stuff', () => {
       </BrowserRouter>
     );
 
-   
     const sectionHeader = screen.getByRole('heading', { name: /How It Works/i, level: 2 });
     expect(sectionHeader).toBeInTheDocument();
+  });
+
+  it('Coverage Boost: Triggers scroll tracking anchor safely when clicking How It Works', () => {
+    const mockScrollIntoView = vi.fn();
+    window.HTMLElement.prototype.scrollIntoView = mockScrollIntoView;
+
+    render(
+      <BrowserRouter>
+        <Home />
+      </BrowserRouter>
+    );
+
+    const scrollBtn = screen.getByRole('button', { name: /How it works/i });
+    fireEvent.click(scrollBtn);
+
+    expect(mockScrollIntoView).toHaveBeenCalledWith({ behavior: "smooth" });
   });
 });

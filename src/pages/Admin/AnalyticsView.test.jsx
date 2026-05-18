@@ -66,4 +66,34 @@ describe('AnalyticsView Component Test Suite (Sprint 4 - US1 API Contract)', () 
       expect(screen.getByText(/System Error:/i)).toBeInTheDocument();
     });
   });
+  
+  test('Coverage Boost: Fallback to default values when RPC response is empty or null', async () => {
+    // Empty object response triggers the || 2 fallback in your component
+    supabase.rpc.mockResolvedValueOnce({ data: {}, error: null });
+
+    render(<AnalyticsView />);
+
+    await waitFor(() => {
+      // 1. Total Volume defaults to R14000.00
+      expect(screen.getByText(/R14000.00/i)).toBeInTheDocument();
+      // 2. Successful Handoffs defaults to 2
+      expect(screen.getByText(/2 Finished/i)).toBeInTheDocument();
+      // 3. Facility Load defaults to 10.0% (5.0 + (2 * 2.5))
+      expect(screen.getByText(/10.0\s*%\s*Capacity/i)).toBeInTheDocument();
+    });
+  });
+
+  test('Coverage Boost: Handles complete data absence (null response) without crashing', async () => {
+    // Null response triggers the same fallback path
+    supabase.rpc.mockResolvedValueOnce({ data: null, error: null });
+
+    render(<AnalyticsView />);
+
+    await waitFor(() => {
+      // Volume defaults to R14000.00
+      expect(screen.getByText(/R14000.00/i)).toBeInTheDocument();
+      // Handoffs defaults to 2
+      expect(screen.getByText(/2 Finished/i)).toBeInTheDocument();
+    });
+  });
 });
