@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { supabase } from "@/supabase/supabaseClient";
 import AnalyticsView from "./AnalyticsView";
 import Reports from "./Reports"; 
+import ModerationQueue from "./ModerationQueue";
 import "./AdminDashboard.css";
 
 export default function AdminDashboard() {
