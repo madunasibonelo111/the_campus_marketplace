@@ -1,10 +1,11 @@
-      import { useNavigate } from 'react-router-dom';
-      import React, { useEffect, useState } from "react";
-      import { supabase } from "@/supabase/supabaseClient";
-      import AnalyticsView from "./AnalyticsView";
-      import "./AdminDashboard.css";
+import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from "react";
+import { supabase } from "@/supabase/supabaseClient";
+import AnalyticsView from "./AnalyticsView";
+import ModerationQueue from "./ModerationQueue";
+import "./AdminDashboard.css";
 
-      export default function AdminDashboard() {
+export default function AdminDashboard() {
   const navigate = useNavigate();
   const [admin, setAdmin] = useState(null);
   const [activeTab, setActiveTab] = useState("analytics"); // Default layout view anchor
@@ -371,11 +372,10 @@
           </div>
         )}
         
-        {/* User Story 2 Placeholder */}
+        {/* User Story 2: Sibonelo's Component */}
         {activeTab === "moderation" && (
-          <div className="placeholder-card" style={{ background: 'white', padding: '50px', borderRadius: '18px', border: '1px solid #e2e8f0', color: '#64748b', textAlign: 'center' }}>
-            <h3 style={{ color: '#1e293b', marginBottom: '8px' }}>🛡️ Content Moderation Workspace</h3>
-            <p style={{ fontSize: '14px', margin: 0 }}>Queue processing view will populate immediately when Sibonelo mounts his component links.</p>
+          <div style={{ animation: 'fadeIn 0.3s ease-in-out' }}>
+            <ModerationQueue />
           </div>
         )}
 

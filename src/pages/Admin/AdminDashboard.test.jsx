@@ -27,39 +27,53 @@ vi.mock("@/supabase/supabaseClient", () => ({
         eq: () => ({
           single: () => Promise.resolve({ data: { name: "Bobo", role: "admin" } })
         }),
+        limit: () => ({
+          maybeSingle: () => Promise.resolve({ data: { slot_duration_minutes: 30, max_capacity_per_slot: 5, open_time: "09:00", close_time: "17:00" } })
+        }),
         order: () => Promise.resolve({
           data: [
             { id: 1, status: "pending", booking_date: "2026-05-16", booking_type: "drop_off", profiles: { name: "Sarah" } }
           ]
-        }),
-        limit: () => ({
-          maybeSingle: () => Promise.resolve({ data: { slot_duration_minutes: 30, max_capacity_per_slot: 5 } }),
-          single: () => Promise.resolve({ data: { slot_duration_minutes: 30, max_capacity_per_slot: 5 } })
         })
-      }),
-      update: () => ({ eq: () => Promise.resolve({ data: true, error: null }) }),
-      insert: () => Promise.resolve({ data: true, error: null })
+      })
     })),
-    rpc: vi.fn(() => Promise.resolve({
-      data: { total_transaction_volume: 12500, pending_flagged_items: 2, weekly_facility_utilization_pct: 10, monthly_successful_handoffs: 5 },
-      error: null
-    }))
+    // ✅ Mock the RPC calls for User Story 2
+    rpc: vi.fn((rpcName, payload) => {
+      if (rpcName === 'get_pending_flags') {
+        return Promise.resolve({ 
+          data: [{ 
+            flag_id: "test-flag-1", 
+            item_id: "item-12345678", 
+            reporter_name: "John Doe", 
+            reason: "Inappropriate content", 
+            created_at: new Date().toISOString() 
+          }] 
+        });
+      }
+      return Promise.resolve({ data: null });
+    })
   }
 }));
 
-describe("AdminDashboard Navigation & Layout Toggles", () => {
+// MOCK CHILD COMPONENT
+vi.mock("./AnalyticsView", () => ({
+  default: () => <div data-testid="mock-analytics-view">Platform Analytics Dashboard</div>
+}));
+
+describe("AdminDashboard Interactive Navigation Viewports", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("renders side navigation layout buttons correctly", async () => {
+  it("renders global dashboard layout after passing security checkpoint", async () => {
     render(
       <MemoryRouter>
         <AdminDashboard />
       </MemoryRouter>
     );
-    // ✅ Wait for loading spinner to clear and dashboard to mount
-    expect(await screen.findByText(/Platform Analytics/i)).toBeInTheDocument();
+
+    // ✅ FIXED: Using findByTestId to avoid the "multiple elements found" error
+    expect(await screen.findByTestId("mock-analytics-view")).toBeInTheDocument();
     expect(screen.getByText(/Facility Operations/i)).toBeInTheDocument();
   });
 
@@ -102,4 +116,27 @@ describe("AdminDashboard Navigation & Layout Toggles", () => {
       expect(screen.getByText(/Facility Parameters & Constraints/i)).toBeInTheDocument();
     });
   });
+
+  // ✅ Test for User Story 2 (Sibonelo's Moderation Queue Component)
+  it("swaps viewports seamlessly to load content moderation workspace", async () => {
+    render(
+      <MemoryRouter>
+        <AdminDashboard />
+      </MemoryRouter>
+    );
+    
+    const moderationButton = await screen.findByText(/Content Moderation/i);
+    
+    await act(async () => {
+      fireEvent.click(moderationButton);
+    });
+
+    // Check if the component text successfully rendered using the mocked RPC data
+    await waitFor(() => {
+      expect(screen.getByText(/Moderation Queue/i)).toBeInTheDocument();
+      // Should also see the mocked dummy data reporter name
+      expect(screen.getByText(/John Doe/i)).toBeInTheDocument();
+    });
+  });
+
 });
