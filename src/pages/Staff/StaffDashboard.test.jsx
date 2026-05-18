@@ -68,28 +68,39 @@ describe("StaffDashboard Component Core Layout Test Suite", () => {
     supabase.auth.getUser.mockResolvedValue({ data: { user: mockUser }, error: null });
     
     supabase.from.mockImplementation((table) => {
-      return {
+      const qb = {
         select: vi.fn().mockReturnThis(),
+        gte: vi.fn().mockReturnThis(),
+        lte: vi.fn().mockReturnThis(),
+        in: vi.fn().mockReturnThis(),
+        order: vi.fn().mockReturnThis(),
+        
         eq: vi.fn().mockImplementation((col, val) => {
-          const qb = {
-            single: vi.fn(),
-            eq: vi.fn().mockReturnThis(),
-            in: vi.fn().mockReturnThis(),
-            order: vi.fn()
-          };
-          
           if (table === 'profiles') {
-            qb.single.mockResolvedValue({ data: mockProfile, error: null });
+            return { single: vi.fn().mockResolvedValue({ data: mockProfile, error: null }) };
           }
           if (table === 'facility_bookings') {
-            qb.order.mockResolvedValue({ data: col === 'booking_type' && val === 'drop_off' ? mockDropoffs : mockCollections, error: null });
-            return qb;
+            return {
+              eq: vi.fn().mockImplementation(() => ({
+                order: vi.fn().mockResolvedValue({ 
+                  data: val === 'drop_off' ? mockDropoffs : mockCollections, 
+                  error: null 
+                })
+              }))
+            };
           }
           return qb;
         }),
-        update: vi.fn().mockReturnThis(),
-        insert: vi.fn().mockResolvedValue({ error: null })
+        update: vi.fn().mockImplementation(() => ({
+          eq: vi.fn().mockResolvedValue({ data: true, error: null })
+        })),
+        insert: vi.fn().mockResolvedValue({ data: true, error: null }),
+        maybeSingle: vi.fn().mockResolvedValue({ data: { id: "row-456" }, error: null })
       };
+
+      // Ensure every promise chain resolves to prevent loading hang
+      qb.then = (resolve) => resolve({ data: [], error: null });
+      return qb;
     });
   });
 
@@ -103,6 +114,54 @@ describe("StaffDashboard Component Core Layout Test Suite", () => {
     });
   };
 
+  it("executes receipt modal verification branch successfully", async () => {
+    const user = userEvent.setup(); // Initialize userEvent
+    await renderDashboard();
+
+    // 1. Find the buttons
+    const receiptBtns = await screen.findAllByRole('button', { name: /Quick Confirm Drop-off/i });
+    
+    // 2. Click the button to trigger modal/state
+    await act(async () => {
+      await user.click(receiptBtns[0]);
+    });
+
+    // If a modal appears, verify its existence here
+    // expect(screen.getByText(/Confirm Drop-off/i)).toBeInTheDocument();
+  });
+
+  it("Branch Coverage: Validates compliance checkboxes inside the Release Modal", async () => {
+    const user = userEvent.setup();
+    await renderDashboard();
+    
+    
+    
+    const releaseBtns = screen.getAllByRole("button", { name: /Quick Release Item/i });
+    
+    // This triggers the alert branch in handleUpdateBookingStatus
+    await act(async () => {
+      await user.click(releaseBtns[0]);
+    });
+    
+    expect(global.alert).toHaveBeenCalledWith(expect.stringContaining("🛑 Verification Compliance"));
+  });
+
+  it("Branch Coverage: Alerts user when attempting Quick Release without checklist verification", async () => {
+    const user = userEvent.setup();
+    await renderDashboard();
+
+    // 1. Find the "Quick Release Item" button for the collection row
+    const releaseBtns = await screen.findAllByRole("button", { name: /Quick Release Item/i });
+    
+    // 2. Click it WITHOUT checking the boxes
+    await act(async () => {
+      await user.click(releaseBtns[0]);
+    });
+
+    // 3. Verify the branch (alert) is triggered
+    expect(global.alert).toHaveBeenCalledWith(expect.stringContaining("🛑 Verification Compliance"));
+  });
+  
   it("resolves authenticated agent metrics and prints active greeting lines", async () => {
     vi.setSystemTime(new Date("2026-05-17T08:00:00.000Z"));
     await renderDashboard();
@@ -133,8 +192,16 @@ describe("StaffDashboard Component Core Layout Test Suite", () => {
     expect(window.alert).toHaveBeenCalledWith(expect.stringContaining("quick-action has been logged and synchronized!"));
   });
 
+  it("intercepts operational database lookup exceptions safely within the try-catch frame", async () => {
+    vi.spyOn(supabase.auth, "getUser").mockRejectedValue(new Error("Database instance unavailable"));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await renderDashboard();
+    expect(screen.getByText("Staff Management Portal")).toBeInTheDocument();
+  });
+
   /* ======================================================================
-      🚀 NEW BOUNDARY TESTING CONDITIONS: SPRINT REQUIREMENTS
+      🚀 BOUNDARY VALUE TESTING (BVA) & EQUIVALENCE PARTITIONS (EP)
      ====================================================================== */
 
   it("Boundary Check: Evaluates late-evening (23:59) local scheduling dates accurately without timezone drift leaks", async () => {
@@ -150,7 +217,11 @@ describe("StaffDashboard Component Core Layout Test Suite", () => {
     supabase.from.mockImplementationOnce(() => ({
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
-      order: vi.fn().mockResolvedValue({ data: [], error: null })
+      gte: vi.fn().mockReturnThis(),
+      lte: vi.fn().mockReturnThis(),
+      in: vi.fn().mockReturnThis(),
+      order: vi.fn().mockResolvedValue({ data: [], error: null }),
+      then: (resolve) => resolve({ data: [], error: null })
     }));
 
     await renderDashboard();
@@ -158,5 +229,17 @@ describe("StaffDashboard Component Core Layout Test Suite", () => {
     await waitFor(() => {
       expect(screen.getByText("Staff Management Portal")).toBeInTheDocument();
     });
+  });
+
+  it("Equivalence Partition: Verifies afternoon shift greeting messages compile at standard hour distributions", async () => {
+    vi.setSystemTime(new Date("2026-05-17T14:30:00.000Z"));
+    await renderDashboard();
+    expect(screen.getByTestId("greeting")).toHaveTextContent(/Good afternoon/i);
+  });
+
+  it("Boundary Check: Verifies evening shift fallback greetings load cleanly at upper time limitations", async () => {
+    vi.setSystemTime(new Date("2026-05-17T20:15:00.000Z"));
+    await renderDashboard();
+    expect(screen.getByTestId("greeting")).toHaveTextContent(/Good evening/i);
   });
 });

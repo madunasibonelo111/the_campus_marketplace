@@ -51,28 +51,30 @@ describe("US13: Item Release to Buyer (CollectionManagement)", () => {
     simulateEmptyQueue = false;
     vi.spyOn(window, "alert").mockImplementation(() => {});
 
-    // High fidelity fluent chaining simulation builder engine 
-    supabase.from.mockImplementation((table) => {
-      const qb = {
+    // Create a stable, fluent chain builder for Supabase
+    const createMockChain = () => {
+      const chain = {
         select: vi.fn().mockReturnThis(),
-        update: vi.fn().mockImplementation(() => Promise.resolve({ error: globalUpdateError || null })),
+        eq: vi.fn().mockReturnThis(),
         order: vi.fn().mockImplementation(() => {
           if (simulateEmptyQueue) return Promise.resolve({ data: [], error: null });
           if (globalFetchError) return Promise.resolve({ data: null, error: globalFetchError });
           return Promise.resolve({ data: mockCollections, error: null });
         }),
+        update: vi.fn().mockReturnThis(),
         insert: vi.fn().mockResolvedValue({ error: null })
       };
-
-      qb.eq = vi.fn().mockImplementation(function(col, val) {
-        if (table === 'facility_bookings' && col === 'id') {
-          return Promise.resolve({ error: globalUpdateError || null });
-        }
-        return qb;
+      
+      // Add the final execution method (eq) to the update chain specifically
+      chain.update.mockReturnValue({
+        eq: vi.fn().mockImplementation(() => Promise.resolve({ error: globalUpdateError || null }))
       });
+      
+      return chain;
+    };
 
-      return qb;
-    });
+    // Replace the spy with a full mock implementation
+    vi.spyOn(supabase, 'from').mockImplementation(() => createMockChain());
   });
 
   const renderComponent = async () => {
@@ -84,6 +86,30 @@ describe("US13: Item Release to Buyer (CollectionManagement)", () => {
       );
     });
   };
+
+  it("executes the full handover security checklist and authorizes release", async () => {
+    await renderComponent();
+    
+    // 1. Open the modal
+    const openModalBtn = await screen.findByRole("button", { name: /Authenticate & Release Item/i });
+    await act(async () => { fireEvent.click(openModalBtn); });
+
+    // 2. Trigger the checkbox branches (This hits the 'disabled' state toggle logic)
+    const checkboxes = screen.getAllByRole("checkbox");
+    await act(async () => {
+      fireEvent.click(checkboxes[0]); // verifyBuyerId
+      fireEvent.click(checkboxes[1]); // verifyConditionNotes
+    });
+
+    // 3. Execute the release
+    const submitBtn = screen.getByRole("button", { name: /Authorize Release Handover/i });
+    expect(submitBtn).not.toBeDisabled(); // Validates branching enablement
+    
+    await act(async () => { fireEvent.click(submitBtn); });
+    
+    // 4. Verify the database call was routed
+    expect(supabase.from).toHaveBeenCalledWith('facility_bookings');
+  });
 
   it("renders collections management component with loaded items grid lists", async () => {
     await renderComponent();

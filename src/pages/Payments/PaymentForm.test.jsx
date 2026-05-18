@@ -26,7 +26,11 @@ vi.mock('react-router-dom', async () => {
 vi.mock('@/supabase/supabaseClient', () => ({
   supabase: {
     auth: {
-      getUser: vi.fn(),
+      // Mock the nested return structure: { data: { user: ... } }
+      getUser: vi.fn().mockResolvedValue({ 
+        data: { user: { id: 'user-123' } }, 
+        error: null 
+      }),
     },
     from: vi.fn(),
   },
@@ -35,34 +39,27 @@ vi.mock('@/supabase/supabaseClient', () => ({
 describe('PaymentForm Component Coverage Suite', () => {
   const mockUser = { id: 'user-123', email: 'test@example.com' };
 
+  
   beforeEach(() => {
     vi.clearAllMocks();
-    mockNavigate.mockClear();
-    supabase.auth.getUser.mockResolvedValue({ data: { user: mockUser }, error: null });
+    
+    // Create a chainable mock object
+    const mockChain = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'some-id' }, error: null }),
+      single: vi.fn().mockResolvedValue({ 
+        data: { id: 'p-999', booking_date: '2026-05-20T10:00:00Z' }, 
+        error: null 
+      }),
+      update: vi.fn().mockReturnThis(),
+      insert: vi.fn().mockReturnThis(), // Added chain support
+    };
 
-    supabase.from.mockImplementation((table) => {
-      const qb = {
-        select: vi.fn().mockImplementation(() => qb),
-        eq: vi.fn().mockImplementation(() => qb),
-        order: vi.fn().mockImplementation(() => {
-          if (table === 'saved_cards') {
-            return Promise.resolve({ data: [], error: null });
-          }
-          return qb;
-        }),
-        update: vi.fn().mockImplementation(() => qb),
-        insert: vi.fn().mockImplementation(() => qb),
-        single: vi.fn().mockImplementation(() => {
-          if (table === 'payments') {
-            return Promise.resolve({ data: { id: 'p-999' }, error: null });
-          }
-          if (table === 'facility_bookings') {
-            return Promise.resolve({ data: { id: 'b-999' }, error: null });
-          }
-          return Promise.resolve({ data: null, error: null });
-        })
-      };
-      return qb;
+    supabase.from.mockImplementation(() => mockChain);
+    supabase.auth.getUser.mockResolvedValue({ 
+      data: { user: { id: 'user-123' } }, 
+      error: null 
     });
   });
 
@@ -200,7 +197,7 @@ describe('PaymentForm Component Coverage Suite', () => {
       expect(screen.getByText(/Successful/i)).toBeInTheDocument();
     });
   });
-
+  
   test('handles paypal gateway redirection routines smoothly on selection update toggles', async () => {
     renderComponent();
 
@@ -235,4 +232,40 @@ describe('PaymentForm Component Coverage Suite', () => {
     expect(window.alert).toHaveBeenCalledWith('Discount applied! 10% off');
     expect(screen.getByRole('button', { name: /Pay R135.00/i })).toBeInTheDocument();
   });
+
+  test('triggers shortfall warning when payment amount is less than total price', async () => {
+    vi.spyOn(window, 'alert').mockImplementation(() => {});
+    renderComponent();
+
+    // 1. Get elements
+    const amountInput = await screen.findByRole('spinbutton');
+    const nameInput = screen.getByPlaceholderText('Card Holder Name');
+    const cardInput = screen.getByPlaceholderText('Card Number');
+    const expiryInput = screen.getByPlaceholderText('Expiry date (MM/YY)');
+    const cvvInput = screen.getByPlaceholderText('CVV');
+
+    // 2. Perform actions: Input a partial amount (100) for a 150 total
+    await act(async () => {
+      fireEvent.change(amountInput, { target: { value: '100.00' } });
+      fireEvent.change(nameInput, { target: { value: 'Khotso Mokoena' } });
+      fireEvent.change(cardInput, { target: { value: '4242 4242 4242 4242' } });
+      fireEvent.change(expiryInput, { target: { value: '12/29' } });
+      fireEvent.change(cvvInput, { target: { value: '123' } });
+    });
+
+    const payBtn = screen.getByRole('button', { name: /Pay R100.00/i });
+    
+    // 3. Click pay and wait for the async processPayment to resolve
+    await act(async () => {
+      fireEvent.click(payBtn);
+    });
+
+    // 4. Increase timeout to wait for the 1500ms gateway delay inside PaymentForm
+    await waitFor(() => {
+      // Look for the specific H2 header rendered when shortfallInfo exists
+      expect(screen.getByRole('heading', { level: 2 }).textContent).toMatch(/Payment Balance Recorded/i);
+      expect(screen.getByText(/Remaining Balance Owed:/i)).toBeInTheDocument();
+    }, { timeout: 3000 });
+  });
+  
 });

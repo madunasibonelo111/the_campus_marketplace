@@ -147,7 +147,7 @@ describe("AdminDashboard Navigation, Mutation Handlers & Boundaries", () => {
       await user.type(inputs[0], "45");
     });
 
-    const submitConfigBtn = screen.getByRole("button", { name: /Save Configuration/i });
+    const submitConfigBtn = screen.getByRole("button", { name: /Save Operational Rules/i });
     await act(async () => {
       fireEvent.click(submitConfigBtn);
     });
@@ -201,9 +201,9 @@ describe("AdminDashboard Navigation, Mutation Handlers & Boundaries", () => {
       fireEvent.click(opsButton);
     });
 
-    await waitFor(() => {
-      expect(screen.getByText(/No facility transactions available./i)).toBeInTheDocument();
-    });
+await waitFor(() => {
+  expect(screen.getByText(/No facility transactions logged in database profiles./i)).toBeInTheDocument();
+});
   });
 
   it("Boundary Check: Confirms system configuration form inputs accept absolute minimum boundary values safely", async () => {
@@ -246,7 +246,7 @@ describe("AdminDashboard Navigation, Mutation Handlers & Boundaries", () => {
       await user.type(inputs[1], "1");
     });
 
-    const submitConfigBtn = screen.getByRole("button", { name: /Save Configuration/i });
+    const submitConfigBtn = screen.getByRole("button", { name: /Save Operational Rules/i });
     
     // 1. Submit the form first!
     await act(async () => {
@@ -255,7 +255,7 @@ describe("AdminDashboard Navigation, Mutation Handlers & Boundaries", () => {
 
     // 2. Assert the alert message second!
     await waitFor(() => {
-      expect(window.alert).toHaveBeenCalledWith(expect.stringContaining("Facility configuration updated!"));
-    });
+  expect(window.alert).toHaveBeenCalledWith("Facility configuration updated!");
+});
   });
 });
