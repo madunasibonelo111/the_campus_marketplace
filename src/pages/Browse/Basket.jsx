@@ -383,10 +383,11 @@ export default function Basket({ onViewListing }) {
           .includes(
             search.toLowerCase()
           );
+      const isNotMine = i.user_id !== currentUser?.id;
 
       return (
         matchCat &&
-        matchSearch
+        matchSearch &&  isNotMine
       );
     });
 
@@ -865,6 +866,10 @@ export default function Basket({ onViewListing }) {
           }
         >
           TRADE OFFERS
+        </button>
+        {/* ADD THIS NEW BUTTON */}
+        <button onClick={() => navigate("/profile")}>
+          PROFILE
         </button>
 
         <button

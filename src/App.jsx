@@ -42,90 +42,77 @@ import CollectionBooking from "./pages/Booking/CollectionBooking";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
 import FacilityConfig from "./pages/Admin/FacilityConfig";
 
+//Profile
+import UserProfile from "./pages/Profile/UserProfile"; // Adjust path if needed
+
 import "./App.css";
 
-function ItemDetailView({
-  selectedItem,
-  setSelectedItem,
-  currentUser,
-}) {
+function ItemDetailView({ selectedItem, setSelectedItem, currentUser }) {
   const navigate = useNavigate();
+  const [avgRating, setAvgRating] = useState("No ratings");
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
 
-  const [avgRating, setAvgRating] =
-    useState("No ratings");
-
-  // Fetch Seller Rating
   useEffect(() => {
     const fetchSellerRating = async () => {
       if (!selectedItem?.user_id) return;
-
       try {
-        const { data, error } =
-          await supabase
-            .from("ratings")
-            .select("score")
-            .eq(
-              "reviewee_id",
-              selectedItem.user_id
-            );
+        const { data, error } = await supabase
+          .from("ratings")
+          .select("score")
+          .eq("reviewee_id", selectedItem.user_id);
 
         if (error) throw error;
-
         if (data && data.length > 0) {
-          const total = data.reduce(
-            (sum, r) =>
-              sum + Number(r.score),
-            0
-          );
-
-          setAvgRating(
-            (
-              total / data.length
-            ).toFixed(1)
-          );
+          const total = data.reduce((sum, r) => sum + Number(r.score), 0);
+          setAvgRating((total / data.length).toFixed(1));
         } else {
           setAvgRating("No ratings");
         }
       } catch (err) {
-        console.error(
-          "Error fetching rating:",
-          err
-        );
-
-        setAvgRating("No ratings");
+        console.error("Error fetching rating:", err);
       }
     };
-
     fetchSellerRating();
   }, [selectedItem]);
 
-  const handleDeleteListing =
-    async (listingId) => {
-      if (
-        !window.confirm(
-          "Are you sure you want to remove this listing?"
-        )
-      )
-        return;
+  const handleDeleteListing = async (listingId) => {
+    if (!window.confirm("Are you sure you want to remove this listing?")) return;
+    try {
+      const { error } = await supabase.from("listings").delete().eq("id", listingId);
+      if (error) throw error;
+      alert("Listing removed.");
+      setSelectedItem(null);
+      window.location.reload();
+    } catch (err) {
+      alert("Error: " + err.message);
+    }
+  };
 
-      try {
-        const { error } =
-          await supabase
-            .from("listings")
-            .delete()
-            .eq("id", listingId);
-
-        if (error) throw error;
-
-        alert("Listing removed.");
-
-        setSelectedItem(null);
-
-        window.location.reload();
-      } catch (err) {
-        alert("Error: " + err.message);
-      }
-    };
+  const handleReportSubmit = async (e) => {
+    e.preventDefault();
+    if (!reportReason) return alert("Please select a reason.");
+    setIsSubmittingReport(true);
+    try {
+      const { error } = await supabase.from("flagged_content").insert({
+        reporter_id: currentUser.id,
+        content_type: "listing",
+        content_id: selectedItem.id,
+        reason: reportReason,
+        status: "pending"
+      });
+      if (error) throw error;
+      alert("Thank you. This listing has been reported to the campus admins for review.");
+      setShowReportModal(false);
+      setReportReason("");
+    } catch (err) {
+      console.error("Report error:", err);
+      alert("Failed to submit report: " + err.message);
+    } finally {
+      setIsSubmittingReport(false);
+    }
+  };
 
   if (!selectedItem) return null;
 
@@ -133,169 +120,100 @@ function ItemDetailView({
     <div className="detail-overlay">
       <div className="detail-card">
         <div className="detail-header-nav">
-          <button
-            onClick={() =>
-              setSelectedItem(null)
-            }
-            className="back-btn-pill"
-          >
-            <span>←</span>
-            Back to Shop
+          <button onClick={() => setSelectedItem(null)} className="back-btn-pill">
+            <span>←</span> Back to Shop
           </button>
-
-          <div className="category-chip">
-            {selectedItem.categories
-              ?.name || "Campus Item"}
-          </div>
+          <div className="category-chip">{selectedItem.categories?.name || "Campus Item"}</div>
         </div>
 
         <div className="detail-grid">
           <div className="detail-visuals">
             <div className="image-container-main">
-              <img
-                src={selectedItem.image}
-                alt={selectedItem.title}
-              />
-
-              <div className="status-tag">
-                {selectedItem.condition?.toUpperCase() ||
-                  "GOOD"}
-              </div>
+              <img src={selectedItem.image} alt={selectedItem.title} />
+              <div className="status-tag">{selectedItem.condition?.toUpperCase() || "GOOD"}</div>
             </div>
           </div>
 
           <div className="detail-specs">
             <div className="specs-top">
-              <h1 className="item-title-hero">
-                {selectedItem.title}
-              </h1>
-
+              <h1 className="item-title-hero">{selectedItem.title}</h1>
               <div className="price-badge-hero">
-                {selectedItem.listing_type ===
-                "trade"
-                  ? "🤝 Trade Only"
-                  : `R${parseFloat(
-                      selectedItem.price || 0
-                    ).toFixed(2)}`}
+                {selectedItem.listing_type === "trade" ? "🤝 Trade Only" : `R${parseFloat(selectedItem.price || 0).toFixed(2)}`}
               </div>
             </div>
 
             <div className="specs-body">
               <div className="description-well">
-                <p>
-                  {selectedItem.description ||
-                    "No description provided."}
-                </p>
+                <p>{selectedItem.description || "No description provided."}</p>
               </div>
 
               <div className="perks-grid">
                 <div className="perk-item">
-                  <div className="perk-icon">
-                    👤
-                  </div>
-
+                  <div className="perk-icon">👤</div>
                   <div className="perk-text">
                     <small>Seller</small>
-
-                    <span
-                      onClick={() =>
-                        navigate(
-                          `/seller/${selectedItem.user_id}/reviews`
-                        )
-                      }
-                      style={{
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        color: "#f39c12",
-                        fontWeight: "bold",
-                      }}
-                      title="View seller reviews"
-                    >
-                      {selectedItem.profiles
-                        ?.name ||
-                        "Verified Student"}
-
-                      <b
-                        style={{
-                          color: "#f39c12",
-                          marginLeft: "10px",
-                        }}
-                      >
-                        ⭐ {avgRating}
-                      </b>
+                    <span onClick={() => navigate(`/seller/${selectedItem.user_id}/reviews`)} style={{ cursor: "pointer", color: "#f39c12", fontWeight: "bold" }}>
+                      {selectedItem.profiles?.name || "Verified Student"}
+                      <b style={{ marginLeft: "10px" }}>⭐ {avgRating}</b>
                     </span>
                   </div>
                 </div>
-
                 <div className="perk-item">
-                  <div className="perk-icon">
-                    📍
-                  </div>
-
+                  <div className="perk-icon">📍</div>
                   <div className="perk-text">
-                    <small>
-                      Meeting Spot
-                    </small>
-
-                    <span>
-                      On-Campus (Safe Zone)
-                    </span>
+                    <small>Meeting Spot</small>
+                    <span>On-Campus (Safe Zone)</span>
                   </div>
                 </div>
-
                 <div className="perk-item">
-                  <div className="perk-icon">
-                    📦
-                  </div>
-
+                  <div className="perk-icon">📦</div>
                   <div className="perk-text">
                     <small>Deal Type</small>
-
-                    <span>
-                      {
-                        selectedItem.listing_type
-                      }
-                    </span>
+                    <span>{selectedItem.listing_type}</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="specs-footer">
-              {currentUser?.id &&
-              String(
-                selectedItem.user_id
-              ) ===
-                String(currentUser.id) ? (
-                <button
-                  className="btn-action-delete"
-                  onClick={() =>
-                    handleDeleteListing(
-                      selectedItem.id
-                    )
-                  }
-                >
+            <div className="specs-footer" style={{ display: "flex", gap: "15px", marginTop: "35px" }}>
+              {currentUser?.id && String(selectedItem.user_id) === String(currentUser.id) ? (
+                <button className="btn-action-delete" onClick={() => handleDeleteListing(selectedItem.id)} style={{ width: "100%", margin: 0 }}>
                   🗑️ Remove My Listing
                 </button>
               ) : (
-                <button
-                  className="btn-action-contact"
-                  onClick={() =>
-                    navigate(
-                      `/messages?listingId=${selectedItem.id}`
-                    )
-                  }
-                >
-                  💬 Contact{" "}
-                  {selectedItem.profiles
-                    ?.name || "Seller"}
-                </button>
+                <>
+                  <button className="btn-action-contact" style={{ flex: 1, margin: 0 }} onClick={() => navigate(`/messages?listingId=${selectedItem.id}`)}>
+                    💬 Contact {selectedItem.profiles?.name || "Seller"}
+                  </button>
+                  <button onClick={() => setShowReportModal(true)} style={{ background: "#fff1f2", color: "#e11d48", border: "1px solid #fecaca", padding: "0 25px", borderRadius: "15px", fontWeight: "800", cursor: "pointer" }}>
+                    🚩 Report
+                  </button>
+                </>
               )}
             </div>
           </div>
         </div>
       </div>
+
+      {showReportModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
+          <div style={{ background: 'white', padding: '30px', borderRadius: '18px', width: '90%', maxWidth: '420px' }}>
+            <h2 style={{ color: '#e11d48' }}>🚩 Report Listing</h2>
+            <form onSubmit={handleReportSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              <select value={reportReason} onChange={(e) => setReportReason(e.target.value)} required style={{ padding: '14px', borderRadius: '10px' }}>
+                <option value="" disabled>Select a reason...</option>
+                <option value="Suspicious or Scam">Suspicious or Scam</option>
+                <option value="Inappropriate Content">Inappropriate Content</option>
+                <option value="Fake Listing / Spam">Fake Listing / Spam</option>
+              </select>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button type="button" onClick={() => setShowReportModal(false)} style={{ flex: 1, padding: '14px' }}>Cancel</button>
+                <button type="submit" style={{ flex: 1, padding: '14px', background: '#e11d48', color: 'white' }}>Submit Report</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -407,6 +325,16 @@ function App() {
               />
             )
           }
+        />
+
+        {/* USER PROFILE */}
+        <Route
+          path="/profile"
+          element={currentUser ? <UserProfile /> : <Navigate to="/auth" replace />}
+        />
+        <Route
+          path="/profile/:userId"
+          element={currentUser ? <UserProfile /> : <Navigate to="/auth" replace />}
         />
 
         {/* REVIEWS */}
