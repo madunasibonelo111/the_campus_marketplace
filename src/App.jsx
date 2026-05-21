@@ -106,7 +106,7 @@ function ItemDetailView({ selectedItem, setSelectedItem, currentUser }) {
           {/* Consolidated Image Container */}
           <div className="detail-visuals">
             <div className="image-container-main" style={{ display: 'flex', gap: '10px', overflowX: 'auto' }}>
-              {selectedItem.images?.length > 0 ? (
+              {selectedItem.images && selectedItem.images.length > 0 ? (
                 selectedItem.images.map((url, idx) => (
                   <img 
                     key={idx} 
@@ -116,7 +116,8 @@ function ItemDetailView({ selectedItem, setSelectedItem, currentUser }) {
                   />
                 ))
               ) : (
-                <img src={selectedItem.image} alt={selectedItem.title} />
+                // Only show placeholder if the array is truly empty
+                <img src="https://via.placeholder.com/300" alt="No image" style={{ width: '100%', height: '300px', objectFit: 'cover' }} />
               )}
             </div>
             <div className="status-tag">{selectedItem.condition?.toUpperCase() || "GOOD"}</div>

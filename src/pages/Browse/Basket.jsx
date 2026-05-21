@@ -39,8 +39,10 @@ export default function Basket({ onViewListing }) {
       const formatted = (data || []).map((item) => ({
         ...item,
         seller_name: item.profiles?.name || "Unknown Seller",
-        // Keep the whole array of images
-        images: (item.listing_images || []).sort((a, b) => a.display_order - b.display_order).map(img => img.image_url)
+        // Crucial: Default to empty array if no images exist
+        images: (item.listing_images || [])
+          .sort((a, b) => a.display_order - b.display_order)
+          .map(img => img.image_url)
       }));
       setItems(formatted);
     } catch (err) {
@@ -56,24 +58,23 @@ export default function Basket({ onViewListing }) {
 
   const addToBasket = (item) => {
     setBasket((prev) => {
-      // Find the current quantity of this item in the basket
       const existingInBasket = prev.find((i) => i.id === item.id);
+      const availableQuantity = Number(item.stock_quantity ?? item.quantity ?? 0);
       const currentBasketQty = existingInBasket ? existingInBasket.quantity : 0;
 
-      // Check: If adding 1 more would exceed available stock, stop it
-      if (currentBasketQty + 1 > (item.quantity || 0)) {
-        alert(`Only ${item.quantity} unit(s) available.`);
+      if (currentBasketQty + 1 > availableQuantity) {
+        alert(`Only ${availableQuantity} unit(s) available.`);
         return prev;
       }
+      
       if (existingInBasket) {
         return prev.map((i) => 
           i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
         );
       }
-      return [...prev, { ...item, quantity: 1 }];
+      // Keep database stock separate from basket quantity.
+      return [...prev, { ...item, stock_quantity: availableQuantity, quantity: 1 }];
     });
-
-      
   };
 
   const removeFromBasket = (item) => {
@@ -98,8 +99,10 @@ export default function Basket({ onViewListing }) {
     try {
       
       const itemToBuy = basket[0];
-      if (itemToBuy.quantity < basket.reduce((sum, i) => sum + i.quantity, 0)) {
-          alert(`Sorry, only ${itemToBuy.quantity} unit(s) available for this item.`);
+      const availableQuantity = Number(itemToBuy.stock_quantity ?? itemToBuy.quantity ?? 0);
+      const totalPurchased = Number(itemToBuy.quantity ?? 0);
+      if (totalPurchased > availableQuantity) {
+          alert(`Sorry, only ${availableQuantity} unit(s) available for this item.`);
           return;
       }
       const totalAmount = basket.reduce((sum, i) => sum + (i.price || 0) * i.quantity, 0);
@@ -154,8 +157,7 @@ export default function Basket({ onViewListing }) {
       console.log("Transaction created successfully:", transaction);
 
       //  Update Listing Inventory
-      const totalPurchased = basket.reduce((sum, i) => sum + i.quantity, 0);
-      const newQuantity = itemToBuy.quantity - totalPurchased;
+      const newQuantity = availableQuantity - totalPurchased;
 
 
       const { data: updatedListing, error: updateError } = await supabase
@@ -263,40 +265,40 @@ export default function Basket({ onViewListing }) {
       <div className="scroll-area">
         <div className="gridItems">
           {filtered.map((item) => {
-            const stockCount = item.quantity || 0;
-            const isSold = item.status === "sold" || (item.quantity !== null && item.quantity <= 0);
-            const isOwner = currentUser?.id === String(item.user_id);
-            return (
-              <div key={item.id} className="card">
-                <div style={{ position: "relative" }}>
-                  {/* Use the first image in the array, or a placeholder if none exist */}
-                  <img 
-                    src={item.images?.[0] || "https://via.placeholder.com/300"} 
-                    onClick={() => onViewListing(item)} 
-                    alt={item.title} 
-                    className="card-image"
-                  />
-                  {isSold && <div className="sold-overlay">SOLD</div>}
-                </div>
-                <h3>{item.title}</h3>
-                <p className="price-main-bold">R{parseFloat(item.price || 0).toFixed(2)}</p>
-                <div className="item-actions">
-                  {isSold ? <button disabled className="btn-sold">Out of Stock</button>
-                  : isOwner ? <button disabled className="btn-owner">Your Listing</button>
-                  : item.listing_type === "either" ? (
-                    <div className="dual-action-gap">
-                      <button className="btn-buy" onClick={() => addToBasket(item)}>Add to Basket</button>
-                      <button className="btn-trade-outline" onClick={() => { setSelectedTradeItem(item); setShowTradeModal(true); }}>Trade</button>
-                    </div>
-                  ) : item.listing_type === "trade" ? (
-                    <button className="btn-trade" onClick={() => { setSelectedTradeItem(item); setShowTradeModal(true); }}>Trade</button>
-                  ) : (
-                    <button className="btn-buy" onClick={() => addToBasket(item)}>Add to Basket</button>
-                  )}
-                </div>
+          // Calculate stock from quantity only.
+          // Do not rely on status here because old checkout bugs may have left
+          // status='sold' while quantity is still greater than 0.
+          const stockCount = Number(item.quantity ?? 0);
+          const isOutOfStock = stockCount <= 0;
+          const isOwner = currentUser?.id === String(item.user_id);
+
+          return (
+            <div key={item.id} className="card">
+              <div style={{ position: "relative" }}>
+                <img 
+                  // Always use the images array
+                  src={item.images?.[0] || "https://via.placeholder.com/300"} 
+                  onClick={() => onViewListing(item)} 
+                  alt={item.title} 
+                  className="card-image"
+                />
+                {isOutOfStock && <div className="sold-overlay">SOLD</div>}
               </div>
-            );
-          })}
+              <h3>{item.title}</h3>
+              <p className="price-main-bold">R{parseFloat(item.price || 0).toFixed(2)}</p>
+              
+              <div className="item-actions">
+                {isOutOfStock ? (
+                  <button disabled className="btn-sold">Out of Stock</button>
+                ) : isOwner ? (
+                  <button disabled className="btn-owner">Your Listing</button>
+                ) : (
+                  <button className="btn-buy" onClick={() => addToBasket(item)}>Add to Basket</button>
+                )}
+              </div>
+            </div>
+          );
+        })}
         </div>
       </div>
 
