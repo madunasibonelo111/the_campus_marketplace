@@ -172,28 +172,15 @@ describe('Create Listing - Component Tests', () => {
 
   });
 
+it('disables price input when Swap is selected as listing type', async () => {
+  render(<BrowserRouter><CreateListing /></BrowserRouter>);
 
+  const selects = screen.getAllByRole('combobox');
+  fireEvent.change(selects[1], { target: { value: 'trade' } });
 
-  it('disables price input when Swap is selected as listing type', async () => {
-
-    await act(async () => {
-
-      render(<BrowserRouter><CreateListing /></BrowserRouter>);
-
-    });
-
-
-
-    const selects = screen.getAllByRole('combobox');
-
-    fireEvent.change(selects[1], { target: { value: 'trade' } }); // Listing Type is 2nd select
-
-
-
-    const priceInput = screen.getByPlaceholderText(/No price for swaps/i);
-
-    expect(priceInput).toBeDisabled();
-
-  });
+  const priceInput = screen.getByPlaceholderText("0 000.00"); 
+  expect(priceInput).toBeDisabled();
+});
+  
 
 });

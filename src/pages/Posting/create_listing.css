@@ -112,6 +112,31 @@
   cursor: not-allowed;
 }
 
+.file-tag {
+    display: inline-flex;
+    align-items: center;
+    background: #eef2ff;
+    padding: 5px 10px;
+    border-radius: 6px;
+    margin: 5px;
+    font-size: 12px;
+    border: 1px solid #c7d2fe;
+}
+
+.remove-img-btn {
+    background: none;
+    border: none;
+    color: #e11d48;
+    margin-left: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.remove-img-btn:hover {
+    color: #9f1239;
+}
+
 .create-listing-page .bottomNav {
   flex-shrink: 0;
   display: flex;

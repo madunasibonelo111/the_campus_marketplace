@@ -10,6 +10,7 @@ const CreateListing = () => {
     const [suggestion, setSuggestion] = useState({ price: null, source: '' });
     const [selectedFiles, setSelectedFiles] = useState([]);
     const [userId, setUserId] = useState(null);
+    const [displayPrice, setDisplayPrice] = useState('');
 
     const [formData, setFormData] = useState({
         title: '',
@@ -17,7 +18,8 @@ const CreateListing = () => {
         price: '',
         category_id: '',
         condition: 'good',
-        listing_type: 'sale'
+        listing_type: 'sale',
+        quantity: 1
     });
 
     // Monitors the session so we know which student is posting
@@ -40,6 +42,19 @@ const CreateListing = () => {
 
         return () => authListener.subscription.unsubscribe();
     }, []);
+
+    const handlePriceChange = (e) => {
+        const rawValue = e.target.value.replace(/\s/g, ''); // Remove existing spaces
+        if (!isNaN(rawValue)) {
+            setDisplayPrice(rawValue); // Keep raw for now
+            // Update formData with the number
+            setFormData({...formData, price: rawValue});
+        }
+    };
+
+    const formatPriceDisplay = (val) => {
+        return val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    };
 
     // Logs the user out and clears the history to prevent back-button access
     const handleLogout = async () => {
@@ -135,10 +150,9 @@ const CreateListing = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         
+        // Ensure user exists
         const { data: { session } } = await supabase.auth.getSession();
-        const activeUser = session?.user || userId;
-        
-        if (!activeUser) {
+        if (!session?.user) {
             alert("Please log in again to post.");
             return;
         }
@@ -151,43 +165,66 @@ const CreateListing = () => {
         setLoading(true);
 
         try {
-            const imageUrls = [];
-            for (const file of selectedFiles) {
-                const filePath = `${Date.now()}_${file.name}`; 
-                const { error: uploadError } = await supabase.storage.from('listing-images').upload(filePath, file);
-                if (uploadError) throw uploadError;
+            // Prepare and Upload images FIRST
+            // This prevents creating a database record if the file name is invalid
+            const imageRecords = [];
+            
+            for (const [index, file] of selectedFiles.entries()) {
+                // Sanitize filename: remove all non-alphanumeric chars (except dots)
+                const safeName = file.name.replace(/[^a-z0-9.]/gi, '_');
+                const filePath = `${session.user.id}/${Date.now()}_${safeName}`;
+                
+                const { error: uploadError } = await supabase.storage
+                    .from('listing-images')
+                    .upload(filePath, file);
 
-                const { data: { publicUrl } } = supabase.storage.from('listing-images').getPublicUrl(filePath);
-                imageUrls.push(publicUrl);
+                if (uploadError) {
+                    throw new Error(`Failed to upload ${file.name}: ${uploadError.message}. Please rename the file and try again.`);
+                }
+
+                const { data: { publicUrl } } = supabase.storage
+                    .from('listing-images')
+                    .getPublicUrl(filePath);
+                
+                imageRecords.push({
+                    image_url: publicUrl,
+                    display_order: index
+                });
             }
 
-            const { data: listingData, error: listingError } = await supabase.from('listings').insert([{
-                user_id: activeUser.id,
-                category_id: formData.category_id,
-                title: formData.title,
-                description: formData.description,
-                condition: formData.condition,
-                price: formData.listing_type === 'trade' ? null : parseFloat(formData.price || 0), 
-                listing_type: formData.listing_type,
-                status: 'active'
-            }]).select();
+            //  Create the listing record ONLY after successful uploads
+            const { data: listingData, error: listingError } = await supabase
+                .from('listings')
+                .insert([{
+                    user_id: session.user.id,
+                    category_id: formData.category_id,
+                    title: formData.title,
+                    description: formData.description,
+                    condition: formData.condition,
+                    price: formData.listing_type === 'trade' ? null : parseFloat(formData.price || 0), 
+                    listing_type: formData.listing_type,
+                    quantity: formData.quantity,
+                    status: 'active'
+                }])
+                .select();
 
             if (listingError) throw listingError;
 
+            //  Attach image records to the new listing ID
             const listingId = listingData[0].id;
-            const imageRecords = imageUrls.map((url, index) => ({
-                listing_id: listingId,
-                image_url: url,
-                display_order: index
+            const finalImageRecords = imageRecords.map(rec => ({
+                ...rec,
+                listing_id: listingId
             }));
 
-            await supabase.from('listing_images').insert(imageRecords);
-            alert("Listing posted successfully!");
+            await supabase.from('listing_images').insert(finalImageRecords);
             
-        
+            alert("Listing posted successfully!");
             navigate('/basket', { replace: true });
+
         } catch (err) {
-            alert("Error: " + err.message);  
+            console.error("Submission Error:", err);
+            alert(err.message); // Displays the specific error to the user
         } finally {
             setLoading(false);
         }
@@ -246,14 +283,12 @@ const CreateListing = () => {
                         <div className="input-group">
                             <label>Price (R)</label>
                             <input 
-                                type="number"
-                                step="0.01" 
-                                min="0"
-                                placeholder={formData.listing_type === 'trade' ? "No price for swaps" : "0.00"}
-                                value={formData.listing_type === 'trade' ? '' : formData.price} 
-                                disabled={formData.listing_type === 'trade'} 
-                                onChange={(e) => setFormData({...formData, price: e.target.value})}
-                                required={formData.listing_type === 'sale'} // Only required for pure sales
+                                type="text" // Change to text to allow formatting
+                                placeholder="0 000.00"
+                                value={formData.listing_type === 'trade' ? '' : formatPriceDisplay(displayPrice)}
+                                disabled={formData.listing_type === 'trade'}
+                                onChange={handlePriceChange}
+                                required={formData.listing_type === 'sale'}
                             />
                         </div>
 
@@ -282,12 +317,63 @@ const CreateListing = () => {
                         </div>
 
                         <div className="input-group">
-                            <label>Product Image</label>
+                            <label>Available Quantity</label>
+                            <input 
+                                type="number"
+                                min="1"
+                                required
+                                value={formData.quantity}
+                                onChange={(e) => setFormData({...formData, quantity: parseInt(e.target.value)})}
+                            />
+                        </div>
+
+
+                        <div className="input-group">
+                            <label>Product Images ({selectedFiles.length} selected)</label>
+                            <p style={{ fontSize: '12px', color: '#666', marginTop: '-5px', marginBottom: '5px' }}>
+                                Supported: JPG, PNG, WEBP (Max 2MB each)
+                            </p>
                             <input 
                                 type="file" 
                                 multiple 
-                                onChange={(e) => setSelectedFiles(Array.from(e.target.files))} 
+                                accept="image/png, image/jpeg, image/jpg, image/webp"
+                                onChange={(e) => {
+                                    if (e.target.files) {
+                                        const newFiles = Array.from(e.target.files);
+                                        const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+                                        const MAX_SIZE = 2 * 1024 * 1024; // 2MB Limit
+
+                                        const validFiles = newFiles.filter(file => {
+                                            const isCorrectType = ALLOWED_TYPES.includes(file.type);
+                                            const isCorrectSize = file.size <= MAX_SIZE;
+
+                                            if (!isCorrectType) alert(`${file.name} is not a valid image type (PNG/JPG/WEBP only).`);
+                                            if (!isCorrectSize) alert(`${file.name} is too large (Max 2MB).`);
+                                            
+                                            return isCorrectType && isCorrectSize;
+                                        });
+
+                                        setSelectedFiles((prev) => [...prev, ...validFiles]);
+                                    }
+                                }} 
                             />
+                            <div className="image-previews">
+                                {selectedFiles.map((file, idx) => (
+                                    <div key={idx} className="file-tag">
+                                        {file.name}
+                                        <button 
+                                            type="button" 
+                                            className="remove-img-btn"
+                                            onClick={() => {
+                                                const newFiles = selectedFiles.filter((_, i) => i !== idx);
+                                                setSelectedFiles(newFiles);
+                                            }}
+                                        >
+                                            ×
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
 
                         <button type="submit" className="btn-post" disabled={loading}>

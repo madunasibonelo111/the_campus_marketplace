@@ -21,6 +21,7 @@ export default function UserProfile() {
   const [editingListing, setEditingListing] = useState(null);
 
   useEffect(() => {
+
     const fetchProfileData = async () => {
       setLoading(true);
       const { data: { user: currentUser } } = await supabase.auth.getUser();
@@ -41,22 +42,30 @@ export default function UserProfile() {
         .single();
       if (profileData) setTargetUser(profileData);
 
-      // Fetch Listings
-        // 2. Fetch Listings
-      const { data: listingsData } = await supabase
+      // 2. Fetch Listings
+      const { data: listingsData, error: listingsError } = await supabase
         .from("listings")
-        .select(`id, title, price, description, condition, status, quantity, listing_type, listing_images (image_url)`)
+        .select(`
+          id, title, price, description, condition, status, quantity, listing_type, user_id,
+          listing_images (image_url, display_order)
+        `)
         .eq("user_id", profileIdToFetch)
         .order("created_at", { ascending: false });
 
-      if (listingsData) {
-        const formattedListings = listingsData.map((item) => ({
-          ...item,
-          image: item.listing_images?.[0]?.image_url || "https://via.placeholder.com/300",
-        }));
+      if (listingsError) {
+        console.error("Error fetching listings:", listingsError);
+      } else if (listingsData) {
+        const formattedListings = listingsData.map((item) => {
+          // Sort images by display_order if available, otherwise take the first
+          const sortedImages = (item.listing_images || []).sort((a, b) => a.display_order - b.display_order);
+          return {
+            ...item,
+            // Use the 'image' property which your UI expects
+            image: sortedImages[0]?.image_url || "https://via.placeholder.com/300",
+          };
+        });
         setUserListings(formattedListings);
       }
-
       // Fetch Ratings
       const { data: ratingData } = await supabase
         .from("ratings")
