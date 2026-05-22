@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/supabase/supabaseClient";
 import AnalyticsView from "./AnalyticsView";
-import Reports from "./Reports"; 
+import EnhancedReports from "./EnhancedReports"; 
 import ModerationQueue from "./ModerationQueue";
 import "./AdminDashboard.css";
 
@@ -416,7 +416,7 @@ export default function AdminDashboard() {
         )}
 
         {/* User Story 3 */}
-        {activeTab === "exports" && <Reports />}
+        {activeTab === "exports" && <EnhancedReports />}
           
       </main>
     </div>
