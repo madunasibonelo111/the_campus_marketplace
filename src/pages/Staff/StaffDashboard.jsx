@@ -298,6 +298,11 @@ const StaffDashboard = () => {
     }));
   };
 
+  const handleLogout = async (navigate) => {
+  await supabase.auth.signOut();
+  navigate("/auth");
+};
+
   if (loading) {
     return (
       <div className="loading-viewport-container">
@@ -320,8 +325,17 @@ const StaffDashboard = () => {
               <p>Staff Management Portal</p>
             </div>
             <div className="time-pill-box">
-              🕒 {currentTime}
-            </div>
+              🕒 {currentTime}</div>
+              <button 
+                onClick={() => handleLogout(navigate)} 
+                style={{ 
+                  background: "#fee2e2", color: "#b91c1c", border: "1px solid #fecaca", 
+                  padding: "8px 16px", borderRadius: "50px", cursor: "pointer", fontWeight: "bold" 
+                }}
+              >
+                🚪 Logout
+              </button>
+            
           </div>
           <div className="greeting-row">
             <h2 data-testid="greeting">{getGreeting()}, {staffName || 'Staff Member'}! 👋</h2>

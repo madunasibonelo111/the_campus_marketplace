@@ -1,4 +1,3 @@
-import "./Auth.css";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/supabase/supabaseClient";
@@ -153,9 +152,15 @@ export default function Login({ switchToRegister }) {
         {/* SWITCH TO REGISTER */}
         <p>
           Don't have an account?{" "}
-          <a href="#" onClick={switchToRegister}>
+          <span 
+            onClick={(e) => {
+              e.preventDefault();
+              switchToRegister();
+            }}
+            style={{ cursor: "pointer", color: "#7494ec", textDecoration: "underline" }}
+          >
             Register
-          </a>
+          </span>
         </p>
       </form>
     </div>
