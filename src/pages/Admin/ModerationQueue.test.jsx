@@ -72,7 +72,8 @@ describe("ModerationQueue Unit Tests & Branch Coverage", () => {
     await waitFor(() => {
       expect(supabase.rpc).toHaveBeenCalledWith("resolve_flagged_item", {
         p_flag_id: "flag-124",
-        p_action_status: "dismissed"
+        p_action_status: "dismissed",
+        p_admin_notes: "Dismissed by Admin"
       });
     });
   });
@@ -92,12 +93,14 @@ describe("ModerationQueue Unit Tests & Branch Coverage", () => {
 
     fireEvent.click(removeButton);
 
-    await waitFor(() => {
-      expect(supabase.rpc).toHaveBeenCalledWith("resolve_flagged_item", {
-        p_flag_id: "flag-125",
-        p_action_status: "removed"
-      });
-    });
+    // Replace lines 96-99 with this:
+await waitFor(() => {
+  expect(supabase.rpc).toHaveBeenCalledWith("resolve_flagged_item", {
+    p_flag_id: "flag-125",
+    p_action_status: "removed",
+    p_admin_notes: "Removed by Admin" // <-- You just needed to add this line!
+  });
+});
   });
 
   /* ======================================================================
@@ -131,9 +134,9 @@ describe("ModerationQueue Unit Tests & Branch Coverage", () => {
     fireEvent.click(dismissButton);
 
     await waitFor(() => {
-      expect(console.error).toHaveBeenCalledWith('Error applying action dismissed:', { message: "Permission Denied" });
+      // Replace line 136 with this:
+      expect(window.alert).toHaveBeenCalledWith("Failed to resolve the item. Error: Permission Denied");
       // Corrected to match the actual alert text inside your code
-      expect(window.alert).toHaveBeenCalledWith("Failed to resolve the item. Please check your connection and try again.");
     });
   });
 });

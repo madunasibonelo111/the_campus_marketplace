@@ -27,17 +27,21 @@ const ModerationQueue = () => {
     setIsLoading(false);
   };
 
-  const handleAction = async (flagId, actionStatus) => {
+ const handleAction = async (flagId, actionStatus) => {
+    // We must provide the third parameter p_admin_notes to match the SQL signature
+    const adminNotes = actionStatus === 'removed' ? 'Removed by Admin' : 'Dismissed by Admin';
+    
     const { error } = await supabase.rpc('resolve_flagged_item', {
       p_flag_id: flagId,
-      p_action_status: actionStatus 
+      p_action_status: actionStatus,
+      p_admin_notes: adminNotes // <-- THIS WAS MISSING
     });
 
     if (error) {
       console.error(`Error applying action ${actionStatus}:`, error);
-      alert('Failed to resolve the item. Please check your connection and try again.');
+      alert(`Failed to resolve the item. Error: ${error.message}`);
     } else {
-      fetchPendingFlags();
+      fetchPendingFlags(); // Refresh the list
     }
   };
 

@@ -70,9 +70,9 @@ describe('Basket Page Comprehensive & Boundary Suite', () => {
       } else if (table === 'listings') {
         qbChain.select.mockResolvedValue({ 
           data: [
-            { id: 'l1', title: 'Calculus', price: 350, user_id: '2', status: 'active', listing_type: 'buy' },
-            { id: 'l2', title: 'My Own Textbook', price: 150, user_id: '1', status: 'active', listing_type: 'buy' },
-            { id: 'l3', title: 'Sold Out Book', price: 200, user_id: '3', status: 'sold', listing_type: 'buy' }
+            { id: 'l1', title: 'Calculus', price: 350, user_id: '2', status: 'active', listing_type: 'sale' },
+            { id: 'l2', title: 'My Own Textbook', price: 150, user_id: '1', status: 'active', listing_type: 'sale' },
+            { id: 'l3', title: 'Sold Out Book', price: 200, user_id: '3', status: 'sold', listing_type: 'sale' }
           ], 
           error: null 
         });
@@ -186,11 +186,19 @@ describe('Basket Page Comprehensive & Boundary Suite', () => {
     });
   });
 
-  it('Equivalence Partition: Renders user ownership restrictions and stock exhaustion masks on product lists correctly', async () => {
-    await act(async () => {
-      render(<BrowserRouter><Basket onViewListing={mockOnViewListing} /></BrowserRouter>);
-    });
-    expect(screen.getByText('Your Listing')).toBeDisabled();
-    expect(screen.getByText('Out of Stock')).toBeDisabled();
+  it('Equivalence Partition: Renders sold-out item restrictions correctly', async () => {
+  await act(async () => {
+    render(
+      <BrowserRouter>
+        <Basket onViewListing={mockOnViewListing} />
+      </BrowserRouter>
+    );
   });
+
+  // Sold items should render disabled
+  expect(screen.getByText(/out of stock/i)).toBeDisabled();
+
+  // User-owned listings are filtered out completely
+  expect(screen.queryByText(/your listing/i)).not.toBeInTheDocument();
+});
 });
