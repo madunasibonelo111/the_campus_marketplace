@@ -35,9 +35,17 @@ We utilize **Vitest** as our primary testing framework, integrated with the **Is
 * **Istanbul:** Unlike standard tools, Istanbul tracks every branch and line in our React components, ensuring that our **50% coverage goal** is backed by accurate data.
 * **Codecov:** Automatically analyzes our test reports during Pull Requests to prevent "coverage regression."
 
-### **Commands**
-* `npm test`: Runs Vitest in watch mode.
-* `npm run coverage`: Generates the Istanbul coverage report.
+# Local Setup Instructions
+1. Clone the repository:git clone https://github.com/madunasibonelo111/the_campus_marketplace.git
+2. Install dependencies:npm install
+Environment Setup: Create a .env file in the root directory and add the Supabase credentials:
+VITE_SUPABASE_URL=https://yvyknuurrwnwlrultrww.supabase.co
+VITE_SUPABASE_ANON_KEY=sb_publishable_mPzAS04ro9PoQldZAr5KtA_jOVL927H
+
+3 .Run Application: npm run dev
+4. Run Tests: 
+npm test: Runs Vitest in watch mode. 
+npm run coverage: Generates the Istanbul coverage report.  
 
 ## 🏗️ Repository Architecture
 The project follows a **Component-Colocated Design**.
@@ -47,8 +55,8 @@ src/
 ├── 📁 pages/           # Module-based views (Colocated with Logic and Tests)
 │   ├── 📁 Auth/        # Login/Register logic
 │   ├── 📁 Browse/      # Product discovery
-│   ├── 📁 Messaging/   # Real-time negotiation (Sprint 2)
-│   ├── 📁 Payments/    # Transaction logic (Sprint 2)
+│   ├── 📁 Messaging/   # Real-time negotiation 
+│   ├── 📁 Payments/    # Transaction logic 
 │   ├── 📁 Posting/     # Listing creation & Price Logic
-│   └── 📁 Profile/     # History & Ratings (Sprint 2)
+│   └── 📁 Profile/     # History,Ratings,Profile 
 ├── 📁 supabase/        # Database client configuration
