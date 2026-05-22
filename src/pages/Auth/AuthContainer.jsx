@@ -11,7 +11,7 @@ export default function AuthContainer() {
   return (
     <div className={`container ${isActive ? "active" : ""}`}>
 
-      <Login />
+      <Login switchToRegister={() => setIsActive(true)} />,
       <Register switchToLogin={() => setIsActive(false)} />
 
       {/* TOGGLE */}

@@ -153,13 +153,13 @@ export default function Basket({ onViewListing }) {
     }
   };
 
-  // UPDATED FILTERED CALCULATION
+  
   const filtered = items.filter((i) => {
     const matchCat = category === "All" || i.categories?.name === category;
     const matchSearch = (i.title || "").toLowerCase().includes(search.toLowerCase());
     return matchCat && matchSearch;
   });
-
+  
   return (
     <div className="browse-wrapper">
       <aside className={`filter-sidebar ${isFilterOpen ? "open" : ""}`}>
@@ -277,6 +277,7 @@ export default function Basket({ onViewListing }) {
         <button onClick={() => navigate("/tradeoffers")}>TRADE OFFERS</button>
         <button onClick={() => navigate("/profile")}>PROFILE</button>
         <button onClick={() => navigate("/history")}>HISTORY</button>
+        <button onClick={async () => {await supabase.auth.signOut();navigate("/auth");}} style={{ color: "#ef4444" }}>LOGOUT</button>
       </div>
 
       <TradeOfferModal
