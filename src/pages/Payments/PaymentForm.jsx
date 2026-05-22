@@ -230,14 +230,33 @@ export default function PaymentForm() {
   const updateListingStatus = async () => {
     try {
       const items = basketItems.length > 0 ? basketItems : (location.state?.listing ? [location.state.listing] : []);
+      
       for (const item of items) {
-        await supabase
+        // Fetch the latest quantity from the DB
+        const { data: currentListing } = await supabase
           .from('listings')
-          .update({ status: 'sold', updated_at: new Date().toISOString() })
-          .eq('id', item.id);
+          .select('quantity')
+          .eq('id', item.id)
+          .single();
+
+        if (currentListing) {
+          const newQty = Math.max(0, currentListing.quantity - item.quantity);
+          
+          // Only set to 'sold' if the inventory is exhausted
+          const newStatus = newQty <= 0 ? 'sold' : 'active';
+          
+          await supabase
+            .from('listings')
+            .update({ 
+              status: newStatus, 
+              quantity: newQty, 
+              updated_at: new Date().toISOString() 
+            })
+            .eq('id', item.id);
+        }
       }
-    } catch {
-      // Silent fail
+    } catch (err) {
+      console.error("Error updating listing inventory:", err);
     }
   };
 

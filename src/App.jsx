@@ -1,19 +1,11 @@
-import {
-  BrowserRouter,
-  Routes,
-  Route,
-  useNavigate,
-  Navigate,
-} from "react-router-dom";
-
-import { useState, useEffect } from "react";
-
+import React, { useState, useEffect } from "react";
+import { BrowserRouter, Routes, Route, useNavigate, Navigate } from "react-router-dom";
 import { supabase } from "@/supabase/supabaseClient";
 
+// Components & Pages
 import ForgotPassword from "./components/Auth/ForgotPassword";
 import ResetPassword from "./components/Auth/ResetPassword";
 import EmailConfirmed from "./components/Auth/EmailConfirmed";
-
 import Home from "./pages/Home/Home";
 import AuthContainer from "./pages/Auth/AuthContainer";
 import Basket from "./pages/Browse/Basket";
@@ -21,29 +13,17 @@ import Messaging from "./pages/Messaging/Messaging";
 import PaymentForm from "./pages/Payments/PaymentForm";
 import TransactionHistory from "./pages/Profile/TransactionHistory";
 import CreateListing from "./pages/Posting/create_listing";
-
-// REVIEWS
 import Reviews from "./pages/Profile/Reviews";
 import SellerProfileReviews from "./pages/Profile/SellerProfileReviews";
-
-// TRADE OFFERS
 import TradeOffers from "./pages/Profile/TradeOffers";
-
-// STAFF
 import StaffDashboard from "./pages/Staff/StaffDashboard";
 import CollectionManagement from "./pages/Staff/CollectionManagement";
 import DropoffManagement from "./pages/Staff/DropoffManagement";
-
-// BOOKINGS
 import DropoffBooking from "./pages/Booking/DropoffBooking";
 import CollectionBooking from "./pages/Booking/CollectionBooking";
-
-// ADMIN
 import AdminDashboard from "./pages/Admin/AdminDashboard";
 import FacilityConfig from "./pages/Admin/FacilityConfig";
-
-//Profile
-import UserProfile from "./pages/Profile/UserProfile"; // Adjust path if needed
+import UserProfile from "./pages/Profile/UserProfile";
 
 import "./App.css";
 
@@ -53,6 +33,7 @@ function ItemDetailView({ selectedItem, setSelectedItem, currentUser }) {
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportReason, setReportReason] = useState("");
   const [isSubmittingReport, setIsSubmittingReport] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
     const fetchSellerRating = async () => {
@@ -64,12 +45,11 @@ function ItemDetailView({ selectedItem, setSelectedItem, currentUser }) {
           .eq("reviewee_id", selectedItem.user_id);
 
         if (error) throw error;
-        if (data && data.length > 0) {
-          const total = data.reduce((sum, r) => sum + Number(r.score), 0);
-          setAvgRating((total / data.length).toFixed(1));
-        } else {
-          setAvgRating("No ratings");
-        }
+        setAvgRating(
+          data?.length > 0 
+            ? (data.reduce((sum, r) => sum + Number(r.score), 0) / data.length).toFixed(1) 
+            : "No ratings"
+        );
       } catch (err) {
         console.error("Error fetching rating:", err);
       }
@@ -107,7 +87,6 @@ function ItemDetailView({ selectedItem, setSelectedItem, currentUser }) {
       setShowReportModal(false);
       setReportReason("");
     } catch (err) {
-      console.error("Report error:", err);
       alert("Failed to submit report: " + err.message);
     } finally {
       setIsSubmittingReport(false);
@@ -115,6 +94,8 @@ function ItemDetailView({ selectedItem, setSelectedItem, currentUser }) {
   };
 
   if (!selectedItem) return null;
+
+  const displayImages = selectedItem.images?.length > 0 ? selectedItem.images : [selectedItem.image];
 
   return (
     <div className="detail-overlay">
@@ -127,11 +108,24 @@ function ItemDetailView({ selectedItem, setSelectedItem, currentUser }) {
         </div>
 
         <div className="detail-grid">
+          {/* UPDATED VISUALS: Full-size Slider */}
           <div className="detail-visuals">
-            <div className="image-container-main">
-              <img src={selectedItem.image} alt={selectedItem.title} />
-              <div className="status-tag">{selectedItem.condition?.toUpperCase() || "GOOD"}</div>
+            <div className="main-image-container" style={{ position: 'relative', width: '100%', height: '400px', background: '#f8fafc', borderRadius: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+              <img src={displayImages[currentImageIndex]} alt="Selected" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+              {displayImages.length > 1 && (
+                <>
+                  <button onClick={() => setCurrentImageIndex(p => (p === 0 ? displayImages.length - 1 : p - 1))} style={{ position: 'absolute', left: '10px', background: 'rgba(255,255,255,0.7)', border: 'none', borderRadius: '50%', padding: '10px', cursor: 'pointer' }}>◀</button>
+                  <button onClick={() => setCurrentImageIndex(p => (p === displayImages.length - 1 ? 0 : p + 1))} style={{ position: 'absolute', right: '10px', background: 'rgba(255,255,255,0.7)', border: 'none', borderRadius: '50%', padding: '10px', cursor: 'pointer' }}>▶</button>
+                </>
+              )}
             </div>
+
+            <div style={{ display: 'flex', gap: '10px', marginTop: '15px', justifyContent: 'center' }}>
+              {displayImages.map((url, idx) => (
+                <img key={idx} src={url} onClick={() => setCurrentImageIndex(idx)} style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '8px', cursor: 'pointer', border: currentImageIndex === idx ? '2px solid #1e3a8a' : 'none' }} />
+              ))}
+            </div>
+            <div className="status-tag" style={{ marginTop: '10px' }}>{selectedItem.condition?.toUpperCase() || "GOOD"}</div>
           </div>
 
           <div className="detail-specs">
@@ -146,7 +140,6 @@ function ItemDetailView({ selectedItem, setSelectedItem, currentUser }) {
               <div className="description-well">
                 <p>{selectedItem.description || "No description provided."}</p>
               </div>
-
               <div className="perks-grid">
                 <div className="perk-item">
                   <div className="perk-icon">👤</div>
@@ -219,41 +212,23 @@ function ItemDetailView({ selectedItem, setSelectedItem, currentUser }) {
 }
 
 function App() {
-  const [selectedItem, setSelectedItem] =
-    useState(null);
-
-  const [currentUser, setCurrentUser] =
-    useState(null);
-
-  const [loading, setLoading] =
-    useState(true);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const getSession = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
+      const { data: { user } } = await supabase.auth.getUser();
       setCurrentUser(user);
-
       setLoading(false);
     };
-
     getSession();
 
-    const { data: authListener } =
-      supabase.auth.onAuthStateChange(
-        (_event, session) => {
-          setCurrentUser(
-            session?.user ?? null
-          );
-
-          setLoading(false);
-        }
-      );
-
-    return () =>
-      authListener.subscription.unsubscribe();
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setCurrentUser(session?.user ?? null);
+      setLoading(false);
+    });
+    return () => authListener.subscription.unsubscribe();
   }, []);
 
   if (loading) return null;
@@ -261,300 +236,37 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-
-        {/* PUBLIC ROUTES */}
-
-        <Route
-          path="/"
-          element={<Home />}
-        />
-
-        <Route
-          path="/auth"
-          element={<AuthContainer />}
-        />
-
-        <Route
-          path="/forgot-password"
-          element={
-            <ForgotPassword />
-          }
-        />
-
-        <Route
-          path="/reset-password"
-          element={
-            <ResetPassword />
-          }
-        />
-
-        <Route
-          path="/email-confirmed"
-          element={
-            <EmailConfirmed />
-          }
-        />
-
-        {/* PAYMENT */}
-
-        <Route
-          path="/payment"
-          element={
-            currentUser ? (
-              <PaymentForm />
+        <Route path="/" element={<Home />} />
+        <Route path="/auth" element={<AuthContainer />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/email-confirmed" element={<EmailConfirmed />} />
+        <Route path="/payment" element={currentUser ? <PaymentForm /> : <Navigate to="/auth" replace />} />
+        <Route path="/history" element={currentUser ? <TransactionHistory /> : <Navigate to="/auth" replace />} />
+        <Route path="/profile" element={currentUser ? <UserProfile /> : <Navigate to="/auth" replace />} />
+        <Route path="/profile/:userId" element={currentUser ? <UserProfile /> : <Navigate to="/auth" replace />} />
+        <Route path="/reviews/:sellerId" element={currentUser ? <Reviews /> : <Navigate to="/auth" replace />} />
+        <Route path="/seller/:sellerId/reviews" element={<SellerProfileReviews />} />
+        <Route path="/staff" element={currentUser ? <StaffDashboard /> : <Navigate to="/auth" replace />} />
+        <Route path="/staff/collections" element={currentUser ? <CollectionManagement /> : <Navigate to="/auth" replace />} />
+        <Route path="/staff/dropoffs" element={currentUser ? <DropoffManagement /> : <Navigate to="/auth" replace />} />
+        <Route path="/booking/dropoff" element={currentUser ? <DropoffBooking /> : <Navigate to="/auth" replace />} />
+        <Route path="/booking/collection" element={currentUser ? <CollectionBooking /> : <Navigate to="/auth" replace />} />
+        <Route path="/basket" element={
+          currentUser ? (
+            selectedItem ? (
+              <ItemDetailView selectedItem={selectedItem} setSelectedItem={setSelectedItem} currentUser={currentUser} />
             ) : (
-              <Navigate
-                to="/auth"
-                replace
-              />
+              <Basket onViewListing={(item) => setSelectedItem(item)} currentUser={currentUser} />
             )
-          }
-        />
-
-        {/* HISTORY */}
-
-        <Route
-          path="/history"
-          element={
-            currentUser ? (
-              <TransactionHistory />
-            ) : (
-              <Navigate
-                to="/auth"
-                replace
-              />
-            )
-          }
-        />
-
-        {/* USER PROFILE */}
-        <Route
-          path="/profile"
-          element={currentUser ? <UserProfile /> : <Navigate to="/auth" replace />}
-        />
-        <Route
-          path="/profile/:userId"
-          element={currentUser ? <UserProfile /> : <Navigate to="/auth" replace />}
-        />
-
-        {/* REVIEWS */}
-
-        <Route
-          path="/reviews/:sellerId"
-          element={
-            currentUser ? (
-              <Reviews />
-            ) : (
-              <Navigate
-                to="/auth"
-                replace
-              />
-            )
-          }
-        />
-
-        <Route
-          path="/seller/:sellerId/reviews"
-          element={
-            <SellerProfileReviews />
-          }
-        />
-
-        {/* STAFF */}
-
-        <Route
-          path="/staff"
-          element={
-            currentUser ? (
-              <StaffDashboard />
-            ) : (
-              <Navigate
-                to="/auth"
-                replace
-              />
-            )
-          }
-        />
-
-        <Route
-          path="/staff/collections"
-          element={
-            currentUser ? (
-              <CollectionManagement />
-            ) : (
-              <Navigate
-                to="/auth"
-                replace
-              />
-            )
-          }
-        />
-
-        <Route
-          path="/staff/dropoffs"
-          element={
-            currentUser ? (
-              <DropoffManagement />
-            ) : (
-              <Navigate
-                to="/auth"
-                replace
-              />
-            )
-          }
-        />
-
-        {/* BOOKINGS */}
-        <Route
-          path="/booking/dropoff"
-          element={
-            currentUser ? (
-              <DropoffBooking />
-            ) : (
-              <Navigate to="/auth" replace />
-            )
-          }
-        />
-
-        
-        <Route
-          path="/booking/collection"
-          element={
-            currentUser ? (
-              <CollectionBooking />
-            ) : (
-              <Navigate to="/auth" replace />
-            )
-          }
-        />
-        
-        {/* BASKET */}
-
-        <Route
-          path="/basket"
-          element={
-            currentUser ? (
-              selectedItem ? (
-                <ItemDetailView
-                  selectedItem={
-                    selectedItem
-                  }
-                  setSelectedItem={
-                    setSelectedItem
-                  }
-                  currentUser={
-                    currentUser
-                  }
-                />
-              ) : (
-                <Basket
-                  onViewListing={(item) =>
-                    setSelectedItem(item)
-                  }
-                  currentUser={currentUser}
-                />
-              )
-            ) : (
-              <Navigate
-                to="/auth"
-                replace
-              />
-            )
-          }
-        />
-
-        {/* SELL */}
-
-        <Route
-          path="/sell"
-          element={
-            currentUser ? (
-              <CreateListing />
-            ) : (
-              <Navigate
-                to="/auth"
-                replace
-              />
-            )
-          }
-        />
-
-        {/* MESSAGES */}
-
-        <Route
-          path="/messages"
-          element={
-            currentUser ? (
-              <Messaging />
-            ) : (
-              <Navigate
-                to="/auth"
-                replace
-              />
-            )
-          }
-        />
-
-        {/* TRADE OFFERS */}
-
-        <Route
-          path="/tradeoffers"
-          element={
-            currentUser ? (
-              <TradeOffers
-                currentUser={
-                  currentUser
-                }
-              />
-            ) : (
-              <Navigate
-                to="/auth"
-                replace
-              />
-            )
-          }
-        />
-
-        {/* ADMIN */}
-
-        <Route
-          path="/admin-dashboard"
-          element={
-            currentUser ? (
-              <AdminDashboard />
-            ) : (
-              <Navigate
-                to="/auth"
-                replace
-              />
-            )
-          }
-        />
-
-        <Route
-          path="/admin"
-          element={
-            <Navigate
-              to="/admin-dashboard"
-              replace
-            />
-          }
-        />
-
-        <Route
-          path="/admin/facility-config"
-          element={
-            currentUser ? (
-              <FacilityConfig />
-            ) : (
-              <Navigate
-                to="/auth"
-                replace
-              />
-            )
-          }
-        />
-
+          ) : <Navigate to="/auth" replace />
+        } />
+        <Route path="/sell" element={currentUser ? <CreateListing /> : <Navigate to="/auth" replace />} />
+        <Route path="/messages" element={currentUser ? <Messaging /> : <Navigate to="/auth" replace />} />
+        <Route path="/tradeoffers" element={currentUser ? <TradeOffers currentUser={currentUser} /> : <Navigate to="/auth" replace />} />
+        <Route path="/admin-dashboard" element={currentUser ? <AdminDashboard /> : <Navigate to="/auth" replace />} />
+        <Route path="/admin" element={<Navigate to="/admin-dashboard" replace />} />
+        <Route path="/admin/facility-config" element={currentUser ? <FacilityConfig /> : <Navigate to="/auth" replace />} />
       </Routes>
     </BrowserRouter>
   );

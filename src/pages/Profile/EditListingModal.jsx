@@ -45,6 +45,19 @@ export default function EditListingModal({ isOpen, onClose, listingData, onSaveS
       setLoading(false);
     }
   };
+  const handleDelete = async () => {
+  if (!window.confirm("Are you sure you want to permanently delete this listing?")) return;
+  
+  try {
+    const { error } = await supabase.from('listings').delete().eq('id', listingData.id);
+    if (error) throw error;
+    alert("Listing deleted.");
+    onSaveSuccess(); // Refresh parent view
+    onClose();
+  } catch (err) {
+    alert("Error deleting: " + err.message);
+  }
+};
 
   return (
     <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
@@ -92,6 +105,11 @@ export default function EditListingModal({ isOpen, onClose, listingData, onSaveS
                 <option value="sold">Sold</option>
               </select>
             </div>
+          </div>
+          <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+            <button type="button" onClick={handleDelete} style={{ flex: 1, padding: '12px', background: '#fee2e2', color: '#b91c1c', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>Delete</button>
+            <button type="button" onClick={onClose} style={{ flex: 1, padding: '12px', background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>Cancel</button>
+            <button type="submit" disabled={loading} style={{ flex: 1, padding: '12px', background: '#1e3a8a', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>Save</button>
           </div>
 
           <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
